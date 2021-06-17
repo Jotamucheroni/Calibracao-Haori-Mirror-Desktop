@@ -1,0 +1,17 @@
+{
+    "java.dependency.packagePresentation": "flat",
+    "java.project.sourcePaths": [
+        "src"
+    ],
+    "java.project.referencedLibraries": [
+        "lib/**/*.jar",
+        "/usr/share/java/jogl2.jar",
+        "/usr/share/java/gluegen2-rt.jar",
+        "/usr/share/java/javacv/javacv.jar",
+        "/usr/share/java/javacv/openblas-linux-x86_64.jar",
+        "/usr/share/java/javacv/opencv-linux-x86_64.jar",
+        "/usr/share/java/javacv/javacpp-linux-x86_64.jar",
+        "/usr/share/java/bluecove-2.1.0.jar",
+        "/usr/share/java/bluecove-gpl-2.1.0.jar"
+    ]
+}
