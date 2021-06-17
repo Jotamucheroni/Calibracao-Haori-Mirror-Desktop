@@ -33,7 +33,7 @@ public class JanelaOpenGL extends JFrame implements Runnable {
     public void run() {
         setVisible( true );
         
-        while( true /* ! Thread.interrupted() */ )  {
+        while( ! Thread.interrupted() )  {
             canvas.repaint();
             try { Thread.sleep( 8 ); } 
             catch ( InterruptedException e ) { return; }
