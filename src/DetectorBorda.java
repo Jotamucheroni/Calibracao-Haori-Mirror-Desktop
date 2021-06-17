@@ -64,24 +64,24 @@ public class DetectorBorda implements AutoCloseable {
 
     private Thread detector = new Thread( () ->
         {
-            long[] t = new long[2];
-            long tempoTotal;
+            /* long[] t = new long[2];
+            long tempoTotal; */
 
             while ( true ) {
-                t[0] = System.currentTimeMillis();
-                int soma = 0;
+                /* t[0] = System.currentTimeMillis();
+                int soma = 0; */
                 for( int i = 0; i < tamImagem; i += deslocamento ) {
                     imagem.position( i );
-                    if ( Byte.toUnsignedInt( imagem.get() ) == 255 )
-                        soma++;
+                    /* if ( Byte.toUnsignedInt( imagem.get() ) == 255 )
+                        soma++; */
                 }
-                t[1] = System.currentTimeMillis();
+                /* t[1] = System.currentTimeMillis();
                 tempoTotal = t[1] - t[0];
                 
                 System.out.println( 
                     "Análise - Soma: " + soma + " píxel(is)\t|\tTempo: " + tempoTotal
                     + " ms\t\t|\tAnálises/s: " +  ( tempoTotal > 0 ? ( 1000 / tempoTotal ) : "+inf" ) 
-                );
+                ); */
 
                 synchronized( sinc ) {
                     try {

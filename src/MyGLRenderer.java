@@ -86,12 +86,12 @@ public class MyGLRenderer implements GLEventListener {
         // -----------------------------
 
         // Abre a câmera para capturar as imagens do olho virtual
-        cam = new Camera( 2, largImgOlhoVirtual, altImgOlhoVirtual );
+        cam = new Camera( 0, largImgOlhoVirtual, altImgOlhoVirtual );
         cam.ligar();
 
         // Inicia a comunicação por Bluetooth para receber as imagens da câmera do smartphone
         bt = new Bluetooth( tamImgSmartphone );
-        bt.conectarSmartphone();
+        // bt.conectarSmartphone();
 
         // Cria um Framebuffer e seus respectivos Renderbuffers
         gl4.glGenFramebuffers( fbo.length, fbo, 0 );
@@ -223,9 +223,9 @@ public class MyGLRenderer implements GLEventListener {
 
     @Override
     public void display( GLAutoDrawable drawable ) {
-        long[] t = new long[3];
+        /* long[] t = new long[3];
 
-        t[0] = System.currentTimeMillis();
+        t[0] = System.currentTimeMillis(); */
         // Imagens das câmeras------------------------------------------------------------------------
         // Copia a imagem atual do olho virtual para a textura 0
         gl4.glBindTexture( GL4.GL_TEXTURE_2D, texturas[0] );
@@ -247,32 +247,9 @@ public class MyGLRenderer implements GLEventListener {
         // Conecta o framebuffer auxiliar
         gl4.glBindFramebuffer( GL4.GL_FRAMEBUFFER, fbo[0] );
         
-        // Desenha imagens em preto e branco, borda e limiar
-        /* gl4.glDrawBuffers( 
-            6,
-            new int[]{ GL4.GL_COLOR_ATTACHMENT0, GL4.GL_COLOR_ATTACHMENT1, GL4.GL_COLOR_ATTACHMENT2,
-                       GL4.GL_COLOR_ATTACHMENT4, GL4.GL_COLOR_ATTACHMENT5, GL4.GL_COLOR_ATTACHMENT6 },
-            0
-        ); */
         gl4.glClear( GL4.GL_COLOR_BUFFER_BIT );
         for ( Objeto obj: objetos )
             obj.draw();
-
-/*         gl4.glDrawBuffers( 2, new int[]{ GL4.GL_COLOR_ATTACHMENT3, GL4.GL_COLOR_ATTACHMENT7 }, 0 );
-        gl4.glClear( GL4.GL_COLOR_BUFFER_BIT ); */
-
-        /* gl4.glReadBuffer( GL4.GL_COLOR_ATTACHMENT2 );
-        gl4.glDrawBuffers( 1, new int[]{ GL4.GL_COLOR_ATTACHMENT3 }, 0 );
-        gl4.glClear( GL4.GL_COLOR_BUFFER_BIT );
-        gl4.glBlitFramebuffer( 0, 0, largImgOlhoVirtual, altImgOlhoVirtual,
-                               0, ( altImgOlhoVirtual / 2 ) - 1, largImgOlhoVirtual, ( altImgOlhoVirtual / 2 ) + 1,
-                               GL4.GL_COLOR_BUFFER_BIT, GL4.GL_LINEAR );
-        gl4.glReadBuffer( GL4.GL_COLOR_ATTACHMENT6 );
-        gl4.glDrawBuffers( 1, new int[]{ GL4.GL_COLOR_ATTACHMENT7 }, 0 );
-        gl4.glClear( GL4.GL_COLOR_BUFFER_BIT );
-        gl4.glBlitFramebuffer( 0, 0, largImgOlhoVirtual, altImgOlhoVirtual,
-                               0, 0, largImgOlhoVirtual, altImgOlhoVirtual,
-                               GL4.GL_COLOR_BUFFER_BIT, GL4.GL_LINEAR ); */
 
         // Desenha os renderbuffers na tela
         gl4.glBindFramebuffer( GL4.GL_DRAW_FRAMEBUFFER, 0 );
@@ -287,7 +264,7 @@ public class MyGLRenderer implements GLEventListener {
                     GL4.GL_COLOR_BUFFER_BIT, GL4.GL_LINEAR );
         }
 
-        t[1] = System.currentTimeMillis();
+        // t[1] = System.currentTimeMillis();
 
         if ( detectorOlhoVirtual.pronto() ) {
             gl4.glReadBuffer( GL4.GL_COLOR_ATTACHMENT2 );
@@ -309,12 +286,12 @@ public class MyGLRenderer implements GLEventListener {
             detectorSmartphone.setImagem( bufferBordaSmartphone );
             detectorSmartphone.executar();
         }
-        t[2] = System.currentTimeMillis();
+        /* t[2] = System.currentTimeMillis();
         long tempoTotal = t[2] - t[0];
         System.out.println(
             "Desenho - Tempos: " + ( t[1] - t[0] ) + " ms, " + ( t[2] - t[1] ) + " ms\t|\tTempo total: " 
             + tempoTotal + " ms\t|\tQuadros/s: " +  ( tempoTotal > 0 ? ( 1000 / tempoTotal ) : "+inf" )
-        );
+        ); */
     }
 
     public static void printGLConfig( int[] configs ) {
