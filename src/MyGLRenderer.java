@@ -3,6 +3,7 @@ import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 
 import javax.imageio.ImageIO;
+import javax.microedition.io.StreamConnection;
 
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
@@ -17,6 +18,7 @@ import com.jogamp.opengl.GLEventListener;
 import es.Bluetooth;
 import es.camera.Camera;
 import es.camera.CameraLocal;
+import es.camera.CameraRemota;
 
 public class MyGLRenderer implements GLEventListener {
     private static Logger log = Logger.getLogger( MyGLRenderer.class.getName() );
@@ -42,12 +44,11 @@ public class MyGLRenderer implements GLEventListener {
     };
 
     // private CameraLocal olhoVirtual;
-    private final Camera olhoVirtual = new CameraLocal( 0, 640, 480, 1 );
-    private final int largImgSmartphone = 320,
-                      altImgSmartphone = 240,
-                      tamImgSmartphone = largImgSmartphone * altImgSmartphone;
+    private Camera olhoVirtual = new CameraLocal( 0, 640, 480, 1 ),
+                   smartphone = new CameraRemota( null, 320, 240, 1 );
 
     private Bluetooth bt;
+    private StreamConnection conexao;
 
     private final int numLinhas = 2, numColunas = 3,
                       numLinhasM1 = numLinhas - 1;
@@ -92,8 +93,12 @@ public class MyGLRenderer implements GLEventListener {
         olhoVirtual.ligar();
         
         // Inicia a comunicação por Bluetooth para receber as imagens da câmera do smartphone
-        bt = new Bluetooth( tamImgSmartphone );
-        // bt.conectarSmartphone();
+        bt = new Bluetooth();
+        conexao = bt.conectarDispositivo( "304B0745112F" );
+        try {
+             ( (CameraRemota) smartphone ).setEntradaRemota( conexao.openDataInputStream() );
+             smartphone.ligar();
+        } catch ( IOException e1 ) { e1.printStackTrace(); }
 
         // Cria um Framebuffer e seus respectivos Renderbuffers
         gl4.glGenFramebuffers( fbo.length, fbo, 0 );
@@ -130,7 +135,7 @@ public class MyGLRenderer implements GLEventListener {
         setTexParams();
         gl4.glTexImage2D( 
                     GL4.GL_TEXTURE_2D, 0, GL4.GL_RGBA8,
-                    largImgSmartphone, altImgSmartphone, 0,
+                    smartphone.getLargImg(), smartphone.getAltImg(), 0,
                     GL4.GL_RED, GL4.GL_UNSIGNED_BYTE, null
         );
 
@@ -237,10 +242,9 @@ public class MyGLRenderer implements GLEventListener {
 
         // Copia a imagem atual do smartphone para a textura 1
         gl4.glBindTexture( GL4.GL_TEXTURE_2D, texturas[1] );
-        bt.visBufferEntrada.rewind();
         gl4.glTexSubImage2D( GL4.GL_TEXTURE_2D, 0, 
-                             0, 0, largImgSmartphone, altImgSmartphone,
-                             GL4.GL_RED, GL4.GL_UNSIGNED_BYTE, bt.visBufferEntrada
+                             0, 0, smartphone.getLargImg(), smartphone.getAltImg(),
+                             GL4.GL_RED, GL4.GL_UNSIGNED_BYTE, smartphone.getImagem()
         );
         //--------------------------------------------------------------------------------------------
 
@@ -682,6 +686,9 @@ public class MyGLRenderer implements GLEventListener {
         gl4.glDeleteFramebuffers( fbo.length, fbo, 0 );
 
         olhoVirtual.desligar();
+        smartphone.desligar();
+
+        bt.desconectarDispositivo();
 
         App.close();
     }

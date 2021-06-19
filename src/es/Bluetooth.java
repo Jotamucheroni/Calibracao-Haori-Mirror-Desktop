@@ -1,9 +1,6 @@
 package es;
 
-import java.io.DataInputStream;
-import java.io.EOFException;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.TreeSet;
 
 import javax.bluetooth.DeviceClass;
@@ -21,14 +18,11 @@ public class Bluetooth {
     private LocalDevice localDevice;
     private DiscoveryAgent discoveryAgent;
     private boolean pesquisando;
+    private boolean conectado;
     private TreeSet<RemoteDevice> remoteDevicesPesquisa;
     private TreeSet<RemoteDevice> remoteDevicesConexao;
 
-    private int tamBufferEntrada;
-    private ByteBuffer bufferEntrada;
-    public ByteBuffer visBufferEntrada;
-    
-    public Bluetooth( int tamBufferEntrada ) {
+    public Bluetooth() {
         try {
             localDevice = LocalDevice.getLocalDevice();
             localDevice.setDiscoverable( DiscoveryAgent.GIAC );
@@ -42,16 +36,9 @@ public class Bluetooth {
 
             remoteDevicesConexao = new TreeSet<RemoteDevice>( remoteDevicesPesquisa );
 
-            this.tamBufferEntrada = tamBufferEntrada;
-            bufferEntrada = ByteBuffer.allocateDirect( tamBufferEntrada );
-            visBufferEntrada = bufferEntrada.asReadOnlyBuffer();
-
             pesquisando = false;
+            conectado = false;
         } catch ( IOException e ) { e.printStackTrace(); }
-    }
-
-    public Bluetooth() {
-        this( 1 );
     }
 
     private void printDevice( RemoteDevice btDevice ) {
@@ -98,57 +85,10 @@ public class Bluetooth {
         discoveryAgent.cancelInquiry( discoveryListener );
         System.out.println( "Pesquisa de dispositivos encerrada." );
     }
-
-    private Thread receberDados( StreamConnection conexao ) {
-        Thread thread = new Thread( () ->
-            {
-                try {
-                    DataInputStream input = conexao.openDataInputStream();
-
-                    byte[] b = new byte[tamBufferEntrada];
-                    while( true ) {
-                        input.readFully( b );
-                        bufferEntrada.rewind();
-                        bufferEntrada.put( b );
-                    }   
-                } 
-                catch ( EOFException ignored ) {}
-                catch ( IOException e ) { e.printStackTrace(); }
-            }
-        );
-        thread.start();
-
-        return thread;
-    }
     
-/*     private final int numElem = 10;
-    private final int numBytes = numElem * Integer.BYTES; */
-
-    /* private Thread enviarDados( StreamConnection conexao ) {
-        Thread thread = new Thread( () ->
-            {
-                try {
-                    DataOutputStream output = conexao.openDataOutputStream();
-
-                    ByteBuffer bb = ByteBuffer.allocateDirect( numBytes );
-                    byte[] b = new byte[numBytes];
-                    for ( int num = 100; true; num += 100 ) {
-                        bb.rewind();
-                        for ( int i = 0; i < numElem; i++ )
-                            bb.putInt( num + ( i * 10 ) );
-                        bb.rewind();
-                        bb.get( b );
-                        output.write( b );
-                        Thread.sleep( 1000 );
-                    } 
-                } catch ( IOException | InterruptedException ignored ) {}
-            }
-        );
-        thread.start();
-
-        return thread;
-    } */
-
+    private String enderecoDispositivo;
+    private StreamConnection conexao;
+    
     DiscoveryListener connectionListener = new DiscoveryListener() {
 
         @Override
@@ -180,19 +120,17 @@ public class Bluetooth {
 
             System.out.println( "Conectando a " + url );
             try {
-                StreamConnection conexao = (StreamConnection) Connector.open( url );
+                conexao = (StreamConnection) Connector.open( url );
                 
                 if ( conexao != null ) {
                     System.out.println( "Conexão bem-sucedida!" );
-
-                    Thread 
-                        tReceber = receberDados( conexao );
-                    
-                    tReceber.join();
-                    conexao.close();
+                    conectado = true;
+                    synchronized( this ) {
+                        notify();
+                    }
                 }
 
-            } catch ( IOException | InterruptedException e ) { e.printStackTrace(); }
+            } catch ( IOException ignored ) {}
         }
 
         @Override
@@ -202,7 +140,7 @@ public class Bluetooth {
         public void inquiryCompleted( int discType ) {
             try {
                 for ( RemoteDevice btDevice: remoteDevicesConexao )
-                    if ( btDevice.getBluetoothAddress().equals( "304B0745112F" ) ) {
+                    if ( btDevice.getBluetoothAddress().equals( enderecoDispositivo ) ) {
                         System.out.println( "Encontrado!" );
                         printDevice( btDevice );
                         System.out.println( "Procurando serviço..." );
@@ -220,14 +158,43 @@ public class Bluetooth {
         
     };
 
-    public void conectarSmartphone() {
+    public StreamConnection conectarDispositivo( String enderecoDispositivo ) {
+        if ( conectado || enderecoDispositivo == null )
+            return null;
+        
         if ( pesquisando )
             encerrarPesquisa();
 
-        remoteDevicesConexao.clear();    
+        remoteDevicesConexao.clear();
+        this.enderecoDispositivo = enderecoDispositivo;
         System.out.println( "Procurando smartphone..." );
         try {
             discoveryAgent.startInquiry( DiscoveryAgent.GIAC, connectionListener );
-        } catch ( IOException e ) { e.printStackTrace(); }
+            synchronized( connectionListener ) {
+                connectionListener.wait();
+            }
+            return conexao;
+        } catch ( IOException | InterruptedException ignored ) {}
+
+        return null;
+    }
+
+    public void desconectarDispositivo() {
+        if ( !conectado )
+            return;
+
+        try { conexao.close(); } catch ( IOException ignored ) {}
+        conectado = false;
+    }
+
+    public StreamConnection reconectarDispositivo( String enderecoDispositivo ) {
+        System.out.println( "Reconectando..." );
+
+        desconectarDispositivo();
+        return conectarDispositivo( enderecoDispositivo );
+    }
+
+    public StreamConnection reconectarDispositivo() {
+        return reconectarDispositivo( enderecoDispositivo );
     }
 }

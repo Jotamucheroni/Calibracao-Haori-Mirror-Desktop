@@ -53,7 +53,7 @@ public class CameraLocal extends Camera implements Runnable {
         return numCamera;
     }
 
-    private Thread exe;
+    private Thread atualizaBuffer;
 
     @Override
     public void run() {
@@ -88,14 +88,15 @@ public class CameraLocal extends Camera implements Runnable {
         }
     }
 
+    @Override
     public void ligar() {
         if ( ligada )
             return;
 
         setBuffer();
-        exe = new Thread( this );
+        atualizaBuffer = new Thread( this );
         ligada = true;
-        exe.start();
+        atualizaBuffer.start();
     }
 
     public void desligar() {
@@ -103,7 +104,7 @@ public class CameraLocal extends Camera implements Runnable {
             return;
         
         ligada = false;
-        try { exe.join(); } 
+        try { atualizaBuffer.join(); } 
         catch ( InterruptedException ignored ) { return; }
     }
 }
