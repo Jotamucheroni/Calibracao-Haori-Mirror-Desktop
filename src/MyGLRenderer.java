@@ -14,6 +14,10 @@ import com.jogamp.opengl.GL4;
 import com.jogamp.opengl.GLAutoDrawable;
 import com.jogamp.opengl.GLEventListener;
 
+import es.Bluetooth;
+import es.camera.Camera;
+import es.camera.CameraLocal;
+
 public class MyGLRenderer implements GLEventListener {
     private static Logger log = Logger.getLogger( MyGLRenderer.class.getName() );
     private static GL4 gl4;
@@ -37,9 +41,8 @@ public class MyGLRenderer implements GLEventListener {
             2, 3, 0
     };
 
-    private Camera cam;
-    private final int largImgOlhoVirtual = 640,
-                      altImgOlhoVirtual = 480;
+    // private CameraLocal olhoVirtual;
+    private final Camera olhoVirtual = new CameraLocal( 0, 640, 480, 1 );
     private final int largImgSmartphone = 320,
                       altImgSmartphone = 240,
                       tamImgSmartphone = largImgSmartphone * altImgSmartphone;
@@ -86,9 +89,8 @@ public class MyGLRenderer implements GLEventListener {
         // -----------------------------
 
         // Abre a câmera para capturar as imagens do olho virtual
-        cam = new Camera( 0, largImgOlhoVirtual, altImgOlhoVirtual );
-        cam.ligar();
-
+        olhoVirtual.ligar();
+        
         // Inicia a comunicação por Bluetooth para receber as imagens da câmera do smartphone
         bt = new Bluetooth( tamImgSmartphone );
         // bt.conectarSmartphone();
@@ -101,7 +103,7 @@ public class MyGLRenderer implements GLEventListener {
         // Aloca espaço para os Renderbuffers
         for ( int i = 0; i < rbo.length; i++ ) {
             gl4.glBindRenderbuffer( GL4.GL_RENDERBUFFER, rbo[i] );
-            gl4.glRenderbufferStorage( GL4.GL_RENDERBUFFER, GL4.GL_RGB8, largImgOlhoVirtual, altImgOlhoVirtual );
+            gl4.glRenderbufferStorage( GL4.GL_RENDERBUFFER, GL4.GL_RGB8, olhoVirtual.getLargImg(), olhoVirtual.getAltImg() );
             gl4.glFramebufferRenderbuffer( GL4.GL_DRAW_FRAMEBUFFER, GL4.GL_COLOR_ATTACHMENT0 + i, GL4.GL_RENDERBUFFER, rbo[i] );
         }
         gl4.glDrawBuffers( 
@@ -119,7 +121,7 @@ public class MyGLRenderer implements GLEventListener {
         setTexParams();
         gl4.glTexImage2D( 
                     GL4.GL_TEXTURE_2D, 0, GL4.GL_RGBA8,
-                    largImgOlhoVirtual, altImgOlhoVirtual, 0,
+                    olhoVirtual.getLargImg(), olhoVirtual.getAltImg(), 0,
                     GL4.GL_RED, GL4.GL_UNSIGNED_BYTE, null
         );
 
@@ -201,9 +203,8 @@ public class MyGLRenderer implements GLEventListener {
         objetos[0] = new Objeto( GL4.GL_TRIANGLES, 2, 2,
                                  refQuad, refElementos, new int[]{ texturas[0], texturas[1] }, true );
     
-        // analiseBorda.start();
-        detectorOlhoVirtual = new DetectorBorda( largImgOlhoVirtual * altImgOlhoVirtual * 3, 3 );
-        detectorSmartphone = new DetectorBorda( largImgOlhoVirtual * altImgOlhoVirtual * 3, 3 );
+        detectorOlhoVirtual = new DetectorBorda( olhoVirtual.getLargImg() * olhoVirtual.getAltImg() * 3, 3 );
+        detectorSmartphone = new DetectorBorda( olhoVirtual.getLargImg() * olhoVirtual.getAltImg() * 3, 3 );
     }
 
     private int viewWidth;
@@ -215,11 +216,11 @@ public class MyGLRenderer implements GLEventListener {
         viewWidth = width / numColunas;
         viewHeight = height / numLinhas;
         
-        gl4.glViewport( 0, 0, largImgOlhoVirtual, altImgOlhoVirtual );
+        gl4.glViewport( 0, 0, olhoVirtual.getLargImg(), olhoVirtual.getAltImg() );
 	}
 
-    private ByteBuffer bufferBordaOlhoVirtual = ByteBuffer.allocateDirect( largImgOlhoVirtual * altImgOlhoVirtual * 3 );
-    private ByteBuffer bufferBordaSmartphone = ByteBuffer.allocateDirect( largImgOlhoVirtual * altImgOlhoVirtual * 3 );
+    private ByteBuffer bufferBordaOlhoVirtual = ByteBuffer.allocateDirect( olhoVirtual.getLargImg() * olhoVirtual.getAltImg() * 3 );
+    private ByteBuffer bufferBordaSmartphone = ByteBuffer.allocateDirect( olhoVirtual.getLargImg() * olhoVirtual.getAltImg() * 3 );
 
     @Override
     public void display( GLAutoDrawable drawable ) {
@@ -229,10 +230,9 @@ public class MyGLRenderer implements GLEventListener {
         // Imagens das câmeras------------------------------------------------------------------------
         // Copia a imagem atual do olho virtual para a textura 0
         gl4.glBindTexture( GL4.GL_TEXTURE_2D, texturas[0] );
-        cam.visBufferCamera.rewind();
         gl4.glTexSubImage2D( GL4.GL_TEXTURE_2D, 0, 
-                             0, 0, largImgOlhoVirtual, altImgOlhoVirtual,
-                             GL4.GL_RED, GL4.GL_UNSIGNED_BYTE, cam.visBufferCamera
+                             0, 0, olhoVirtual.getLargImg(), olhoVirtual.getAltImg(),
+                             GL4.GL_RED, GL4.GL_UNSIGNED_BYTE, olhoVirtual.getImagem()
         );
 
         // Copia a imagem atual do smartphone para a textura 1
@@ -258,7 +258,7 @@ public class MyGLRenderer implements GLEventListener {
             int linha = numLinhasM1 - ( i / numColunas );
 
             gl4.glReadBuffer( GL4.GL_COLOR_ATTACHMENT0 + i );
-            gl4.glBlitFramebuffer( 0, 0, largImgOlhoVirtual, altImgOlhoVirtual,
+            gl4.glBlitFramebuffer( 0, 0, olhoVirtual.getLargImg(), olhoVirtual.getAltImg(),
                     coluna * viewWidth, linha * viewHeight, 
                     ( coluna + 1 ) * viewWidth, ( linha  + 1 ) * viewHeight,
                     GL4.GL_COLOR_BUFFER_BIT, GL4.GL_LINEAR );
@@ -269,7 +269,7 @@ public class MyGLRenderer implements GLEventListener {
         if ( detectorOlhoVirtual.pronto() ) {
             gl4.glReadBuffer( GL4.GL_COLOR_ATTACHMENT2 );
             bufferBordaOlhoVirtual.rewind();
-            gl4.glReadPixels( 0, 0, largImgOlhoVirtual, altImgOlhoVirtual, 
+            gl4.glReadPixels( 0, 0, olhoVirtual.getLargImg(), olhoVirtual.getAltImg(), 
                               GL4.GL_RGB, GL4.GL_UNSIGNED_BYTE, 
                               bufferBordaOlhoVirtual );
 
@@ -279,7 +279,7 @@ public class MyGLRenderer implements GLEventListener {
         if ( detectorSmartphone.pronto() ) {
             gl4.glReadBuffer( GL4.GL_COLOR_ATTACHMENT5 );
             bufferBordaSmartphone.rewind();
-            gl4.glReadPixels( 0, 0, largImgOlhoVirtual, altImgOlhoVirtual,
+            gl4.glReadPixels( 0, 0, olhoVirtual.getLargImg(), olhoVirtual.getAltImg(),
                               GL4.GL_RGB, GL4.GL_UNSIGNED_BYTE,
                               bufferBordaSmartphone );
 
@@ -681,7 +681,7 @@ public class MyGLRenderer implements GLEventListener {
         gl4.glDeleteRenderbuffers( rbo.length, rbo, 0 );
         gl4.glDeleteFramebuffers( fbo.length, fbo, 0 );
 
-        cam.desligar();
+        olhoVirtual.desligar();
 
         App.close();
     }

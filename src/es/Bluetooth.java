@@ -1,6 +1,7 @@
+package es;
+
 import java.io.DataInputStream;
 import java.io.EOFException;
-// import java.io.DataOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.TreeSet;
@@ -27,7 +28,7 @@ public class Bluetooth {
     private ByteBuffer bufferEntrada;
     public ByteBuffer visBufferEntrada;
     
-    Bluetooth( int tamBufferEntrada ) {
+    public Bluetooth( int tamBufferEntrada ) {
         try {
             localDevice = LocalDevice.getLocalDevice();
             localDevice.setDiscoverable( DiscoveryAgent.GIAC );
@@ -49,7 +50,7 @@ public class Bluetooth {
         } catch ( IOException e ) { e.printStackTrace(); }
     }
 
-    Bluetooth() {
+    public Bluetooth() {
         this( 1 );
     }
 
@@ -185,11 +186,9 @@ public class Bluetooth {
                     System.out.println( "Conexão bem-sucedida!" );
 
                     Thread 
-                        tReceber = receberDados( conexao );//, 
-                        // tEnviar = enviarDados( conexao );
+                        tReceber = receberDados( conexao );
                     
                     tReceber.join();
-                    // tEnviar.join();
                     conexao.close();
                 }
 
