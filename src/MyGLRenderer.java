@@ -19,18 +19,14 @@ import es.Bluetooth;
 import es.camera.Camera;
 import es.camera.CameraLocal;
 import es.camera.CameraRemota;
+import es.tela.FrameBuffer;
+import es.tela.RenderBuffer;
 
 public class MyGLRenderer implements GLEventListener {
     private static Logger log = Logger.getLogger( MyGLRenderer.class.getName() );
     private static GL4 gl4;
 
-    private final float[] /* refTriangulo = {
-            // Coordenadas          // Cor
-            0.0f,    0.622008459f,   1.0f, 0.0f, 0.0f,
-           -0.5f,   -0.311004243f,   0.0f, 1.0f, 0.0f,
-            0.5f,   -0.311004243f,   0.0f, 0.0f, 1.0f
-    }, */
-                        refQuad = {
+    private final float[] refQuad = {
            -1.0f,  1.0f,      0.0f, 0.0f,
            -1.0f, -1.0f,      0.0f, 1.0f,
             1.0f, -1.0f,      1.0f, 1.0f,
@@ -43,18 +39,15 @@ public class MyGLRenderer implements GLEventListener {
             2, 3, 0
     };
 
-    // private CameraLocal olhoVirtual;
-    private Camera olhoVirtual = new CameraLocal( 0, 640, 480, 1 ),
-                   smartphone = new CameraRemota( null, 320, 240, 1 );
+    private Camera olhoVirtual,
+                   smartphone;
 
     private Bluetooth bt;
-    private StreamConnection conexao;
 
     private final int numLinhas = 2, numColunas = 3,
                       numLinhasM1 = numLinhas - 1;
 
-    private final int[] fbo = new int[1];
-    private final int[] rbo = new int[numLinhas * numColunas];
+    private FrameBuffer fb;
 
     private final int[] texturas = new int[4];
 
@@ -80,37 +73,37 @@ public class MyGLRenderer implements GLEventListener {
     // Objetos
     private final Objeto[] objetos = new Objeto[1];
 
-    DetectorBorda detectorOlhoVirtual, detectorSmartphone;
+    private DetectorBorda detectorOlhoVirtual,
+                          detectorSmartphone;
+
+    private ByteBuffer bufferBordaOlhoVirtual,
+                       bufferBordaSmartphone;
 
     @Override
     public void init( GLAutoDrawable drawable ) {
         // Executar sempre primeiro-----
         gl4 = drawable.getGL().getGL4();
         Objeto.gl4 = gl4;
+        RenderBuffer.gl4 = gl4;
+        FrameBuffer.gl4 = gl4;
         // -----------------------------
 
-        // Abre a câmera para capturar as imagens do olho virtual
+        // Cria e abre a câmera para capturar as imagens do olho virtual
+        olhoVirtual = new CameraLocal( 2, 640, 480, 1 );
         olhoVirtual.ligar();
         
         // Inicia a comunicação por Bluetooth para receber as imagens da câmera do smartphone
         bt = new Bluetooth();
-        conexao = bt.conectarDispositivo( "304B0745112F" );
         try {
-             ( (CameraRemota) smartphone ).setEntradaRemota( conexao.openDataInputStream() );
-             smartphone.ligar();
+            smartphone = new CameraRemota( bt.conectarDispositivo( "304B0745112F" )
+                                           .openDataInputStream(),
+                                           320, 240, 1 );
+            smartphone.ligar();
         } catch ( IOException e1 ) { e1.printStackTrace(); }
 
         // Cria um Framebuffer e seus respectivos Renderbuffers
-        gl4.glGenFramebuffers( fbo.length, fbo, 0 );
-        gl4.glGenRenderbuffers( rbo.length, rbo, 0 );
-        gl4.glBindFramebuffer( GL4.GL_DRAW_FRAMEBUFFER, fbo[0] );
+        fb = new FrameBuffer( numColunas * numLinhas, 640, 480 );
 
-        // Aloca espaço para os Renderbuffers
-        for ( int i = 0; i < rbo.length; i++ ) {
-            gl4.glBindRenderbuffer( GL4.GL_RENDERBUFFER, rbo[i] );
-            gl4.glRenderbufferStorage( GL4.GL_RENDERBUFFER, GL4.GL_RGB8, olhoVirtual.getLargImg(), olhoVirtual.getAltImg() );
-            gl4.glFramebufferRenderbuffer( GL4.GL_DRAW_FRAMEBUFFER, GL4.GL_COLOR_ATTACHMENT0 + i, GL4.GL_RENDERBUFFER, rbo[i] );
-        }
         gl4.glDrawBuffers( 
             6,
             new int[]{ GL4.GL_COLOR_ATTACHMENT0, GL4.GL_COLOR_ATTACHMENT1, GL4.GL_COLOR_ATTACHMENT2,
@@ -171,45 +164,15 @@ public class MyGLRenderer implements GLEventListener {
         // Determina a cor de fundo
         gl4.glClearColor( 0.0f, 0.0f, 0.0f, 1.0f );
 
-/*         float[] copiaTri = refTriangulo.clone();
-
-        objetos[0] = new Objeto( GL4.GL_TRIANGLES, 2, 3, copiaTri );
-
-        copiaTri[1] = 0.3f;   copiaTri[2] = 0.0f;
-        copiaTri[8] = 0.0f;
-        copiaTri[14] = 0.0f;
-        objetos[1] = new Objeto( GL4.GL_TRIANGLES, 2, 3, copiaTri );
-
-
-        copiaTri[1] = -0.1f;    copiaTri[2] = 1.0f;
-        copiaTri[8] = 1.0f;
-        copiaTri[14] = 1.0f;
-        objetos[2] = new Objeto( GL4.GL_TRIANGLES, 2, 3, copiaTri );
-
-        for ( int i = 0; i < 3; i ++ ) {
-            objetos[i].setEscala(0.5f, 0.5f, 0.0f );
-            objetos[i].setTrans(0.5f, 0.5f, 0.0f );
-        }
-
-        objetos[3] = new Objeto( GL4.GL_TRIANGLES, 2, 2,
-                                 refQuad, refElementos, texturas[0], false );
-        objetos[3].setTrans(-0.5f, -0.5f, 0.0f );
-
-        objetos[4] = new Objeto( GL4.GL_TRIANGLES, 2, 2,
-                                 refQuad, refElementos, texturas[1], false );
-        objetos[4].setTrans(-0.5f, 0.5f, 0.0f );
-
-        for ( int i = 3; i < 5; i ++ )
-            objetos[i].setEscala( 0.25f, 0.25f, 0.0f ); */
-
         // Cria objetos para exibir as imagens das câmeras
-        /* refQuad[2] = refQuad[6] = 1.0f;
-        refQuad[10] = refQuad[14] = 0.0f; */
         objetos[0] = new Objeto( GL4.GL_TRIANGLES, 2, 2,
                                  refQuad, refElementos, new int[]{ texturas[0], texturas[1] }, true );
-    
-        detectorOlhoVirtual = new DetectorBorda( olhoVirtual.getLargImg() * olhoVirtual.getAltImg() * 3, 3 );
-        detectorSmartphone = new DetectorBorda( olhoVirtual.getLargImg() * olhoVirtual.getAltImg() * 3, 3 );
+
+        bufferBordaOlhoVirtual = ByteBuffer.allocateDirect( fb.getNumBytes() );
+        bufferBordaSmartphone = ByteBuffer.allocateDirect( fb.getNumBytes() );
+
+        detectorOlhoVirtual = new DetectorBorda( fb.getNumBytes(), FrameBuffer.numCompCor );
+        detectorSmartphone = new DetectorBorda( fb.getNumBytes(), FrameBuffer.numCompCor );
     }
 
     private int viewWidth;
@@ -221,17 +184,11 @@ public class MyGLRenderer implements GLEventListener {
         viewWidth = width / numColunas;
         viewHeight = height / numLinhas;
         
-        gl4.glViewport( 0, 0, olhoVirtual.getLargImg(), olhoVirtual.getAltImg() );
+        gl4.glViewport( 0, 0, fb.getLargura(), fb.getAltura() );
 	}
-
-    private ByteBuffer bufferBordaOlhoVirtual = ByteBuffer.allocateDirect( olhoVirtual.getLargImg() * olhoVirtual.getAltImg() * 3 );
-    private ByteBuffer bufferBordaSmartphone = ByteBuffer.allocateDirect( olhoVirtual.getLargImg() * olhoVirtual.getAltImg() * 3 );
 
     @Override
     public void display( GLAutoDrawable drawable ) {
-        /* long[] t = new long[3];
-
-        t[0] = System.currentTimeMillis(); */
         // Imagens das câmeras------------------------------------------------------------------------
         // Copia a imagem atual do olho virtual para a textura 0
         gl4.glBindTexture( GL4.GL_TEXTURE_2D, texturas[0] );
@@ -249,7 +206,7 @@ public class MyGLRenderer implements GLEventListener {
         //--------------------------------------------------------------------------------------------
 
         // Conecta o framebuffer auxiliar
-        gl4.glBindFramebuffer( GL4.GL_FRAMEBUFFER, fbo[0] );
+        gl4.glBindFramebuffer( GL4.GL_FRAMEBUFFER, fb.getId() );
         
         gl4.glClear( GL4.GL_COLOR_BUFFER_BIT );
         for ( Objeto obj: objetos )
@@ -257,23 +214,21 @@ public class MyGLRenderer implements GLEventListener {
 
         // Desenha os renderbuffers na tela
         gl4.glBindFramebuffer( GL4.GL_DRAW_FRAMEBUFFER, 0 );
-        for ( int i = 0; i < rbo.length; i++ ) {
+        for ( int i = 0; i < fb.getNumRenderBuffer(); i++ ) {
             int coluna = i % numColunas;
             int linha = numLinhasM1 - ( i / numColunas );
 
             gl4.glReadBuffer( GL4.GL_COLOR_ATTACHMENT0 + i );
-            gl4.glBlitFramebuffer( 0, 0, olhoVirtual.getLargImg(), olhoVirtual.getAltImg(),
+            gl4.glBlitFramebuffer( 0, 0, fb.getLargura(), fb.getAltura(),
                     coluna * viewWidth, linha * viewHeight, 
                     ( coluna + 1 ) * viewWidth, ( linha  + 1 ) * viewHeight,
                     GL4.GL_COLOR_BUFFER_BIT, GL4.GL_LINEAR );
         }
 
-        // t[1] = System.currentTimeMillis();
-
         if ( detectorOlhoVirtual.pronto() ) {
             gl4.glReadBuffer( GL4.GL_COLOR_ATTACHMENT2 );
             bufferBordaOlhoVirtual.rewind();
-            gl4.glReadPixels( 0, 0, olhoVirtual.getLargImg(), olhoVirtual.getAltImg(), 
+            gl4.glReadPixels( 0, 0, fb.getLargura(), fb.getAltura(), 
                               GL4.GL_RGB, GL4.GL_UNSIGNED_BYTE, 
                               bufferBordaOlhoVirtual );
 
@@ -283,19 +238,34 @@ public class MyGLRenderer implements GLEventListener {
         if ( detectorSmartphone.pronto() ) {
             gl4.glReadBuffer( GL4.GL_COLOR_ATTACHMENT5 );
             bufferBordaSmartphone.rewind();
-            gl4.glReadPixels( 0, 0, olhoVirtual.getLargImg(), olhoVirtual.getAltImg(),
+            gl4.glReadPixels( 0, 0, fb.getLargura(), fb.getAltura(),
                               GL4.GL_RGB, GL4.GL_UNSIGNED_BYTE,
                               bufferBordaSmartphone );
 
             detectorSmartphone.setImagem( bufferBordaSmartphone );
             detectorSmartphone.executar();
         }
-        /* t[2] = System.currentTimeMillis();
-        long tempoTotal = t[2] - t[0];
-        System.out.println(
-            "Desenho - Tempos: " + ( t[1] - t[0] ) + " ms, " + ( t[2] - t[1] ) + " ms\t|\tTempo total: " 
-            + tempoTotal + " ms\t|\tQuadros/s: " +  ( tempoTotal > 0 ? ( 1000 / tempoTotal ) : "+inf" )
-        ); */
+    }
+
+    @Override
+    public void dispose( GLAutoDrawable drawable ) {
+        detectorOlhoVirtual.close();
+        detectorSmartphone.close();
+
+        for ( int[][] matProg : programas )
+            for ( int[] vetProg : matProg )
+                for ( int programa: vetProg )
+                    gl4.glDeleteProgram( programa );
+
+        gl4.glDeleteTextures( texturas.length, texturas, 0 );
+        fb.close();
+
+        olhoVirtual.desligar();
+        smartphone.desligar();
+
+        bt.desconectarDispositivo();
+
+        App.close();
     }
 
     public static void printGLConfig( int[] configs ) {
@@ -669,27 +639,5 @@ public class MyGLRenderer implements GLEventListener {
 
         programas[cor][tex][pb] = gerarPrograma( vertexShaderCode.toString(), fragmentShaderCode.toString() );
         return programas[cor][tex][pb];
-    }
-
-    @Override
-    public void dispose( GLAutoDrawable drawable ) {
-        detectorOlhoVirtual.close();
-        detectorSmartphone.close();
-
-        for ( int[][] matProg : programas )
-            for ( int[] vetProg : matProg )
-                for ( int programa: vetProg )
-                    gl4.glDeleteProgram( programa );
-
-        gl4.glDeleteTextures( texturas.length, texturas, 0 );
-        gl4.glDeleteRenderbuffers( rbo.length, rbo, 0 );
-        gl4.glDeleteFramebuffers( fbo.length, fbo, 0 );
-
-        olhoVirtual.desligar();
-        smartphone.desligar();
-
-        bt.desconectarDispositivo();
-
-        App.close();
     }
 }
