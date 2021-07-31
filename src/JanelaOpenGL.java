@@ -35,7 +35,7 @@ public class JanelaOpenGL extends JFrame implements Runnable {
         
         while( ! Thread.interrupted() )  {
             canvas.repaint();
-            try { Thread.sleep( 8 ); } 
+            try { Thread.sleep( 8 ); }  // ~120 Hz
             catch ( InterruptedException e ) { return; }
         }
     }

@@ -1,25 +1,13 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
         {
             "type": "java",
-            "name": "Launch Current File",
+            "name": "Executar",
             "request": "launch",
-            "mainClass": "${file}",
-            "presentation": {
-                "hidden": true
-            }
-        },
-        {
-            "type": "java",
-            "name": "Launch App",
-            "request": "launch",
-            "mainClass": "App",
+            "mainClass": "Aplicativo",
             "vmArgs": ["--add-exports=java.desktop/sun.awt=ALL-UNNAMED", "-Djogl.disable.openglcore=false"],
-            "projectName": "App_582e2bb6"
+            "projectName": "Calibracao-Haori-Mirror-Desktop_b0c8ae8"
         }
     ]
 }

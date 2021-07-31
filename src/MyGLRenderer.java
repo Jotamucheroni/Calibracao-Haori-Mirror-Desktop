@@ -3,7 +3,6 @@ import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 
 import javax.imageio.ImageIO;
-import javax.microedition.io.StreamConnection;
 
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
@@ -42,14 +41,15 @@ public class MyGLRenderer implements GLEventListener {
     private Camera olhoVirtual,
                    smartphone;
 
-    private Bluetooth bt;
+    // private Bluetooth bt;
 
     private final int numLinhas = 2, numColunas = 3,
                       numLinhasM1 = numLinhas - 1;
 
     private FrameBuffer fb;
 
-    private final int[] texturas = new int[4];
+    // private final int[] texturas = new int[4];
+    private final int[] texturas = new int[2];
 
     private void setTexParams() {
         gl4.glTexParameteri( GL4.GL_TEXTURE_2D, GL4.GL_TEXTURE_WRAP_S, GL4.GL_CLAMP_TO_EDGE );
@@ -89,17 +89,17 @@ public class MyGLRenderer implements GLEventListener {
         // -----------------------------
 
         // Cria e abre a câmera para capturar as imagens do olho virtual
-        olhoVirtual = new CameraLocal( 2, 640, 480, 1 );
+        olhoVirtual = new CameraLocal( 0, 640, 480, 1 );
         olhoVirtual.ligar();
         
         // Inicia a comunicação por Bluetooth para receber as imagens da câmera do smartphone
-        bt = new Bluetooth();
+        /* bt = new Bluetooth();
         try {
             smartphone = new CameraRemota( bt.conectarDispositivo( "304B0745112F" )
                                            .openDataInputStream(),
                                            320, 240, 1 );
             smartphone.ligar();
-        } catch ( IOException e1 ) { e1.printStackTrace(); }
+        } catch ( IOException e1 ) { e1.printStackTrace(); } */
 
         // Cria um Framebuffer e seus respectivos Renderbuffers
         fb = new FrameBuffer( numColunas * numLinhas, 640, 480 );
@@ -124,21 +124,21 @@ public class MyGLRenderer implements GLEventListener {
         );
 
         // Aloca espaço para a textura 1 para receber imagens da câmera do smartphone
-        gl4.glBindTexture( GL4.GL_TEXTURE_2D, texturas[1] );
+/*         gl4.glBindTexture( GL4.GL_TEXTURE_2D, texturas[1] );
         setTexParams();
         gl4.glTexImage2D( 
                     GL4.GL_TEXTURE_2D, 0, GL4.GL_RGBA8,
                     smartphone.getLargImg(), smartphone.getAltImg(), 0,
                     GL4.GL_RED, GL4.GL_UNSIGNED_BYTE, null
-        );
+        ); */
 
         // Carrega imagens nas demais texturas
-        BufferedImage[] imageTex;
+        /* BufferedImage[] imageTex;
         try {
             imageTex = new BufferedImage[]{ ImageIO.read( new File( "imagens/cachorrinho.png" ) ), 
                                             ImageIO.read( new File( "imagens/gatinho.png" ) ) };
 
-            for (int i = 2; i < texturas.length; i++) {
+            for ( int i = 2; i < texturas.length; i++ ) {
                 int indice = i - 2;
 
                 gl4.glBindTexture( GL4.GL_TEXTURE_2D, texturas[i] );
@@ -157,9 +157,9 @@ public class MyGLRenderer implements GLEventListener {
                     GL4.GL_TEXTURE_2D, 0, GL4.GL_RGBA8,
                     imageTex[indice].getWidth(), imageTex[indice].getHeight(), 0,
                     GL4.GL_BGR, GL4.GL_UNSIGNED_BYTE, bb
-                    );
+                );
             }
-        } catch ( IOException e ) { e.printStackTrace(); }
+        } catch ( IOException e ) { e.printStackTrace(); } */
 
         // Determina a cor de fundo
         gl4.glClearColor( 0.0f, 0.0f, 0.0f, 1.0f );
@@ -198,11 +198,11 @@ public class MyGLRenderer implements GLEventListener {
         );
 
         // Copia a imagem atual do smartphone para a textura 1
-        gl4.glBindTexture( GL4.GL_TEXTURE_2D, texturas[1] );
+        /* gl4.glBindTexture( GL4.GL_TEXTURE_2D, texturas[1] );
         gl4.glTexSubImage2D( GL4.GL_TEXTURE_2D, 0, 
                              0, 0, smartphone.getLargImg(), smartphone.getAltImg(),
                              GL4.GL_RED, GL4.GL_UNSIGNED_BYTE, smartphone.getImagem()
-        );
+        ); */
         //--------------------------------------------------------------------------------------------
 
         // Conecta o framebuffer auxiliar
@@ -261,11 +261,11 @@ public class MyGLRenderer implements GLEventListener {
         fb.close();
 
         olhoVirtual.desligar();
-        smartphone.desligar();
+        // smartphone.desligar();
 
-        bt.desconectarDispositivo();
+        // bt.desconectarDispositivo();
 
-        App.close();
+        Aplicativo.close();
     }
 
     public static void printGLConfig( int[] configs ) {

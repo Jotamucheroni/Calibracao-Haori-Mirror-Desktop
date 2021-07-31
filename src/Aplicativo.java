@@ -1,4 +1,4 @@
-public class App {
+public class Aplicativo {
     private static Thread thread;
 
     public static void main( String[] args ) throws Exception {
