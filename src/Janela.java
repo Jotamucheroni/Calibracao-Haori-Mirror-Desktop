@@ -7,28 +7,28 @@ import com.jogamp.opengl.awt.GLCanvas;
 
 import java.awt.BorderLayout;
 
-public class JanelaOpenGL extends JFrame implements Runnable {
+public class Janela extends JFrame implements Runnable {
     GLCapabilities cap;
     GLCanvas canvas;
     
-    JanelaOpenGL() {
+    Janela() {
         cap = new GLCapabilities( GLProfile.getDefault() );
         cap.setRedBits( 8 );
         cap.setBlueBits( 8 );
         cap.setGreenBits( 8 );
         cap.setAlphaBits( 8 );
-
+        
         canvas = new GLCanvas( cap );
-        canvas.addGLEventListener( new MyGLRenderer() );
+        canvas.addGLEventListener( new RenderizadorOpenGL() );
         
         setBounds( 0, 0, 720, 360 );
         setDefaultCloseOperation( WindowConstants.DISPOSE_ON_CLOSE );
         getContentPane().setLayout( new BorderLayout() );
         add( canvas );
-
+        
         setTitle( "OpenGL" );
     }
-
+    
     @Override
     public void run() {
         setVisible( true );

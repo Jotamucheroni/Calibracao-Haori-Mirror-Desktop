@@ -6,7 +6,9 @@
             "name": "Executar",
             "request": "launch",
             "mainClass": "Aplicativo",
-            "vmArgs": ["--add-exports=java.desktop/sun.awt=ALL-UNNAMED", "-Djogl.disable.openglcore=false"],
+            "vmArgs": [
+                "--add-exports=java.desktop/sun.awt=ALL-UNNAMED", "-Djogl.disable.openglcore=false"
+            ],
             "projectName": "Calibracao-Haori-Mirror-Desktop_b0c8ae8"
         }
     ]
