@@ -6,12 +6,13 @@ import com.jogamp.opengl.GL4;
 import java.util.Arrays;
 
 public class ConfigOpenGL {
-    private static Logger log = Logger.getLogger( ConfigOpenGL.class.getName() );
     private GL gl;
     
     ConfigOpenGL( GL gl ) {
         this.gl = gl;
     }
+    
+    private static Logger log = Logger.getLogger( ConfigOpenGL.class.getName() );
     
     public void imprimir( int[] configs ) {
         final int[] valConfig =  new int[1];
@@ -22,12 +23,12 @@ public class ConfigOpenGL {
         }
     }
     
-    public void imprimir( int[] configs, String[] configNames ) {
+    public void imprimir( int[] configs, String[] nomesConfigs ) {
         final int[] valConfig =  new int[1];
         
         for ( int i = 0; i < configs.length; i++ ) {
             gl.glGetIntegerv( configs[i], valConfig, 0 );
-            log.info( "OpenGL Config.: " + configNames[i] + ": " + valConfig[0] );
+            log.info( "OpenGL Config.: " + nomesConfigs[i] + ": " + valConfig[0] );
         }
     }
     
@@ -44,7 +45,7 @@ public class ConfigOpenGL {
         }
     }
     
-    public void imprimir( int[] configs, String[] configNames, int[] configNumComp ) {
+    public void imprimir( int[] configs, String[] nomesConfigs, int[] configNumComp ) {
         final int[] valConfig =  new int[Arrays.stream( configNumComp ).max().getAsInt()];
         
         for ( int i = 0; i < configs.length; i++ ) {
@@ -53,7 +54,7 @@ public class ConfigOpenGL {
             StringBuilder info = new StringBuilder( Integer.toString( valConfig[0] ) );
             for ( int j = 1; j < configNumComp[i]; j++ )
                 info.append(", ").append( valConfig[j] );
-            log.info( "OpenGL Config.: " + configNames[i] + ": " + String.valueOf( info ) );
+            log.info( "OpenGL Config.: " + nomesConfigs[i] + ": " + String.valueOf( info ) );
         }
     }
     
