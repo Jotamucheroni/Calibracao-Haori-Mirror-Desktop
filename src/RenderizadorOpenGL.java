@@ -1,12 +1,5 @@
 import java.nio.ByteBuffer;
-// import java.nio.ByteOrder;
-import java.io.DataInputStream;
-/* import javax.imageio.ImageIO;
 
-import java.awt.image.BufferedImage;
-import java.awt.image.DataBufferByte;
-import java.io.File; */
-import java.io.IOException;
 import com.jogamp.opengl.GL4;
 import com.jogamp.opengl.GLAutoDrawable;
 import com.jogamp.opengl.GLEventListener;
@@ -40,7 +33,7 @@ public class RenderizadorOpenGL implements GLEventListener {
     
     private FrameBuffer fb;
     
-    private final int[] texturas = new int[2];
+    private final int[] texturas = new int[4];
     
     private void setTexParams() {
         gl4.glTexParameteri( GL4.GL_TEXTURE_2D, GL4.GL_TEXTURE_WRAP_S, GL4.GL_CLAMP_TO_EDGE );
@@ -48,18 +41,6 @@ public class RenderizadorOpenGL implements GLEventListener {
         gl4.glTexParameteri( GL4.GL_TEXTURE_2D, GL4.GL_TEXTURE_MIN_FILTER, GL4.GL_LINEAR );
         gl4.glTexParameteri( GL4.GL_TEXTURE_2D, GL4.GL_TEXTURE_MAG_FILTER, GL4.GL_LINEAR );
     }
-    
-/*     private byte[] toBGR( byte[] imagemABGR ) {
-        byte[] imagemBGR = new byte[imagemABGR.length - imagemABGR.length / 4];
-        
-        for ( int i = 1, j = 0; i < imagemABGR.length; i += 4, j += 3 ) {
-            imagemBGR[j] = imagemABGR[i];
-            imagemBGR[j + 1] = imagemABGR[i + 1];
-            imagemBGR[j + 2] = imagemABGR[i + 2]; 
-        }
-        
-        return imagemBGR;
-    } */
     
     // Objetos
     private final Objeto[] objetos = new Objeto[1];
@@ -73,12 +54,13 @@ public class RenderizadorOpenGL implements GLEventListener {
     public void init( GLAutoDrawable drawable ) {
         // Executar sempre primeiro
         gl4 = drawable.getGL().getGL4();
-        Objeto.gl4 = gl4;
         programaOpenGL = new ProgramaOpenGL( gl4 );
+        Objeto.gl4 = gl4;
         Objeto.programaOpenGL = programaOpenGL;
         RenderBuffer.gl4 = gl4;
         FrameBuffer.gl4 = gl4;
-
+        ImagemOpenGL.gl4 = gl4;
+        
         // Cria e abre a câmera para capturar as imagens do olho virtual
         olhoVirtual = new CameraLocal( 0, 640, 480, 1 );
         olhoVirtual.ligar();
@@ -98,12 +80,15 @@ public class RenderizadorOpenGL implements GLEventListener {
             0
         );
         
-        // Cria as texturas
+        // Cria as texturas e configura seus parâmetros
         gl4.glGenTextures( texturas.length, texturas, 0 );
+        for( int textura : texturas ) {
+            gl4.glBindTexture( GL4.GL_TEXTURE_2D, textura );
+            setTexParams();
+        }
         
         // Aloca espaço para a textura 0 para receber imagens do olho virtual
         gl4.glBindTexture( GL4.GL_TEXTURE_2D, texturas[0] );
-        setTexParams();
         gl4.glTexImage2D(
             GL4.GL_TEXTURE_2D, 0, GL4.GL_RGBA8,
             olhoVirtual.getLargImg(), olhoVirtual.getAltImg(), 0,
@@ -112,7 +97,6 @@ public class RenderizadorOpenGL implements GLEventListener {
         
         // Aloca espaço para a textura 1 para receber imagens da câmera do smartphone
         gl4.glBindTexture( GL4.GL_TEXTURE_2D, texturas[1] );
-        setTexParams();
         gl4.glTexImage2D(
             GL4.GL_TEXTURE_2D, 0, GL4.GL_RGBA8,
             smartphone.getLargImg(), smartphone.getAltImg(), 0,
@@ -120,36 +104,8 @@ public class RenderizadorOpenGL implements GLEventListener {
         );
         
         // Carrega imagens nas demais texturas
-        /* BufferedImage[] imageTex;
-        try {
-            imageTex = new BufferedImage[]{
-                ImageIO.read( new File( "imagens/cachorrinho.png" ) ), 
-                ImageIO.read( new File( "imagens/gatinho.png" ) )
-            };
-            
-            for ( int i = 2; i < texturas.length; i++ ) {
-                int indice = i - 2;
-                
-                gl4.glBindTexture( GL4.GL_TEXTURE_2D, texturas[i] );
-                setTexParams();
-                
-                byte[] imagem = toBGR(
-                    ( (DataBufferByte) imageTex[indice].getData().getDataBuffer() ).getData()
-                );
-                ByteBuffer bb = ByteBuffer.allocateDirect( imagem.length );
-                bb.order( ByteOrder.nativeOrder() );
-                bb.put( imagem );
-                bb.position( 0 );
-                
-                gl4.glTexImage2D( 
-                    GL4.GL_TEXTURE_2D, 0, GL4.GL_RGBA8,
-                    imageTex[indice].getWidth(), imageTex[indice].getHeight(), 0,
-                    GL4.GL_BGR, GL4.GL_UNSIGNED_BYTE, bb
-                );
-            }
-        } catch ( IOException e ) {
-            e.printStackTrace();
-        } */
+        new ImagemOpenGL( "imagens/cachorrinho.png", texturas[2] ).carregar();
+        new ImagemOpenGL( "imagens/gatinho.png", texturas[3] ).carregar();
         
         // Determina a cor de fundo
         gl4.glClearColor( 0.0f, 0.0f, 0.0f, 1.0f );
@@ -168,7 +124,7 @@ public class RenderizadorOpenGL implements GLEventListener {
         
         // Inicia a comunicação por Bluetooth para receber as imagens da câmera do smartphone
         bt = new Bluetooth();
-        new Thread(
+        /* new Thread(
             () -> {
                 try {
                     DataInputStream entradaRemota;
@@ -186,7 +142,7 @@ public class RenderizadorOpenGL implements GLEventListener {
                     e.printStackTrace();
                 }
             }
-        ).start();
+        ).start(); */
     }
     
     private int viewWidth;

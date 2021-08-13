@@ -63,7 +63,6 @@ public class Objeto {
         fb.position( 0 );
         gl4.glBufferData( GL4.GL_ARRAY_BUFFER, tamVertices, fb, GL4.GL_STATIC_DRAW );
         
-        // program = RenderizadorOpenGL.gerarPrograma( numCompCor, numCompTex, texPb );
         program = programaOpenGL.gerarPrograma( numCompCor, numCompTex, texPb );
         
         pontMatrizEscala = gl4.glGetUniformLocation( program, "escala" );
