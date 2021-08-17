@@ -10,9 +10,7 @@ public class FrameBuffer implements AutoCloseable {
     private int numRenderBuffer;
     private int largura, altura;
     
-    private int[] id;
-    
-    private RenderBuffer[] rb;
+    private final int[] id;
     
     public FrameBuffer( int numRenderBuffer, int largura, int altura ) {
         setNumRenderBuffer( numRenderBuffer );
@@ -37,52 +35,51 @@ public class FrameBuffer implements AutoCloseable {
     }
     
     public void setNumRenderBuffer( int numRenderBuffer ) {
-        if ( numRenderBuffer < 1 ) {
+        if ( numRenderBuffer < 1 )
             numRenderBuffer = 1;
-        }
         
         this.numRenderBuffer = numRenderBuffer;
     }
     
     public void setLargura( int largura ) {
-        if ( largura < 1 ) {
+        if ( largura < 1 )
             largura = 1;
-        }
         
         this.largura = largura;
     }
     
     public void setAltura( int altura ) {
-        if ( altura < 1 ) {
+        if ( altura < 1 )
             altura = 1;
-        }
         
         this.altura = altura;
     }
     
     public int getNumRenderBuffer() {
-        return this.numRenderBuffer;
+        return numRenderBuffer;
     }
     
     public int getLargura() {
-        return this.largura;
+        return largura;
     }
     
     public int getAltura() {
-        return this.altura;
+        return altura;
     }
     
     public int getId() {
-        return this.id[0];
+        return id[0];
     }
     
     public int getNumPix() {
-        return this.largura * this.altura;
+        return largura * altura;
     }
     
     public int getNumBytes() {
-        return this.largura * this.altura * FrameBuffer.numCompCor;
+        return getNumPix() * FrameBuffer.numCompCor;
     }
+    
+    private RenderBuffer[] rb;
     
     public void alocar() {
         gl4.glBindFramebuffer( GL4.GL_DRAW_FRAMEBUFFER, id[0] );

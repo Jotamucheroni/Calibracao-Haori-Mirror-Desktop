@@ -14,7 +14,7 @@ import javax.microedition.io.Connector;
 
 import javax.microedition.io.StreamConnection;
 
-public class Bluetooth {
+public class Bluetooth implements AutoCloseable {
     private LocalDevice localDevice;
     private DiscoveryAgent discoveryAgent;
     private boolean pesquisando;
@@ -84,6 +84,9 @@ public class Bluetooth {
     }
     
     public void encerrarPesquisa() {
+        if ( !pesquisando )
+            return;
+        
         pesquisando = false;
         discoveryAgent.cancelInquiry( discoveryListener );
         System.out.println( "Pesquisa de dispositivos encerrada." );
@@ -201,5 +204,11 @@ public class Bluetooth {
     
     public StreamConnection reconectarDispositivo() {
         return reconectarDispositivo( enderecoDispositivo );
+    }
+
+    @Override
+    public void close() {
+        encerrarPesquisa();
+        desconectarDispositivo();
     }
 }

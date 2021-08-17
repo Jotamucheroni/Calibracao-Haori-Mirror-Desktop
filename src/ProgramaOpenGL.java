@@ -285,7 +285,7 @@ public class ProgramaOpenGL {
         return programas[cor][tex][pb];
     }
     
-    public void liberarRecursos() {
+    public void close() {
         for ( int[][] matProg : programas )
             for ( int[] vetProg : matProg )
                 for ( int programa : vetProg )

@@ -2,7 +2,7 @@ package es.camera;
 
 import java.nio.ByteBuffer;
 
-public abstract class Camera {
+public abstract class Camera implements AutoCloseable {
     private int largImg, altImg;
     private int numCompCor;
     protected ByteBuffer buffer, visBuffer;
@@ -10,38 +10,30 @@ public abstract class Camera {
     protected boolean ligada;
     
     public void setLargImg( int largImg ) {
-        if ( largImg < 1 ) {
+        if ( largImg < 1 )
             largImg = 1;
-        }
         
         this.largImg = largImg;
     }
     
     public void setAltImg( int altImg ) {
-        if ( altImg < 1 ) {
+        if ( altImg < 1 )
             altImg = 1;
-        }
         
         this.altImg = altImg;
     }
     
     public void setNumCompCor( int numCompCor ) {
-        if ( numCompCor < 1 ) {
+        if ( numCompCor < 1 )
             numCompCor = 1;
-            
-            return;
-        }
-        if ( numCompCor > 4 ) {
+        else if ( numCompCor > 4 )
             numCompCor = 4;
-            
-            return;
-        }
         
         this.numCompCor = numCompCor;
     }
     
     protected void setBuffer() {
-        buffer = ByteBuffer.allocateDirect( largImg * altImg * numCompCor );
+        buffer = ByteBuffer.allocateDirect( getTamImg() );
         visBuffer = buffer.asReadOnlyBuffer();
     }
     
@@ -55,6 +47,10 @@ public abstract class Camera {
     
     public int getNumCompCor() {
         return numCompCor;
+    }
+    
+    public int getTamImg() {
+        return largImg * altImg * numCompCor;
     }
     
     public ByteBuffer getImagem() {
@@ -73,5 +69,10 @@ public abstract class Camera {
     public void reiniciar() {
         desligar();
         ligar();
+    }
+    
+    @Override
+    public void close() {
+        desligar();
     }
 }

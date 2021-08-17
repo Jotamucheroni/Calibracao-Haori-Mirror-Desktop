@@ -1,3 +1,5 @@
+import java.io.DataInputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import com.jogamp.opengl.GL4;
@@ -27,11 +29,11 @@ public class RenderizadorOpenGL implements GLEventListener {
     private CameraLocal olhoVirtual;
     private CameraRemota smartphone;
     
-    private Bluetooth bt;
+    private Bluetooth bluetooth;
     
     private final int numLinhas = 2, numColunas = 3, numLinhasM1 = numLinhas - 1;
     
-    private FrameBuffer fb;
+    private FrameBuffer frameBuffer;
     
     private final int[] texturas = new int[4];
     
@@ -69,8 +71,7 @@ public class RenderizadorOpenGL implements GLEventListener {
         smartphone = new CameraRemota( 320, 240, 1 );
         
         // Cria um Framebuffer e seus respectivos Renderbuffers
-        fb = new FrameBuffer( numColunas * numLinhas, 640, 480 );
-        
+        frameBuffer = new FrameBuffer( numColunas * numLinhas, 640, 480 );
         gl4.glDrawBuffers( 
             6,
             new int[]{
@@ -104,34 +105,33 @@ public class RenderizadorOpenGL implements GLEventListener {
         );
         
         // Carrega imagens nas demais texturas
-        new ImagemOpenGL( "imagens/cachorrinho.png", texturas[2] ).carregar();
-        new ImagemOpenGL( "imagens/gatinho.png", texturas[3] ).carregar();
+        /* new ImagemOpenGL( "imagens/cachorrinho.png", texturas[2] ).carregar();
+        new ImagemOpenGL( "imagens/gatinho.png", texturas[3] ).carregar(); */
         
         // Determina a cor de fundo
         gl4.glClearColor( 0.0f, 0.0f, 0.0f, 1.0f );
-        
         // Cria objetos para exibir as imagens das câmeras
         objetos[0] = new Objeto(
             GL4.GL_TRIANGLES, 2, 2,
             refQuad, refElementos, new int[]{ texturas[0], texturas[1] }, true
         );
         
-        bufferBordaOlhoVirtual = ByteBuffer.allocateDirect( fb.getNumBytes() );
-        bufferBordaSmartphone = ByteBuffer.allocateDirect( fb.getNumBytes() );
+        bufferBordaOlhoVirtual = ByteBuffer.allocateDirect( frameBuffer.getNumBytes() );
+        bufferBordaSmartphone = ByteBuffer.allocateDirect( frameBuffer.getNumBytes() );
         
-        detectorOlhoVirtual = new DetectorBorda( fb.getNumBytes(), FrameBuffer.numCompCor );
-        detectorSmartphone = new DetectorBorda( fb.getNumBytes(), FrameBuffer.numCompCor );
+        detectorOlhoVirtual = new DetectorBorda( frameBuffer.getNumBytes(), FrameBuffer.numCompCor );
+        detectorSmartphone = new DetectorBorda( frameBuffer.getNumBytes(), FrameBuffer.numCompCor );
         
         // Inicia a comunicação por Bluetooth para receber as imagens da câmera do smartphone
-        bt = new Bluetooth();
-        /* new Thread(
+        bluetooth = new Bluetooth();
+        new Thread(
             () -> {
                 try {
                     DataInputStream entradaRemota;
                     
-                    synchronized( bt ) {
+                    synchronized( bluetooth ) {
                         entradaRemota = 
-                            bt.conectarDispositivo( "304B0745112F" ).openDataInputStream();
+                            bluetooth.conectarDispositivo( "304B0745112F" ).openDataInputStream();
                     }
                     
                     synchronized( smartphone ) {
@@ -142,11 +142,10 @@ public class RenderizadorOpenGL implements GLEventListener {
                     e.printStackTrace();
                 }
             }
-        ).start(); */
+        ).start();
     }
     
-    private int viewWidth;
-    private int viewHeight;
+    private int viewWidth, viewHeight;
     
     @Override
     public void reshape( GLAutoDrawable drawable, int x, int y, int width, int height )
@@ -154,7 +153,7 @@ public class RenderizadorOpenGL implements GLEventListener {
         viewWidth = width / numColunas;
         viewHeight = height / numLinhas;
         
-        gl4.glViewport( 0, 0, fb.getLargura(), fb.getAltura() );
+        gl4.glViewport( 0, 0, frameBuffer.getLargura(), frameBuffer.getAltura() );
 	}
     
     @Override
@@ -181,7 +180,7 @@ public class RenderizadorOpenGL implements GLEventListener {
         }
         
         // Conecta o framebuffer auxiliar
-        gl4.glBindFramebuffer( GL4.GL_FRAMEBUFFER, fb.getId() );
+        gl4.glBindFramebuffer( GL4.GL_FRAMEBUFFER, frameBuffer.getId() );
         
         gl4.glClear( GL4.GL_COLOR_BUFFER_BIT );
         for ( Objeto obj: objetos )
@@ -189,13 +188,13 @@ public class RenderizadorOpenGL implements GLEventListener {
         
         // Desenha os renderbuffers na tela
         gl4.glBindFramebuffer( GL4.GL_DRAW_FRAMEBUFFER, 0 );
-        for ( int i = 0; i < fb.getNumRenderBuffer(); i++ ) {
+        for ( int i = 0; i < frameBuffer.getNumRenderBuffer(); i++ ) {
             int coluna = i % numColunas;
             int linha = numLinhasM1 - ( i / numColunas );
             
             gl4.glReadBuffer( GL4.GL_COLOR_ATTACHMENT0 + i );
             gl4.glBlitFramebuffer(
-                0, 0, fb.getLargura(), fb.getAltura(),
+                0, 0, frameBuffer.getLargura(), frameBuffer.getAltura(),
                 coluna * viewWidth, linha * viewHeight, 
                 ( coluna + 1 ) * viewWidth, ( linha  + 1 ) * viewHeight,
                 GL4.GL_COLOR_BUFFER_BIT, GL4.GL_LINEAR
@@ -206,7 +205,7 @@ public class RenderizadorOpenGL implements GLEventListener {
             gl4.glReadBuffer( GL4.GL_COLOR_ATTACHMENT2 );
             bufferBordaOlhoVirtual.rewind();
             gl4.glReadPixels(
-                0, 0, fb.getLargura(), fb.getAltura(), 
+                0, 0, frameBuffer.getLargura(), frameBuffer.getAltura(), 
                 GL4.GL_RGB, GL4.GL_UNSIGNED_BYTE, 
                 bufferBordaOlhoVirtual
             );
@@ -218,7 +217,7 @@ public class RenderizadorOpenGL implements GLEventListener {
             gl4.glReadBuffer( GL4.GL_COLOR_ATTACHMENT5 );
             bufferBordaSmartphone.rewind();
             gl4.glReadPixels(
-                0, 0, fb.getLargura(), fb.getAltura(),
+                0, 0, frameBuffer.getLargura(), frameBuffer.getAltura(),
                 GL4.GL_RGB, GL4.GL_UNSIGNED_BYTE,
                 bufferBordaSmartphone
             );
@@ -232,19 +231,14 @@ public class RenderizadorOpenGL implements GLEventListener {
     public void dispose( GLAutoDrawable drawable ) {
         detectorOlhoVirtual.close();
         detectorSmartphone.close();
-        
-        programaOpenGL.liberarRecursos();
-        
+        programaOpenGL.close();
         gl4.glDeleteTextures( texturas.length, texturas, 0 );
-        fb.close();
-        
-        olhoVirtual.desligar();
-        smartphone.desligar();
-        
-        synchronized( bt ) {
-            bt.desconectarDispositivo();
+        frameBuffer.close();
+        olhoVirtual.close();
+        smartphone.close();
+        synchronized( bluetooth ) {
+            bluetooth.close();
         }
-        
         Aplicativo.close();
     }
 }

@@ -9,7 +9,7 @@ public class RenderBuffer implements AutoCloseable {
     
     private int largura, altura;
     
-    private int[] id;
+    private final int[] id;
     
     public RenderBuffer( int largura, int altura ) {
         setLargura( largura );
@@ -25,39 +25,37 @@ public class RenderBuffer implements AutoCloseable {
     }
     
     public void setLargura( int largura ) {
-        if ( largura < 1 ) {
+        if ( largura < 1 )
             largura = 1;
-        }
         
         this.largura = largura;
     }
     
     public void setAltura( int altura ) {
-        if ( altura < 1 ) {
+        if ( altura < 1 )
             altura = 1;
-        }
         
         this.altura = altura;
     }
     
     public int getLargura() {
-        return this.largura;
+        return largura;
     }
     
     public int getAltura() {
-        return this.altura;
+        return altura;
     }
     
     public int getId() {
-        return this.id[0];
+        return id[0];
     }
     
     public int getNumPix() {
-        return this.largura * this.altura;
+        return largura * altura;
     }
     
     public int getNumBytes() {
-        return this.largura * this.altura * RenderBuffer.numCompCor;
+        return getNumPix() * RenderBuffer.numCompCor;
     }
     
     public void alocar() {
