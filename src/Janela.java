@@ -8,17 +8,17 @@ import com.jogamp.opengl.awt.GLCanvas;
 import java.awt.BorderLayout;
 
 public class Janela extends JFrame implements Runnable {
-    GLCapabilities cap;
+    GLCapabilities capacidades;
     GLCanvas canvas;
     
     Janela() {
-        cap = new GLCapabilities( GLProfile.getDefault() );
-        cap.setRedBits( 8 );
-        cap.setBlueBits( 8 );
-        cap.setGreenBits( 8 );
-        cap.setAlphaBits( 8 );
+        capacidades = new GLCapabilities( GLProfile.getDefault() );
+        capacidades.setRedBits( 8 );
+        capacidades.setBlueBits( 8 );
+        capacidades.setGreenBits( 8 );
+        capacidades.setAlphaBits( 8 );
         
-        canvas = new GLCanvas( cap );
+        canvas = new GLCanvas( capacidades );
         canvas.addGLEventListener( new RenderizadorOpenGL() );
         
         setBounds( 0, 0, 720, 360 );

@@ -9,14 +9,15 @@ public class RenderBuffer implements AutoCloseable {
     
     private int largura, altura;
     
-    private final int[] id;
+    private final int id;
     
     public RenderBuffer( int largura, int altura ) {
         setLargura( largura );
         setAltura( altura );
-        id = new int[1];
-        gl4.glGenRenderbuffers( 1, id, 0 );
         
+        int[] bufferId = new int[1];
+        gl4.glGenRenderbuffers( 1, bufferId, 0 );
+        id = bufferId[0];
         alocar();
     }
     
@@ -47,7 +48,7 @@ public class RenderBuffer implements AutoCloseable {
     }
     
     public int getId() {
-        return id[0];
+        return id;
     }
     
     public int getNumPix() {
@@ -59,12 +60,12 @@ public class RenderBuffer implements AutoCloseable {
     }
     
     public void alocar() {
-        gl4.glBindRenderbuffer( GL4.GL_RENDERBUFFER, id[0] );
+        gl4.glBindRenderbuffer( GL4.GL_RENDERBUFFER, id );
         gl4.glRenderbufferStorage( GL4.GL_RENDERBUFFER, GL4.GL_RGB8, getLargura(), getAltura() );
     }
     
     @Override
     public void close() {
-        gl4.glDeleteRenderbuffers( 1, id, 0 );
+        gl4.glDeleteRenderbuffers( 1, new int[]{ id }, 0 );
     }
 }
