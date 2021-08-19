@@ -92,7 +92,7 @@ public class FrameBuffer implements AutoCloseable {
         rb = new RenderBuffer[getNumRenderBuffer()];
         gl4.glBindFramebuffer( GL4.GL_DRAW_FRAMEBUFFER, id );
         for ( int i = 0; i < rb.length; i++ ) {
-            rb[i] = new RenderBuffer( getLargura(), getAltura() );
+            rb[i] = new RenderBuffer( largura, altura );
             gl4.glFramebufferRenderbuffer(
                 GL4.GL_DRAW_FRAMEBUFFER, GL4.GL_COLOR_ATTACHMENT0 + i,
                 GL4.GL_RENDERBUFFER, rb[i].getId()
