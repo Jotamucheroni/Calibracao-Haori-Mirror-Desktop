@@ -13,18 +13,16 @@ public class ProgramaOpenGL {
     private static Logger log = Logger.getLogger( ProgramaOpenGL.class.getName() );
     
     public int loadShader( int type, String shaderCode ) {
-        int shader = gl4.glCreateShader( type );
-        
+        int shader = gl4.glCreateShader( type );      
         gl4.glShaderSource(
             shader, 1, new String[]{ shaderCode }, new int[]{ shaderCode.length() }, 0
         );
         gl4.glCompileShader( shader );
-        int[] compilado = new int[1];
-        gl4.glGetShaderiv( shader, GL4.GL_COMPILE_STATUS, compilado, 0 );
         
+        int[] compilado = new int[1];
+        gl4.glGetShaderiv( shader, GL4.GL_COMPILE_STATUS, compilado, 0 );    
         // Verifica se houve erro de compilação
         if ( compilado[0] == 0 ) {
-            // Imprime a mensagem de erro
             int[] tamLog = new int[1];
             gl4.glGetShaderiv( shader, GL4.GL_INFO_LOG_LENGTH, tamLog, 0 );
             
@@ -37,6 +35,7 @@ public class ProgramaOpenGL {
                 +   "\n"
                 +   "Código fonte:"
             );
+            
             int i = 1;
             for( String linha: shaderCode.split( "\n" ) ) {
                 System.out.println( i + "\t" + linha );
@@ -60,167 +59,151 @@ public class ProgramaOpenGL {
         return program;
     }
     
-    private static final String vertexShaderCabRef = 
-        """
-        #version 460
+    public String gerarCodigoVertexShader( boolean cor, boolean textura ) {
+        StringBuilder codigo = new StringBuilder(
+            """
+            #version 460
+            
+            uniform mat4 escala;
+            uniform mat4 rotX;
+            uniform mat4 rotY;
+            uniform mat4 rotZ;
+            uniform mat4 trans;
+            
+            in vec4 pos;
+            in vec4 cor;
+            in vec2 tex;
+            """
+        );
         
-        uniform mat4 escala;
-        uniform mat4 rotX;
-        uniform mat4 rotY;
-        uniform mat4 rotZ;
-        uniform mat4 trans;
+        if ( cor )
+            codigo.append( "out vec4 corFrag;" );
         
-        in vec4 pos;
-        in vec4 cor;
-        in vec2 tex;
-        """
-        ;
-    
-    private static final String vertexShaderMainRef =
-        """
-        void main() {
-            gl_Position = trans * rotZ * rotY * rotX * escala * pos;
-        """
-        ;
-    
-    private static final String fragmentCabRef =
-        """
-        #version 460
+        if ( textura )
+            codigo.append( "out vec2 texFrag;" );
         
-        layout(binding = 0) uniform sampler2D imagem;
-        """
-        ;
-    
-    private static final String fragmentCabMainRef =
-        """
-        void main() {
-        """
-        ;
+        codigo.append(
+            """
+            void main() {
+                gl_Position = trans * rotZ * rotY * rotX * escala * pos;
+            """
+        );
+        
+        if ( cor )
+            codigo.append( "corFrag = cor;" );
+        
+        if ( textura )
+            codigo.append( "texFrag = tex;" );
+        
+        codigo.append( "}" );
+        
+        return codigo.toString();
+    }
     
     private static final int numSaidas = 3;
     
-    private static final String corFragRef =
-        """
-        saida[2] = saida[1] = saida[0] = corFrag;
-        """
-        ;
-    
-    private final int[][][] programas = new int[][][] {
-        { { 0, 0 }, { 0, 0 } }, { { 0, 0 }, { 0, 0 } }
-    };
-    
-    public int gerarPrograma( int numCompCor, int numCompTex, boolean texPb ) {
-        int cor = ( numCompCor > 0 ) ? 1 : 0, tex = ( numCompTex > 0 ) ? 1 : 0, pb = texPb ? 1 : 0;
+    public String gerarCodigoFragmentShader(
+        boolean cor, boolean textura, boolean texturaMonocromatica
+    ) {
+        StringBuilder codigo = new StringBuilder( "#version 460\n" );
         
-        if ( programas[cor][tex][pb] != 0 )
-            return programas[cor][tex][pb];
+        if ( cor )
+            codigo.append( "in vec4 corFrag;" );
         
-        StringBuilder vertexShaderCode = new StringBuilder( vertexShaderCabRef );
-        StringBuilder fragmentShaderCode = new StringBuilder( fragmentCabRef );
-        
-        if ( numCompCor > 0 ) {
-            vertexShaderCode.append( "out vec4 corFrag;\n" );
-            fragmentShaderCode.append( "in vec4 corFrag;\n" );
-        }
-        if ( numCompTex > 0 ) {
-            vertexShaderCode.append( "out vec2 texFrag;\n" );
-            fragmentShaderCode.append( "in vec2 texFrag;\n" );
-        }
-        
-        vertexShaderCode.append( vertexShaderMainRef );
-        fragmentShaderCode
-            .append( "out vec4 saida[" )
-            .append( numSaidas )
-            .append( "];\n" )
-            .append( fragmentCabMainRef );
-        
-        if ( !( numCompCor > 0 || numCompTex > 0 ) ) {
-            fragmentShaderCode.append( "vec4 corFrag = vec4( 1.0, 1.0, 1.0, 1.0 );\n" );
-            fragmentShaderCode.append( corFragRef );
-        }
-        else {
-            if ( numCompCor > 0 ) {
-                vertexShaderCode.append( "corFrag = cor;\n" );
+        if ( textura )
+            codigo.append(
+                """
+                in vec2 texFrag;
                 
-                if ( !( numCompTex > 0 ) )
-                    fragmentShaderCode.append( corFragRef );
-            }
-            if ( numCompTex > 0 ) {
-                vertexShaderCode.append( "texFrag = tex;\n" );
-                fragmentShaderCode.append(
-                    """
-                    ivec2 tamanho = textureSize( imagem, 0 );
-                    
-                    vec2 dist = vec2( 1.0 / float( tamanho.x ), 1.0 / float( tamanho.y ) );
-                    
-                    float gx[3][3] = float[3][3]( float[3]( -1.0,  0.0,  1.0 ), float[3]( -2.0,  0.0,  2.0 ), float[3]( -1.0,  0.0,  1.0 ) );
-                    float gy[3][3] = float[3][3]( float[3](  1.0,  2.0,  1.0 ), float[3](  0.0,  0.0,  0.0 ), float[3]( -1.0, -2.0, -1.0 ) );
-                    
-                    vec4 corTex;
-                    vec4 janela[3][3];
-                    
-                    vec4 dx = vec4( 0.0 );
-                    vec4 dy = vec4( 0.0 );
-                    
-                    for ( int y = -1; y <= 1; y++ )
-                        for ( int x = -1; x <= 1; x++ ) {
-                            int i = y + 1, j = x + 1;
-                            corTex = texture( imagem, vec2( texFrag.x + float(x) * dist.x, texFrag.y + float(y) * dist.y ) );
-                    """
-                );
-                
-                if ( pb > 0 ) {
-                    fragmentShaderCode.append(
-                        """
-                            corTex.b = corTex.g = corTex.r;
-                        """
-                    );
-                }
-                
-                if ( numCompCor > 0 ) {
-                    fragmentShaderCode.append(
-                        """
-                            janela[i][j] = corTex = 0.5 * corFrag + 0.5 * corTex;
-                        """
-                    );
-                }
-                else {
-                    fragmentShaderCode.append(
-                        """
-                            janela[i][j] = corTex;
-                        """
-                    );
-                }
-                
-                fragmentShaderCode.append(
-                    """
-                        dx += gx[i][j] * corTex;
-                        dy += gy[i][j] * corTex;
-                    }
-                    
-                    vec4 sobel = sqrt( dx * dx + dy * dy );
-                    
-                    saida[0] = janela[1][1];
-                    saida[1] = sobel;
-                    saida[2] = ( sobel.g > 1.0 ) ? vec4( 1.0 ) : vec4( 0.0 );
-                    """
-                );
-            }
+                layout(binding = 0) uniform sampler2D imagem;
+                """
+            );
+        
+        codigo
+            .append( "out vec4 saida[" ).append( numSaidas ).append( "];" )
+            .append( "void main() {" );
+        
+        if ( !textura ) {
+            for( int i = numSaidas; i > 0; i-- )
+                codigo.append( "saida[" + (i - 1) + "] = " );
+            
+            if ( cor )
+                codigo.append( "corFrag" );
+            else
+                codigo.append( "vec4( 1.0, 1.0, 1.0, 1.0 )" );
+            
+            codigo.append( ";}" );
+            
+            return codigo.toString();
         }
         
-        vertexShaderCode.append( "}" );
-        fragmentShaderCode.append( "}" );
+        codigo.append( "vec4 pixelCentral = texture( imagem, vec2( texFrag.x, texFrag.y ) );" );
         
-        programas[cor][tex][pb] = gerarPrograma(
-            vertexShaderCode.toString(), fragmentShaderCode.toString()
+        if ( texturaMonocromatica )
+            codigo.append( "pixelCentral.b = pixelCentral.g = pixelCentral.r;" );
+        
+        if ( cor )
+            codigo.append( "pixelCentral = 0.5 * corFrag + 0.5 * pixelCentral;" );
+        
+        codigo.append(
+            """
+            ivec2 tamanho = textureSize( imagem, 0 );
+            
+            vec2 dist = vec2( 1.0 / float( tamanho.x ), 1.0 / float( tamanho.y ) );
+            
+            float gx[3][3] = float[3][3](
+                float[3]( -1.0,  0.0,  1.0 ),
+                float[3]( -2.0,  0.0,  2.0 ),
+                float[3]( -1.0,  0.0,  1.0 )
+            );
+            float gy[3][3] = float[3][3](
+                float[3](  1.0,  2.0,  1.0 ),
+                float[3](  0.0,  0.0,  0.0 ),
+                float[3]( -1.0, -2.0, -1.0 )
+            );
+            
+            vec4 corTex;
+            
+            vec4 dx = vec4( 0.0 );
+            vec4 dy = vec4( 0.0 );
+            
+            int i, j;
+            for ( int y = -1; y <= 1; y++ )
+                for ( int x = -1; x <= 1; x++ ) {
+                    i = y + 1;
+                    j = x + 1;
+                    corTex = texture( imagem, vec2( texFrag.x + float(x) * dist.x, texFrag.y + float(y) * dist.y ) );
+            """
         );
-        return programas[cor][tex][pb];
+        
+        if ( texturaMonocromatica )
+            codigo.append( "corTex.b = corTex.g = corTex.r;" );
+        
+        if ( cor )
+            codigo.append( "corTex = 0.5 * corFrag + 0.5 * corTex;" );
+        
+        codigo.append(
+            """
+                    dx += gx[i][j] * corTex;
+                    dy += gy[i][j] * corTex;
+                }
+                
+                vec4 sobel = sqrt( dx * dx + dy * dy );
+                
+                saida[0] = pixelCentral;
+                saida[1] = sobel;
+                saida[2] = ( sobel.g > 1.0 ) ? vec4( 1.0 ) : vec4( 0.0 );
+            }
+            """
+        );
+            
+        return codigo.toString();
     }
     
-    public void close() {
-        for ( int[][] matProg : programas )
-            for ( int[] vetProg : matProg )
-                for ( int programa : vetProg )
-                    gl4.glDeleteProgram( programa );
+    public int gerarPrograma( boolean cor, boolean textura, boolean texturaMonocromatica ) {
+        return gerarPrograma(
+            gerarCodigoVertexShader( cor, textura ),
+            gerarCodigoFragmentShader( cor, textura, texturaMonocromatica )
+        );
     }
 }

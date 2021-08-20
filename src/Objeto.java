@@ -37,7 +37,7 @@ public class Objeto {
     public Objeto(
         int modoDes, int numCompPos, int numCompCor, int numCompTex,
         float[] vertices, int[] elementos,
-        int textura, boolean texPb
+        int textura, boolean texturaMonocromatica
     ) {
         this.modoDes = modoDes;
         this.textura = textura;
@@ -59,7 +59,9 @@ public class Objeto {
         fb.position( 0 );
         gl4.glBufferData( GL4.GL_ARRAY_BUFFER, tamVertices, fb, GL4.GL_STATIC_DRAW );
         
-        program = programaOpenGL.gerarPrograma( numCompCor, numCompTex, texPb );
+        program = programaOpenGL.gerarPrograma(
+            numCompCor > 0, numCompTex > 0, texturaMonocromatica
+        );
         
         pontMatrizEscala = gl4.glGetUniformLocation( program, "escala" );
         pontMatrizRotX = gl4.glGetUniformLocation( program, "rotX" );
@@ -117,12 +119,12 @@ public class Objeto {
     public Objeto(
         int modoDes, int numCompPos, int numCompCor, int numCompTex,
         float[] vertices,
-        int textura, boolean texPb
+        int textura, boolean texturaMonocromatica
     ) {
         this(
             modoDes, numCompPos, numCompCor, numCompTex,
             vertices, getElementos( numCompPos, numCompCor, numCompTex, vertices ),
-            textura, texPb
+            textura, texturaMonocromatica
         );
     }
     
@@ -151,24 +153,24 @@ public class Objeto {
     public Objeto(
         int modoDes, int numCompPos, int numCompTex,
         float[] vertices, int[] elementos,
-        int textura, boolean texPb
+        int textura, boolean texturaMonocromatica
     ) {
         this(
             modoDes, numCompPos, 0, numCompTex,
             vertices, elementos,
-            textura, texPb
+            textura, texturaMonocromatica
         );
     }
     
     public Objeto(
         int modoDes, int numCompPos, int numCompTex,
         float[] vertices,
-        int textura, boolean texPb
+        int textura, boolean texturaMonocromatica
     ) {
         this(
             modoDes, numCompPos, 0, numCompTex,
             vertices, getElementos( numCompPos, 0, numCompTex, vertices ),
-            textura, texPb
+            textura, texturaMonocromatica
         );
     }
     

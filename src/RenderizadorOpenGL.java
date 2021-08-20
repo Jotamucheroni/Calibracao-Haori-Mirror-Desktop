@@ -107,7 +107,7 @@ public class RenderizadorOpenGL implements GLEventListener {
         
         // Inicia a comunicação por Bluetooth para receber as imagens da câmera do smartphone
         bluetooth = new Bluetooth();
-        new Thread(
+        /* new Thread(
             () -> {
                 try {
                     DataInputStream entradaRemota;
@@ -125,7 +125,7 @@ public class RenderizadorOpenGL implements GLEventListener {
                     e.printStackTrace();
                 }
             }
-        ).start();
+        ).start(); */
     }
     
     private int larguraTela, alturaTela;
@@ -209,7 +209,6 @@ public class RenderizadorOpenGL implements GLEventListener {
     public void dispose( GLAutoDrawable drawable ) {
         detectorOlhoVirtual.close();
         detectorSmartphone.close();
-        programaOpenGL.close();
         gl4.glDeleteTextures( texturas.length, texturas, 0 );
         frameBufferOlhoVirtual.close();
         olhoVirtual.close();
