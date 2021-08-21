@@ -1,5 +1,3 @@
-import com.jogamp.opengl.GL4;
-
 import java.awt.image.BufferedImage;
 import javax.imageio.ImageIO;
 import java.io.File;
@@ -8,50 +6,41 @@ import java.awt.image.DataBufferByte;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-public class ImagemOpenGL {
-    public static GL4 gl4;
+public class ImagemOpenGL extends TexturaOpenGL {
+    private String caminhoArquivo;
+    private BufferedImage bufferImagem;
     
-    private String caminhoArquivo = null;
-    private BufferedImage bufferImagem = null;
-    
-    private int textura;
-    
-    ImagemOpenGL( String caminhoArquivo, int textura ) {
+    public ImagemOpenGL( String caminhoArquivo, boolean monocromatica ) {
+        super();
+        
         setCaminhoArquivo( caminhoArquivo );
-        setTextura( textura );
+        setMonocromatica( monocromatica );
     }
     
     ImagemOpenGL( String caminhoArquivo ) {
-        this( caminhoArquivo, 0 );
+        this( caminhoArquivo, false );
     }
     
     public void setCaminhoArquivo( String caminhoArquivo ) {
         this.caminhoArquivo = caminhoArquivo;
+        
         bufferImagem = null;
         
         if ( caminhoArquivo == null )
-            return;    
+            return;
         
         try {
             bufferImagem = ImageIO.read( new File( caminhoArquivo ) );
+            setLargura( bufferImagem.getWidth() );
+            setAltura( bufferImagem.getHeight() );
+            alocar();
         } catch ( IOException e ) {
             e.printStackTrace();
         }
     }
     
-    public void setTextura( int textura ) {
-        if ( textura < 0 )
-            textura = 0;
-        
-        this.textura = textura;
-    }
-    
     public String getCaminhoArquivo() {
         return caminhoArquivo;
-    }
-    
-    public int getTextura() {
-        return textura;
     }
     
     private byte[] toBGR( byte[] imagemABGR ) {
@@ -79,11 +68,12 @@ public class ImagemOpenGL {
         bb.put( imagem );
         bb.position( 0 );
         
-        gl4.glBindTexture( GL4.GL_TEXTURE_2D, textura );
+        carregarImagem( bb );
+        /* gl4.glBindTexture( GL4.GL_TEXTURE_2D, textura );
         gl4.glTexImage2D( 
             GL4.GL_TEXTURE_2D, 0, GL4.GL_RGBA8,
             bufferImagem.getWidth(), bufferImagem.getHeight(), 0,
             GL4.GL_BGR, GL4.GL_UNSIGNED_BYTE, bb
-        );
+        ); */
     }
 }

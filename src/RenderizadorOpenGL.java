@@ -26,18 +26,12 @@ public class RenderizadorOpenGL implements GLEventListener {
     
     private final int[] refElementos = { 0, 1, 2, 2, 3, 0 };
     
-    private CameraLocal olhoVirtual;
-    private CameraRemota smartphone;    
+    private CameraLocal cameraOlhoVirtual;
+    private CameraRemota cameraSmartphone;    
     private Bluetooth bluetooth;
     private FrameBuffer frameBufferOlhoVirtual, frameBufferSmartphone;
-    
-    private final int[] texturas = new int[4]; 
-    private void setTexParams() {
-        gl4.glTexParameteri( GL4.GL_TEXTURE_2D, GL4.GL_TEXTURE_WRAP_S, GL4.GL_CLAMP_TO_EDGE );
-        gl4.glTexParameteri( GL4.GL_TEXTURE_2D, GL4.GL_TEXTURE_WRAP_T, GL4.GL_CLAMP_TO_EDGE );
-        gl4.glTexParameteri( GL4.GL_TEXTURE_2D, GL4.GL_TEXTURE_MIN_FILTER, GL4.GL_LINEAR );
-        gl4.glTexParameteri( GL4.GL_TEXTURE_2D, GL4.GL_TEXTURE_MAG_FILTER, GL4.GL_LINEAR );
-    }
+    private TexturaOpenGL texturaOlhoVirtual, texturaSmartphone;
+    // private ImagemOpenGL texturaCachorrinho, texturaGatinho;
     
     private ProgramaOpenGL programaOpenGL;
     private Objeto imagemOlhoVirtual, imagemSmartphone;
@@ -54,49 +48,37 @@ public class RenderizadorOpenGL implements GLEventListener {
         RenderBuffer.gl4 = gl4;
         FrameBuffer.gl4 = gl4;
         ImagemOpenGL.gl4 = gl4;
+        TexturaOpenGL.gl4 = gl4;
         
-        olhoVirtual = new CameraLocal( 0, 640, 480, 1 );
-        olhoVirtual.ligar();
-        smartphone = new CameraRemota( 320, 240, 1 );
+        cameraOlhoVirtual = new CameraLocal( 0, 640, 480, 1 );
+        cameraOlhoVirtual.ligar();
+        cameraSmartphone = new CameraRemota( 320, 240, 1 );
         
         frameBufferOlhoVirtual = new FrameBuffer( 3, 640, 480 );
         frameBufferSmartphone = new FrameBuffer( 3, 640, 480 );
         
-        // Cria as texturas e configura seus parâmetros
-        gl4.glGenTextures( texturas.length, texturas, 0 );
-        for( int textura : texturas ) {
-            gl4.glBindTexture( GL4.GL_TEXTURE_2D, textura );
-            setTexParams();
-        }
-        
-        // Aloca espaço para a textura 0 para receber imagens do olho virtual
-        gl4.glBindTexture( GL4.GL_TEXTURE_2D, texturas[0] );
-        gl4.glTexImage2D(
-            GL4.GL_TEXTURE_2D, 0, GL4.GL_RGBA8,
-            olhoVirtual.getLargImg(), olhoVirtual.getAltImg(), 0,
-            GL4.GL_RED, GL4.GL_UNSIGNED_BYTE, null
+        texturaOlhoVirtual = new TexturaOpenGL(
+            cameraOlhoVirtual.getLargImg(), cameraOlhoVirtual.getAltImg(), true
         );
-        
-        // Aloca espaço para a textura 1 para receber imagens da câmera do smartphone
-        gl4.glBindTexture( GL4.GL_TEXTURE_2D, texturas[1] );
-        gl4.glTexImage2D(
-            GL4.GL_TEXTURE_2D, 0, GL4.GL_RGBA8,
-            smartphone.getLargImg(), smartphone.getAltImg(), 0,
-            GL4.GL_RED, GL4.GL_UNSIGNED_BYTE, null
+        texturaOlhoVirtual.alocar();
+        texturaSmartphone = new TexturaOpenGL(
+            cameraSmartphone.getLargImg(), cameraSmartphone.getAltImg(), true
         );
+        texturaSmartphone.alocar();
         
-        // Carrega imagens nas demais texturas
-        /* new ImagemOpenGL( "imagens/cachorrinho.png", texturas[2] ).carregar();
-        new ImagemOpenGL( "imagens/gatinho.png", texturas[3] ).carregar(); */
+        /* texturaCachorrinho = new ImagemOpenGL( "imagens/cachorrinho.png" );
+        texturaCachorrinho.carregar();
+        texturaGatinho = new ImagemOpenGL( "imagens/gatinho.png" );
+        texturaGatinho.carregar(); */
         
         gl4.glClearColor( 0.0f, 0.0f, 0.0f, 1.0f );
         imagemOlhoVirtual = new Objeto(
             GL4.GL_TRIANGLES, 2, 2,
-            refQuad, refElementos, texturas[0], true
+            refQuad, refElementos, texturaOlhoVirtual
         );
         imagemSmartphone = new Objeto(
             GL4.GL_TRIANGLES, 2, 2,
-            refQuad, refElementos, texturas[1], true
+            refQuad, refElementos, texturaSmartphone
         );
         
         bufferBordaOlhoVirtual = ByteBuffer.allocateDirect( frameBufferOlhoVirtual.getNumBytes() );
@@ -117,9 +99,9 @@ public class RenderizadorOpenGL implements GLEventListener {
                             bluetooth.conectarDispositivo( "304B0745112F" ).openDataInputStream();
                     }
                     
-                    synchronized( smartphone ) {
-                        smartphone.setEntradaRemota( entradaRemota );
-                        smartphone.ligar();
+                    synchronized( cameraSmartphone ) {
+                        cameraSmartphone.setEntradaRemota( entradaRemota );
+                        cameraSmartphone.ligar();
                     }
                 } catch ( IOException e ) {
                     e.printStackTrace();
@@ -139,24 +121,11 @@ public class RenderizadorOpenGL implements GLEventListener {
     
     @Override
     public void display( GLAutoDrawable drawable ) {
-        // Copia a imagem atual do olho virtual para a textura 0
-        gl4.glBindTexture( GL4.GL_TEXTURE_2D, texturas[0] );
-        gl4.glTexSubImage2D(
-            GL4.GL_TEXTURE_2D, 0, 
-            0, 0, olhoVirtual.getLargImg(), olhoVirtual.getAltImg(),
-            GL4.GL_RED, GL4.GL_UNSIGNED_BYTE, olhoVirtual.getImagem()
-        );
+        texturaOlhoVirtual.carregarImagem( cameraOlhoVirtual.getImagem() );
         
-        // Copia a imagem atual do smartphone para a textura 1
-        synchronized( smartphone ) {
-            if( smartphone.ligada() ) {
-                gl4.glBindTexture( GL4.GL_TEXTURE_2D, texturas[1] );
-                gl4.glTexSubImage2D(
-                    GL4.GL_TEXTURE_2D, 0, 
-                    0, 0, smartphone.getLargImg(), smartphone.getAltImg(),
-                    GL4.GL_RED, GL4.GL_UNSIGNED_BYTE, smartphone.getImagem()
-                );
-            }
+        synchronized( cameraSmartphone ) {
+            if( cameraSmartphone.ligada() )
+                texturaSmartphone.carregarImagem( cameraSmartphone.getImagem() );
         }
         
         // Desenha no framebuffer intermediário
@@ -209,10 +178,13 @@ public class RenderizadorOpenGL implements GLEventListener {
     public void dispose( GLAutoDrawable drawable ) {
         detectorOlhoVirtual.close();
         detectorSmartphone.close();
-        gl4.glDeleteTextures( texturas.length, texturas, 0 );
+        texturaOlhoVirtual.close();
+        texturaSmartphone.close();
+        /* texturaCachorrinho.close();
+        texturaGatinho.close(); */
         frameBufferOlhoVirtual.close();
-        olhoVirtual.close();
-        smartphone.close();
+        cameraOlhoVirtual.close();
+        cameraSmartphone.close();
         synchronized( bluetooth ) {
             bluetooth.close();
         }

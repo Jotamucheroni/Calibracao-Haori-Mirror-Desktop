@@ -18,6 +18,7 @@ public class RenderBuffer implements AutoCloseable {
         int[] bufferId = new int[1];
         gl4.glGenRenderbuffers( 1, bufferId, 0 );
         id = bufferId[0];
+        
         alocar();
     }
     
@@ -59,7 +60,7 @@ public class RenderBuffer implements AutoCloseable {
         return getNumPix() * RenderBuffer.numCompCor;
     }
     
-    public void alocar() {
+    private void alocar() {
         gl4.glBindRenderbuffer( GL4.GL_RENDERBUFFER, id );
         gl4.glRenderbufferStorage( GL4.GL_RENDERBUFFER, GL4.GL_RGB8, largura, altura );
     }
