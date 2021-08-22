@@ -1,14 +1,17 @@
 import javax.swing.JFrame;
 import javax.swing.WindowConstants;
 
+import java.awt.BorderLayout;
+
 import com.jogamp.opengl.GLCapabilities;
 import com.jogamp.opengl.GLProfile;
 import com.jogamp.opengl.awt.GLCanvas;
 
-import java.awt.BorderLayout;
+import opengl.Renderizador;
 
 public class Janela extends JFrame implements Runnable {
     GLCapabilities capacidades;
+    Renderizador renderizadorOpenGL;
     GLCanvas canvas;
     
     Janela() {
@@ -19,24 +22,28 @@ public class Janela extends JFrame implements Runnable {
         capacidades.setAlphaBits( 8 );
         
         canvas = new GLCanvas( capacidades );
-        canvas.addGLEventListener( new RenderizadorOpenGL() );
+        canvas.addGLEventListener( renderizadorOpenGL = new Renderizador() );
         
-        setBounds( 0, 0, 720, 360 );
+        setBounds( 323, 204, 720, 360 );
         setDefaultCloseOperation( WindowConstants.DISPOSE_ON_CLOSE );
         getContentPane().setLayout( new BorderLayout() );
         add( canvas );
         
-        setTitle( "OpenGL" );
+        setTitle( "Calibração Haori Mirror" );
     }
     
     @Override
     public void run() {
         setVisible( true );
         
-        while( ! Thread.interrupted() )  {
+        while( renderizadorOpenGL.getExecutando() )  {
             canvas.repaint();
-            try { Thread.sleep( 8 ); }  // ~120 Hz
-            catch ( InterruptedException e ) { return; }
+            try {
+                Thread.sleep( 8 );  // ~120 Hz
+            }
+            catch ( InterruptedException e ) {
+                break;
+            }
         }
     }
 }

@@ -1,10 +1,8 @@
-package es.tela;
+package opengl;
 
 import com.jogamp.opengl.GL4;
 
-public class RenderBuffer implements AutoCloseable {
-    public static GL4 gl4;
-    
+public class RenderBuffer extends OpenGL implements AutoCloseable {
     public static final int numCompCor = 3;
     
     private int largura, altura;

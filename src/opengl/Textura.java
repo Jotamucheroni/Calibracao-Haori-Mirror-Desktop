@@ -1,16 +1,16 @@
+package opengl;
+
 import java.nio.ByteBuffer;
 
 import com.jogamp.opengl.GL4;
 
-public class TexturaOpenGL implements AutoCloseable {
-    public static GL4 gl4;
-    
+public class Textura extends OpenGL implements AutoCloseable {
     private final int id;
     private int largura, altura;
     private boolean monocromatica;
-    private int formato;
+    private int formatoImagem, formatoInterno;
     
-    public TexturaOpenGL( int largura, int altura, boolean monocromatica ) {
+    public Textura( int largura, int altura, boolean monocromatica ) {
         setLargura( largura );
         setAltura( altura );
         setMonocromatica( monocromatica );
@@ -24,19 +24,17 @@ public class TexturaOpenGL implements AutoCloseable {
         gl4.glTexParameteri( GL4.GL_TEXTURE_2D, GL4.GL_TEXTURE_WRAP_T, GL4.GL_CLAMP_TO_EDGE );
         gl4.glTexParameteri( GL4.GL_TEXTURE_2D, GL4.GL_TEXTURE_MIN_FILTER, GL4.GL_LINEAR );
         gl4.glTexParameteri( GL4.GL_TEXTURE_2D, GL4.GL_TEXTURE_MAG_FILTER, GL4.GL_LINEAR );
-        
-        // alocar();
     }
     
-    public TexturaOpenGL( int largura, int altura ) {
+    public Textura( int largura, int altura ) {
         this( largura, altura, false );
     }
     
-    public TexturaOpenGL( boolean monocromatica ) {
+    public Textura( boolean monocromatica ) {
         this( 1, 1, monocromatica );
     }
     
-    public TexturaOpenGL() {
+    public Textura() {
         this( 1, 1, false );
     }
     
@@ -57,7 +55,8 @@ public class TexturaOpenGL implements AutoCloseable {
     public void setMonocromatica( boolean monocromatica ) {
         this.monocromatica = monocromatica;
         
-        formato = monocromatica ? GL4.GL_RED : GL4.GL_BGR; 
+        formatoInterno = monocromatica ? GL4.GL_R8 : GL4.GL_RGB8;
+        formatoImagem = monocromatica ? GL4.GL_RED : GL4.GL_BGR;
     }
     
     public int getLargura() {
@@ -81,9 +80,9 @@ public class TexturaOpenGL implements AutoCloseable {
     public void alocar() {
         gl4.glBindTexture( GL4.GL_TEXTURE_2D, id );       
         gl4.glTexImage2D(
-            GL4.GL_TEXTURE_2D, 0, GL4.GL_RGBA8,
+            GL4.GL_TEXTURE_2D, 0, formatoInterno,
             largura, altura, 0,
-            formato, GL4.GL_UNSIGNED_BYTE, null
+            formatoImagem, GL4.GL_UNSIGNED_BYTE, null
         );
         
         alocado = true;
@@ -97,7 +96,7 @@ public class TexturaOpenGL implements AutoCloseable {
         gl4.glTexSubImage2D(
             GL4.GL_TEXTURE_2D, 0,
             0, 0, largura, altura,
-            formato, GL4.GL_UNSIGNED_BYTE, imagem
+            formatoImagem, GL4.GL_UNSIGNED_BYTE, imagem
         );
     }
     

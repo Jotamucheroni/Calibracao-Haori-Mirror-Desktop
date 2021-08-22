@@ -1,18 +1,14 @@
+package opengl;
+
 import java.nio.charset.StandardCharsets;
 import java.util.logging.Logger;
 
 import com.jogamp.opengl.GL4;
 
-public class ProgramaOpenGL {
-    private GL4 gl4;
+public class Programa extends OpenGL {
+    private static Logger log = Logger.getLogger( Programa.class.getName() );
     
-    ProgramaOpenGL( GL4 gl4 ) {
-        this.gl4  = gl4;
-    }
-    
-    private static Logger log = Logger.getLogger( ProgramaOpenGL.class.getName() );
-    
-    public int loadShader( int type, String shaderCode ) {
+    public static int loadShader( int type, String shaderCode ) {
         int shader = gl4.glCreateShader( type );
         
         gl4.glShaderSource(
@@ -47,7 +43,7 @@ public class ProgramaOpenGL {
         return shader;
     }
     
-    public int gerarPrograma( String vertexShaderCode, String fragmentShaderCode ) {
+    public static int gerarPrograma( String vertexShaderCode, String fragmentShaderCode ) {
         int program = gl4.glCreateProgram();
         
         int vertexShader = loadShader( GL4.GL_VERTEX_SHADER, vertexShaderCode );
@@ -60,7 +56,7 @@ public class ProgramaOpenGL {
         return program;
     }
     
-    public String gerarCodigoVertexShader( boolean cor, boolean textura ) {
+    public static String gerarCodigoVertexShader( boolean cor, boolean textura ) {
         StringBuilder codigo = new StringBuilder(
             """
             #version 460
@@ -106,7 +102,7 @@ public class ProgramaOpenGL {
     
     private static final int numSaidas = 3;
     
-    public String gerarCodigoFragmentShader(
+    public static String gerarCodigoFragmentShader(
         boolean cor, boolean textura, boolean texturaMonocromatica
     ) {
         StringBuilder codigo = new StringBuilder(
@@ -220,7 +216,7 @@ public class ProgramaOpenGL {
         return codigo.toString();
     }
     
-    public int gerarPrograma( boolean cor, boolean textura, boolean texturaMonocromatica ) {
+    public static int gerarPrograma( boolean cor, boolean textura, boolean texturaMonocromatica ) {
         return gerarPrograma(
             gerarCodigoVertexShader( cor, textura ),
             gerarCodigoFragmentShader( cor, textura, texturaMonocromatica )

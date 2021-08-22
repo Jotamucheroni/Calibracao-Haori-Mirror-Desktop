@@ -1,3 +1,5 @@
+package opengl;
+
 import java.nio.ByteBuffer;
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -9,12 +11,8 @@ import com.jogamp.opengl.GLEventListener;
 import es.Bluetooth;
 import es.camera.CameraLocal;
 import es.camera.CameraRemota;
-import es.tela.FrameBuffer;
-import es.tela.RenderBuffer;
 
-public class RenderizadorOpenGL implements GLEventListener {
-    private static GL4 gl4;
-    
+public class Renderizador extends OpenGL implements GLEventListener {
     private final float[] 
         refQuad = {
             // Coordenadas  Textura
@@ -30,10 +28,8 @@ public class RenderizadorOpenGL implements GLEventListener {
     private CameraRemota cameraSmartphone;    
     private Bluetooth bluetooth;
     private FrameBuffer frameBufferOlhoVirtual, frameBufferSmartphone;
-    private TexturaOpenGL texturaOlhoVirtual, texturaSmartphone;
-    // private ImagemOpenGL texturaCachorrinho, texturaGatinho;
+    private Textura texturaOlhoVirtual, texturaSmartphone;
     
-    private ProgramaOpenGL programaOpenGL;
     private Objeto imagemOlhoVirtual, imagemSmartphone;
     private DetectorBorda detectorOlhoVirtual, detectorSmartphone;
     private ByteBuffer bufferBordaOlhoVirtual, bufferBordaSmartphone;
@@ -42,14 +38,7 @@ public class RenderizadorOpenGL implements GLEventListener {
     public void init( GLAutoDrawable drawable ) {
         // Executar sempre primeiro
         gl4 = drawable.getGL().getGL4();
-        programaOpenGL = new ProgramaOpenGL( gl4 );
-        Objeto.gl4 = gl4;
-        Objeto.programaOpenGL = programaOpenGL;
-        RenderBuffer.gl4 = gl4;
-        FrameBuffer.gl4 = gl4;
-        ImagemOpenGL.gl4 = gl4;
-        TexturaOpenGL.gl4 = gl4;
-        
+
         cameraOlhoVirtual = new CameraLocal( 0, 640, 480, 1 );
         cameraOlhoVirtual.ligar();
         cameraSmartphone = new CameraRemota( 320, 240, 1 );
@@ -57,19 +46,14 @@ public class RenderizadorOpenGL implements GLEventListener {
         frameBufferOlhoVirtual = new FrameBuffer( 3, 640, 480 );
         frameBufferSmartphone = new FrameBuffer( 3, 640, 480 );
         
-        texturaOlhoVirtual = new TexturaOpenGL(
+        texturaOlhoVirtual = new Textura(
             cameraOlhoVirtual.getLargImg(), cameraOlhoVirtual.getAltImg(), true
         );
         texturaOlhoVirtual.alocar();
-        texturaSmartphone = new TexturaOpenGL(
+        texturaSmartphone = new Textura(
             cameraSmartphone.getLargImg(), cameraSmartphone.getAltImg(), true
         );
         texturaSmartphone.alocar();
-        
-        /* texturaCachorrinho = new ImagemOpenGL( "imagens/cachorrinho.png" );
-        texturaCachorrinho.carregar();
-        texturaGatinho = new ImagemOpenGL( "imagens/gatinho.png" );
-        texturaGatinho.carregar(); */
         
         gl4.glClearColor( 0.0f, 0.0f, 0.0f, 1.0f );
         imagemOlhoVirtual = new Objeto(
@@ -174,20 +158,25 @@ public class RenderizadorOpenGL implements GLEventListener {
         frameBufferSmartphone.exibir( 0, 0, larguraTela, alturaTela / 2, 3, 1 );
     }
     
+    private boolean executando = true;
+    
     @Override
     public void dispose( GLAutoDrawable drawable ) {
+        executando = false;
+        
         detectorOlhoVirtual.close();
         detectorSmartphone.close();
         texturaOlhoVirtual.close();
         texturaSmartphone.close();
-        /* texturaCachorrinho.close();
-        texturaGatinho.close(); */
         frameBufferOlhoVirtual.close();
         cameraOlhoVirtual.close();
         cameraSmartphone.close();
         synchronized( bluetooth ) {
             bluetooth.close();
         }
-        Aplicativo.close();
+    }
+    
+    public boolean getExecutando() {
+        return executando;
     }
 }

@@ -1,3 +1,5 @@
+package opengl;
+
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
@@ -5,12 +7,9 @@ import java.nio.IntBuffer;
 
 import com.jogamp.opengl.GL4;
 
-public class Objeto {
-    public static GL4 gl4;
-    public static ProgramaOpenGL programaOpenGL;
-    
+public class Objeto extends OpenGL {
     private final int modoDes;  
-    private final TexturaOpenGL textura;
+    private final Textura textura;
     private final int numElementos;
     private final int[] vao = new int[1];
     private final int program;
@@ -36,7 +35,7 @@ public class Objeto {
     
     public Objeto(
         int modoDes, int numCompPos, int numCompCor, int numCompTex,
-        float[] vertices, int[] elementos, TexturaOpenGL textura
+        float[] vertices, int[] elementos, Textura textura
     ) {
         this.modoDes = modoDes;
         this.textura = textura;
@@ -58,8 +57,8 @@ public class Objeto {
         fb.position( 0 );
         gl4.glBufferData( GL4.GL_ARRAY_BUFFER, tamVertices, fb, GL4.GL_STATIC_DRAW );
         
-        program = programaOpenGL.gerarPrograma(
-            numCompCor > 0, numCompTex > 0, textura.getMonocromatica()
+        program = Programa.gerarPrograma(
+            numCompCor > 0, numCompTex > 0, textura != null && textura.getMonocromatica()
         );
         
         pontMatrizEscala = gl4.glGetUniformLocation( program, "escala" );
@@ -117,7 +116,7 @@ public class Objeto {
     
     public Objeto(
         int modoDes, int numCompPos, int numCompCor, int numCompTex,
-        float[] vertices, TexturaOpenGL textura
+        float[] vertices, Textura textura
     ) {
         this(
             modoDes, numCompPos, numCompCor, numCompTex,
@@ -147,7 +146,7 @@ public class Objeto {
     
     public Objeto(
         int modoDes, int numCompPos, int numCompTex,
-        float[] vertices, int[] elementos, TexturaOpenGL textura
+        float[] vertices, int[] elementos, Textura textura
     ) {
         this(
             modoDes, numCompPos, 0, numCompTex,
@@ -157,7 +156,7 @@ public class Objeto {
     
     public Objeto(
         int modoDes, int numCompPos, int numCompTex,
-        float[] vertices, TexturaOpenGL textura
+        float[] vertices, Textura textura
     ) {
         this(
             modoDes, numCompPos, 0, numCompTex,

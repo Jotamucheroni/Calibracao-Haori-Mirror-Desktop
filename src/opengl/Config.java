@@ -1,42 +1,36 @@
+package opengl;
+
 import java.util.logging.Logger;
-
-import com.jogamp.opengl.GL;
-import com.jogamp.opengl.GL4;
-
 import java.util.Arrays;
 
-public class ConfigOpenGL {
-    private GL gl;
+import com.jogamp.opengl.GL4;
+
+public class Config extends OpenGL {
+    private static Logger log = Logger.getLogger( Config.class.getName() );
     
-    ConfigOpenGL( GL gl ) {
-        this.gl = gl;
-    }
-    
-    private static Logger log = Logger.getLogger( ConfigOpenGL.class.getName() );
-    
-    public void imprimir( int[] configs ) {
+    public static void imprimir( int[] configs ) {
         final int[] valConfig =  new int[1];
         
         for ( int config : configs ) {
-            gl.glGetIntegerv( config, valConfig, 0 );
+            gl4.glGetIntegerv( config, valConfig, 0 );
             log.info( "OpenGL Config.: " + valConfig[0] );
         }
     }
     
-    public void imprimir( int[] configs, String[] nomesConfigs ) {
+    public static void imprimir( int[] configs, String[] nomesConfigs ) {
         final int[] valConfig =  new int[1];
         
         for ( int i = 0; i < configs.length; i++ ) {
-            gl.glGetIntegerv( configs[i], valConfig, 0 );
+            gl4.glGetIntegerv( configs[i], valConfig, 0 );
             log.info( "OpenGL Config.: " + nomesConfigs[i] + ": " + valConfig[0] );
         }
     }
     
-    public void imprimir( int[] configs, int[] configNumComp ) {
+    public static void imprimir( int[] configs, int[] configNumComp ) {
         final int[] valConfig =  new int[Arrays.stream( configNumComp ).max().getAsInt()];
         
         for ( int i = 0; i < configs.length; i++ ) {
-            gl.glGetIntegerv( configs[i], valConfig, 0 );
+            gl4.glGetIntegerv( configs[i], valConfig, 0 );
             
             StringBuilder info = new StringBuilder( Integer.toString( valConfig[0] ) );
             for ( int j = 1; j < configNumComp[i]; j++ )
@@ -45,11 +39,11 @@ public class ConfigOpenGL {
         }
     }
     
-    public void imprimir( int[] configs, String[] nomesConfigs, int[] configNumComp ) {
+    public static void imprimir( int[] configs, String[] nomesConfigs, int[] configNumComp ) {
         final int[] valConfig =  new int[Arrays.stream( configNumComp ).max().getAsInt()];
         
         for ( int i = 0; i < configs.length; i++ ) {
-            gl.glGetIntegerv( configs[i], valConfig, 0 );
+            gl4.glGetIntegerv( configs[i], valConfig, 0 );
             
             StringBuilder info = new StringBuilder( Integer.toString( valConfig[0] ) );
             for ( int j = 1; j < configNumComp[i]; j++ )
@@ -58,37 +52,37 @@ public class ConfigOpenGL {
         }
     }
     
-    public void imprimirConfigBuffer( int tipo, int buffer ) {
+    public static void imprimirConfigBuffer( int tipo, int buffer ) {
         final int[] bufferConfig =  new int[10];
         
-        gl.glGetFramebufferAttachmentParameteriv(
+        gl4.glGetFramebufferAttachmentParameteriv(
             tipo, buffer, GL4.GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE, bufferConfig, 0
         );
-        gl.glGetFramebufferAttachmentParameteriv(
+        gl4.glGetFramebufferAttachmentParameteriv(
             tipo, buffer, GL4.GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME, bufferConfig, 1
         );
-        gl.glGetFramebufferAttachmentParameteriv(
+        gl4.glGetFramebufferAttachmentParameteriv(
             tipo, buffer, GL4.GL_FRAMEBUFFER_ATTACHMENT_RED_SIZE, bufferConfig, 2
         );
-        gl.glGetFramebufferAttachmentParameteriv(
+        gl4.glGetFramebufferAttachmentParameteriv(
             tipo, buffer, GL4.GL_FRAMEBUFFER_ATTACHMENT_GREEN_SIZE, bufferConfig, 3
         );
-        gl.glGetFramebufferAttachmentParameteriv(
+        gl4.glGetFramebufferAttachmentParameteriv(
             tipo, buffer, GL4.GL_FRAMEBUFFER_ATTACHMENT_BLUE_SIZE, bufferConfig, 4
         );
-        gl.glGetFramebufferAttachmentParameteriv(
+        gl4.glGetFramebufferAttachmentParameteriv(
             tipo, buffer, GL4.GL_FRAMEBUFFER_ATTACHMENT_ALPHA_SIZE, bufferConfig, 5
         );
-        gl.glGetFramebufferAttachmentParameteriv(
+        gl4.glGetFramebufferAttachmentParameteriv(
             tipo, buffer, GL4.GL_FRAMEBUFFER_ATTACHMENT_DEPTH_SIZE, bufferConfig, 6
         );
-        gl.glGetFramebufferAttachmentParameteriv(
+        gl4.glGetFramebufferAttachmentParameteriv(
             tipo, buffer, GL4.GL_FRAMEBUFFER_ATTACHMENT_STENCIL_SIZE, bufferConfig, 7
         );
-        gl.glGetFramebufferAttachmentParameteriv(
+        gl4.glGetFramebufferAttachmentParameteriv(
             tipo, buffer, GL4.GL_FRAMEBUFFER_ATTACHMENT_COMPONENT_TYPE, bufferConfig, 8
         );
-        gl.glGetFramebufferAttachmentParameteriv(
+        gl4.glGetFramebufferAttachmentParameteriv(
             tipo, buffer, GL4.GL_FRAMEBUFFER_ATTACHMENT_COLOR_ENCODING, bufferConfig, 9
         );
         

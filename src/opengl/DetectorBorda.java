@@ -1,3 +1,5 @@
+package opengl;
+
 import java.nio.ByteBuffer;
 
 public class DetectorBorda implements AutoCloseable {

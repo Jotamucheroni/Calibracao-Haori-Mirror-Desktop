@@ -1,23 +1,26 @@
-import java.awt.image.BufferedImage;
+package opengl;
+
 import javax.imageio.ImageIO;
+
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.awt.image.DataBufferByte;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-public class ImagemOpenGL extends TexturaOpenGL {
+public class Imagem extends Textura {
     private String caminhoArquivo;
     private BufferedImage bufferImagem;
     
-    public ImagemOpenGL( String caminhoArquivo, boolean monocromatica ) {
+    public Imagem( String caminhoArquivo, boolean monocromatica ) {
         super();
         
         setCaminhoArquivo( caminhoArquivo );
         setMonocromatica( monocromatica );
     }
     
-    ImagemOpenGL( String caminhoArquivo ) {
+    Imagem( String caminhoArquivo ) {
         this( caminhoArquivo, false );
     }
     
@@ -69,11 +72,5 @@ public class ImagemOpenGL extends TexturaOpenGL {
         bb.position( 0 );
         
         carregarImagem( bb );
-        /* gl4.glBindTexture( GL4.GL_TEXTURE_2D, textura );
-        gl4.glTexImage2D( 
-            GL4.GL_TEXTURE_2D, 0, GL4.GL_RGBA8,
-            bufferImagem.getWidth(), bufferImagem.getHeight(), 0,
-            GL4.GL_BGR, GL4.GL_UNSIGNED_BYTE, bb
-        ); */
     }
 }
