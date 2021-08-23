@@ -27,7 +27,7 @@ public class Renderizador extends OpenGL implements GLEventListener {
     private CameraLocal cameraOlhoVirtual;
     private CameraRemota cameraSmartphone;    
     private Bluetooth bluetooth;
-    private FrameBuffer frameBufferOlhoVirtual, frameBufferSmartphone;
+    private FrameBufferObject frameBufferOlhoVirtual, frameBufferSmartphone;
     private Textura texturaOlhoVirtual, texturaSmartphone;
     
     private Objeto imagemOlhoVirtual, imagemSmartphone;
@@ -43,8 +43,8 @@ public class Renderizador extends OpenGL implements GLEventListener {
         cameraOlhoVirtual.ligar();
         cameraSmartphone = new CameraRemota( 320, 240, 1 );
         
-        frameBufferOlhoVirtual = new FrameBuffer( 3, 640, 480 );
-        frameBufferSmartphone = new FrameBuffer( 3, 640, 480 );
+        frameBufferOlhoVirtual = new FrameBufferObject( 3, 640, 480 );
+        frameBufferSmartphone = new FrameBufferObject( 3, 640, 480 );
         
         texturaOlhoVirtual = new Textura(
             cameraOlhoVirtual.getLargImg(), cameraOlhoVirtual.getAltImg(), true
@@ -68,8 +68,8 @@ public class Renderizador extends OpenGL implements GLEventListener {
         bufferBordaOlhoVirtual = ByteBuffer.allocateDirect( frameBufferOlhoVirtual.getNumBytes() );
         bufferBordaSmartphone = ByteBuffer.allocateDirect( frameBufferOlhoVirtual.getNumBytes() );
         
-        detectorOlhoVirtual = new DetectorBorda( frameBufferOlhoVirtual.getNumBytes(), FrameBuffer.numCompCor );
-        detectorSmartphone = new DetectorBorda( frameBufferOlhoVirtual.getNumBytes(), FrameBuffer.numCompCor );
+        detectorOlhoVirtual = new DetectorBorda( frameBufferOlhoVirtual.getNumBytes(), FrameBufferObject.numCompCor );
+        detectorSmartphone = new DetectorBorda( frameBufferOlhoVirtual.getNumBytes(), FrameBufferObject.numCompCor );
         
         // Inicia a comunicação por Bluetooth para receber as imagens da câmera do smartphone
         bluetooth = new Bluetooth();
@@ -94,13 +94,13 @@ public class Renderizador extends OpenGL implements GLEventListener {
         ).start(); */
     }
     
-    private int larguraTela, alturaTela;
+    private Tela tela = Tela.getInstance();
     
     @Override
     public void reshape( GLAutoDrawable drawable, int x, int y, int width, int height )
 	{
-        larguraTela = width;
-        alturaTela = height;
+        tela.setLargura( width );
+        tela.setAltura( height );
 	}
     
     @Override
@@ -112,6 +112,7 @@ public class Renderizador extends OpenGL implements GLEventListener {
                 texturaSmartphone.carregarImagem( cameraSmartphone.getImagem() );
         }
         
+        frameBufferOlhoVirtual.clear();
         frameBufferOlhoVirtual.draw( imagemOlhoVirtual );
         
         frameBufferOlhoVirtual.bindRead();
@@ -128,6 +129,7 @@ public class Renderizador extends OpenGL implements GLEventListener {
             detectorOlhoVirtual.executar();
         }
         
+        frameBufferSmartphone.clear();
         frameBufferSmartphone.draw( imagemSmartphone );
         
         frameBufferSmartphone.bindRead();
@@ -144,11 +146,13 @@ public class Renderizador extends OpenGL implements GLEventListener {
             detectorSmartphone.executar();
         }    
         
-        // Desenha na tela
-        gl4.glBindFramebuffer( GL4.GL_DRAW_FRAMEBUFFER, 0 );
-        gl4.glClear( GL4.GL_COLOR_BUFFER_BIT );
-        frameBufferOlhoVirtual.exibir( 0, alturaTela / 2, larguraTela, alturaTela / 2, 3, 1 );
-        frameBufferSmartphone.exibir( 0, 0, larguraTela, alturaTela / 2, 3, 1 );
+        tela.clear();
+        frameBufferOlhoVirtual.copiar(
+            tela, 0, tela.getAltura() / 2, tela.getLargura(), tela.getAltura() / 2, 3, 1
+        );
+        frameBufferSmartphone.copiar(
+            tela, 0, 0, tela.getLargura(), tela.getAltura() / 2, 3, 1
+        );
     }
     
     private boolean executando = true;
