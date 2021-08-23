@@ -112,13 +112,9 @@ public class Renderizador extends OpenGL implements GLEventListener {
                 texturaSmartphone.carregarImagem( cameraSmartphone.getImagem() );
         }
         
-        // Desenha no framebuffer intermediário
-        gl4.glBindFramebuffer( GL4.GL_DRAW_FRAMEBUFFER, frameBufferOlhoVirtual.getId() );
-        gl4.glClear( GL4.GL_COLOR_BUFFER_BIT );
-        gl4.glViewport( 0, 0, frameBufferOlhoVirtual.getLargura(), frameBufferOlhoVirtual.getAltura() );
-        imagemOlhoVirtual.draw();
+        frameBufferOlhoVirtual.draw( imagemOlhoVirtual );
         
-        gl4.glBindFramebuffer( GL4.GL_READ_FRAMEBUFFER, frameBufferOlhoVirtual.getId() );
+        frameBufferOlhoVirtual.bindRead();
         if ( detectorOlhoVirtual.pronto() ) {
             gl4.glReadBuffer( GL4.GL_COLOR_ATTACHMENT2 );
             bufferBordaOlhoVirtual.rewind();
@@ -132,12 +128,9 @@ public class Renderizador extends OpenGL implements GLEventListener {
             detectorOlhoVirtual.executar();
         }
         
-        gl4.glBindFramebuffer( GL4.GL_DRAW_FRAMEBUFFER, frameBufferSmartphone.getId() );
-        gl4.glClear( GL4.GL_COLOR_BUFFER_BIT );
-        gl4.glViewport( 0, 0, frameBufferSmartphone.getLargura(), frameBufferSmartphone.getAltura() );
-        imagemSmartphone.draw();
+        frameBufferSmartphone.draw( imagemSmartphone );
         
-        gl4.glBindFramebuffer( GL4.GL_READ_FRAMEBUFFER, frameBufferSmartphone.getId() );
+        frameBufferSmartphone.bindRead();
         if ( detectorSmartphone.pronto() ) {
             gl4.glReadBuffer( GL4.GL_COLOR_ATTACHMENT2 );
             bufferBordaSmartphone.rewind();

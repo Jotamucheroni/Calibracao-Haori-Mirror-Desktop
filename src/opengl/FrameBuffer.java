@@ -23,7 +23,7 @@ public class FrameBuffer extends OpenGL implements AutoCloseable {
         int[] drawBuffers = new int[numRenderBuffer];
         for ( int i = 0; i < numRenderBuffer; i++ )
             drawBuffers[i] = GL4.GL_COLOR_ATTACHMENT0 + i;
-        gl4.glBindFramebuffer( GL4.GL_DRAW_FRAMEBUFFER, id );
+        bindDraw();
         gl4.glDrawBuffers( numRenderBuffer, drawBuffers, 0 );
     }
     
@@ -88,7 +88,7 @@ public class FrameBuffer extends OpenGL implements AutoCloseable {
     
     private void alocar() {
         rb = new RenderBuffer[getNumRenderBuffer()];
-        gl4.glBindFramebuffer( GL4.GL_DRAW_FRAMEBUFFER, id );
+        bindDraw();
         for ( int i = 0; i < rb.length; i++ ) {
             rb[i] = new RenderBuffer( largura, altura );
             gl4.glFramebufferRenderbuffer(
@@ -98,24 +98,69 @@ public class FrameBuffer extends OpenGL implements AutoCloseable {
         }
     }
     
+    public void bindDraw() {
+        gl4.glBindFramebuffer( GL4.GL_DRAW_FRAMEBUFFER, id );
+    }
+    
+    public void bindRead() {
+        gl4.glBindFramebuffer( GL4.GL_READ_FRAMEBUFFER, id );
+    }
+    
+    public void bind() {
+        gl4.glBindFramebuffer( GL4.GL_FRAMEBUFFER, id );
+    }
+    
+    public void draw( int x, int y, int largura, int altura, Objeto objeto ) {
+        bindDraw();
+        gl4.glClear( GL4.GL_COLOR_BUFFER_BIT );
+        gl4.glViewport( x, y, largura, altura );
+        objeto.draw();
+    }
+    
+    public void draw( int largura, int altura, Objeto objeto ) {
+       draw( 0, 0, largura, altura, objeto );
+    }
+    
+    public void draw( Objeto objeto ) {
+        draw( 0, 0, this.largura, this.altura, objeto );
+    }
+    
+    public void draw( int x, int y, int largura, int altura, Objeto[] objeto ) {
+        for( Objeto obj : objeto )
+            draw( x, y, largura, altura, obj );
+    }
+    
+    public void draw( int largura, int altura, Objeto[] objeto ) {
+       draw( 0, 0, largura, altura, objeto );
+    }
+    
+    public void draw( Objeto[] objeto ) {
+        draw( 0, 0, this.largura, this.altura, objeto );
+    }
+    
     public void exibir( int x, int y, int largura, int altura, int numColunas, int numLinhas ) {
         if( x < 0 )
             x = 0;
+            
         if( y < 0 )
             y = 0;
+            
         if( largura < 1 )
             largura = 1;
+            
         if( altura < 1 )
             altura = 1;
+            
         if( numColunas < 1 )
             numColunas = 1;
+            
         if( numLinhas < 1 )
             numLinhas = 1;
         
         int
             numCelulas = numColunas * numLinhas,
             largColuna = largura / numColunas, altLinha = altura / numLinhas;
-        gl4.glBindFramebuffer( GL4.GL_READ_FRAMEBUFFER, id );
+        bindRead();
         gl4.glBindFramebuffer( GL4.GL_DRAW_FRAMEBUFFER, 0 );
         for ( int i = 0; i < numCelulas; i++ ) {
             int coluna = i % numColunas;
