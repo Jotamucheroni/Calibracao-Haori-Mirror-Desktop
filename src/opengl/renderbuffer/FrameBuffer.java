@@ -1,6 +1,9 @@
-package opengl;
+package opengl.renderbuffer;
 
 import com.jogamp.opengl.GL4;
+
+import opengl.Objeto;
+import opengl.OpenGL;
 
 public abstract class FrameBuffer extends OpenGL {
     private int largura, altura;
@@ -58,6 +61,7 @@ public abstract class FrameBuffer extends OpenGL {
     }
     
     public void draw( int x, int y, int largura, int altura, Objeto objeto ) {
+        bindDraw();
         gl4.glViewport( x, y, largura, altura );
         objeto.draw();
     }
@@ -71,8 +75,11 @@ public abstract class FrameBuffer extends OpenGL {
     }
     
     public void draw( int x, int y, int largura, int altura, Objeto[] objeto ) {
+        bindDraw();
+        gl4.glViewport( x, y, largura, altura );
+        
         for( Objeto obj : objeto )
-            draw( x, y, largura, altura, obj );
+            obj.draw();
     }
     
     public void draw( int largura, int altura, Objeto[] objeto ) {

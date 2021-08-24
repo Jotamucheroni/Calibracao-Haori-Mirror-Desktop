@@ -1,6 +1,8 @@
-package opengl;
+package opengl.renderbuffer;
 
 import com.jogamp.opengl.GL4;
+
+import opengl.RenderBuffer;
 
 public class FrameBufferObject extends FrameBuffer implements AutoCloseable {
     public static final int numCompCor = 3;

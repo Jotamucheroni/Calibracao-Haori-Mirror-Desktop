@@ -11,6 +11,8 @@ import com.jogamp.opengl.GLEventListener;
 import es.Bluetooth;
 import es.camera.CameraLocal;
 import es.camera.CameraRemota;
+import opengl.renderbuffer.FrameBufferObject;
+import opengl.renderbuffer.Tela;
 
 public class Renderizador extends OpenGL implements GLEventListener {
     private final float[] 
@@ -94,7 +96,7 @@ public class Renderizador extends OpenGL implements GLEventListener {
         ).start(); */
     }
     
-    private Tela tela = Tela.getInstance();
+    private final Tela tela = Tela.getInstance();
     
     @Override
     public void reshape( GLAutoDrawable drawable, int x, int y, int width, int height )

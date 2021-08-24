@@ -1,4 +1,4 @@
-package opengl;
+package opengl.renderbuffer;
 
 public class Tela extends FrameBuffer {
     private static Tela instancia;
