@@ -3,91 +3,66 @@ package opengl;
 import java.nio.ByteBuffer;
 
 public class DetectorBorda implements AutoCloseable {
-    private int tamImagem;
+    private int tamanhoImagem;
+    private int numeroComponentesCor;
+    
     private ByteBuffer imagem;
-    private int deslocamento;
     
-    DetectorBorda( int tamImagem, ByteBuffer imagem, int deslocamento ) {
-        setTamImagem( tamImagem );
-        setImagem( imagem );
-        setDeslocamento( deslocamento );
+    DetectorBorda( int tamanhoImagem, int numeroComponentesCor ) {
+        setTamanhoImagem( tamanhoImagem );
+        setNumeroComponentesCor( numeroComponentesCor );
     }
     
-    DetectorBorda( int tamImagem, int deslocamento ) {
-        this( tamImagem, null, deslocamento );
+    DetectorBorda( int tamanhoImagem ) {
+        this( tamanhoImagem, 4 );
     }
     
-    DetectorBorda( int tamImagem, ByteBuffer imagem ) {
-        this( tamImagem, imagem, 1 );
-    }
-    
-    DetectorBorda( ByteBuffer imagem, int deslocamento ) {
-        this( 0, imagem, deslocamento );
-    }
-    
-    DetectorBorda( ByteBuffer imagem ) {
-        this( 0, imagem, 1 );
-    }
-    
-    DetectorBorda( int tamImagem ) {
-        this( tamImagem, null, 1 );
-    }
-    
-    DetectorBorda() {
-        this( 0, null, 1 );
-    }
-    
-    public void setImagem( ByteBuffer imagem ) {
-        this.imagem = imagem;
+    public void setTamanhoImagem( int tamanhoImagem ) {
+        if ( tamanhoImagem < 1 )
+            tamanhoImagem = 1;
         
-        if ( tamImagem == 0 && this.imagem != null )
-            this.tamImagem = this.imagem.capacity();
+        this.tamanhoImagem = tamanhoImagem;
     }
     
-    public void setTamImagem( int tamImagem ) {
-        if ( tamImagem < 0 ) {
-            this.tamImagem = 0;
-            return;
-        }
+    public void setNumeroComponentesCor( int numeroComponentesCor ) {
+        if ( numeroComponentesCor < 1 )
+            numeroComponentesCor = 1;
+        else if ( numeroComponentesCor > 4 )
+            numeroComponentesCor = 4;
         
-        this.tamImagem = tamImagem;
+        this.numeroComponentesCor = numeroComponentesCor;
     }
     
-    public void setDeslocamento( int deslocamento ) {
-        if ( deslocamento <= 0 ) {
-            this.deslocamento = 1;
-            return;
-        }
+    public ByteBuffer getImagem() {
+        imagem.rewind();
         
-        this.deslocamento = deslocamento;
+        return imagem;
     }
     
-    private Object sinc = new Object();
+    public void alocar() {
+        imagem = ByteBuffer.allocateDirect( tamanhoImagem );
+    }
     
-    private Thread detector = new Thread( () ->
+    private Object sincronizador = new Object();
+    public int saida = 0;
+    
+    private Thread detector = new Thread(
+        () ->
         {
-            /* long[] t = new long[2];
-            long tempoTotal; */
+            int contador;
             
             while ( true ) {
-                /* t[0] = System.currentTimeMillis();
-                int soma = 0; */
-                for( int i = 0; i < tamImagem; i += deslocamento ) {
+                contador = 0;
+                for( int i = 0; i < tamanhoImagem; i += numeroComponentesCor ) {
                     imagem.position( i );
-                    /* if ( Byte.toUnsignedInt( imagem.get() ) == 255 )
-                        soma++; */
+                    if ( Byte.toUnsignedInt( imagem.get() ) == 255 )
+                        contador++;
                 }
-                /* t[1] = System.currentTimeMillis();
-                tempoTotal = t[1] - t[0];
+                saida = contador;
                 
-                System.out.println( 
-                    "Análise - Soma: " + soma + " píxel(is)\t|\tTempo: " + tempoTotal
-                    + " ms\t\t|\tAnálises/s: " +  ( tempoTotal > 0 ? ( 1000 / tempoTotal ) : "+inf" ) 
-                ); */
-                
-                synchronized( sinc ) {
+                synchronized( sincronizador ) {
                     try {
-                        sinc.wait();
+                        sincronizador.wait();
                     } catch ( InterruptedException e ) {
                         return;
                     }
@@ -98,7 +73,7 @@ public class DetectorBorda implements AutoCloseable {
     
     // Verifica se todos os parâmetros obrigatórios foram devidamente inicializados
     public boolean preparado() {
-        return ( imagem != null && tamImagem != 0 );
+        return imagem != null;
     }
     
     // Verifica se o objeto está preparado e se não há outra execução ainda em curso
@@ -111,14 +86,14 @@ public class DetectorBorda implements AutoCloseable {
     
     // Realiza a detecção de borda
     public void executar() {
-        if ( !pronto() || !preparado() )
+        if ( !preparado() || !pronto() )
             return;
         
         if ( !detector.isAlive() )
             detector.start();
         else
-            synchronized( sinc ) {
-                sinc.notify();
+            synchronized( sincronizador ) {
+                sincronizador.notify();
             }
     }
     

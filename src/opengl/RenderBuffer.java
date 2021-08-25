@@ -3,7 +3,7 @@ package opengl;
 import com.jogamp.opengl.GL4;
 
 public class RenderBuffer extends OpenGL implements AutoCloseable {
-    public static final int numCompCor = 3;
+    public static final int numeroComponentesCor = 4;
     
     private int largura, altura;
     
@@ -18,10 +18,6 @@ public class RenderBuffer extends OpenGL implements AutoCloseable {
         id = bufferId[0];
         
         alocar();
-    }
-    
-    public RenderBuffer() {
-        this( 1, 1 );
     }
     
     public void setLargura( int largura ) {
@@ -55,12 +51,14 @@ public class RenderBuffer extends OpenGL implements AutoCloseable {
     }
     
     public int getNumBytes() {
-        return getNumPix() * RenderBuffer.numCompCor;
+        return getNumPix() * RenderBuffer.numeroComponentesCor;
     }
     
     private void alocar() {
         gl4.glBindRenderbuffer( GL4.GL_RENDERBUFFER, id );
-        gl4.glRenderbufferStorage( GL4.GL_RENDERBUFFER, GL4.GL_RGB8, largura, altura );
+        gl4.glRenderbufferStorage(
+            GL4.GL_RENDERBUFFER, GL4.GL_RGBA8, largura, altura
+        );
     }
     
     @Override

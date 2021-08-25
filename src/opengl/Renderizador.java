@@ -33,8 +33,7 @@ public class Renderizador extends OpenGL implements GLEventListener {
     private Textura texturaOlhoVirtual, texturaSmartphone;
     
     private Objeto imagemOlhoVirtual, imagemSmartphone;
-    private DetectorBorda detectorOlhoVirtual, detectorSmartphone;
-    private ByteBuffer bufferBordaOlhoVirtual, bufferBordaSmartphone;
+    private DetectorBorda detectorBordaOlhoVirtual, detectorBordaSmartphone, detectorTeste;
     
     @Override
     public void init( GLAutoDrawable drawable ) {
@@ -67,11 +66,14 @@ public class Renderizador extends OpenGL implements GLEventListener {
             refQuad, refElementos, texturaSmartphone
         );
         
-        bufferBordaOlhoVirtual = ByteBuffer.allocateDirect( frameBufferOlhoVirtual.getNumBytes() );
-        bufferBordaSmartphone = ByteBuffer.allocateDirect( frameBufferOlhoVirtual.getNumBytes() );
+        detectorBordaOlhoVirtual = new DetectorBorda( frameBufferOlhoVirtual.getNumPix(), 1 );
+        detectorBordaOlhoVirtual.alocar();
         
-        detectorOlhoVirtual = new DetectorBorda( frameBufferOlhoVirtual.getNumBytes(), FrameBufferObject.numCompCor );
-        detectorSmartphone = new DetectorBorda( frameBufferOlhoVirtual.getNumBytes(), FrameBufferObject.numCompCor );
+        detectorBordaSmartphone = new DetectorBorda( frameBufferOlhoVirtual.getNumPix(), 1 );
+        detectorBordaSmartphone.alocar();
+        
+        detectorTeste = new DetectorBorda( frameBufferOlhoVirtual.getNumPix(), 1 );
+        detectorTeste.alocar();
         
         // Inicia a comunicação por Bluetooth para receber as imagens da câmera do smartphone
         bluetooth = new Bluetooth();
@@ -117,36 +119,28 @@ public class Renderizador extends OpenGL implements GLEventListener {
         frameBufferOlhoVirtual.clear();
         frameBufferOlhoVirtual.draw( imagemOlhoVirtual );
         
-        frameBufferOlhoVirtual.bindRead();
-        if ( detectorOlhoVirtual.pronto() ) {
-            gl4.glReadBuffer( GL4.GL_COLOR_ATTACHMENT2 );
-            bufferBordaOlhoVirtual.rewind();
-            gl4.glReadPixels(
-                0, 0, frameBufferOlhoVirtual.getLargura(), frameBufferOlhoVirtual.getAltura(), 
-                GL4.GL_RGB, GL4.GL_UNSIGNED_BYTE, 
-                bufferBordaOlhoVirtual
-            );
-            
-            detectorOlhoVirtual.setImagem( bufferBordaOlhoVirtual );
-            detectorOlhoVirtual.executar();
+        if ( detectorBordaOlhoVirtual.pronto() ) {
+            System.out.println( "Píxeis(1): " + detectorBordaOlhoVirtual.saida );
+            frameBufferOlhoVirtual.lerRenderBuffer( 1, 1, detectorBordaOlhoVirtual.getImagem() );
+            detectorBordaOlhoVirtual.executar();
         }
         
         frameBufferSmartphone.clear();
         frameBufferSmartphone.draw( imagemSmartphone );
         
-        frameBufferSmartphone.bindRead();
-        if ( detectorSmartphone.pronto() ) {
-            gl4.glReadBuffer( GL4.GL_COLOR_ATTACHMENT2 );
-            bufferBordaSmartphone.rewind();
-            gl4.glReadPixels(
-                0, 0, frameBufferSmartphone.getLargura(), frameBufferSmartphone.getAltura(),
-                GL4.GL_RGB, GL4.GL_UNSIGNED_BYTE,
-                bufferBordaSmartphone
-            );
-            
-            detectorSmartphone.setImagem( bufferBordaSmartphone );
-            detectorSmartphone.executar();
-        }    
+        if ( detectorBordaSmartphone.pronto() ) {
+            System.out.println( "Píxeis(2): " + detectorBordaSmartphone.saida );
+            frameBufferOlhoVirtual.lerRenderBuffer( 2, 1, detectorBordaSmartphone.getImagem() );
+            detectorBordaSmartphone.executar();
+        }
+        
+        if ( detectorTeste.pronto() ) {
+            System.out.println( "Píxeis(3): " + detectorTeste.saida );
+            frameBufferOlhoVirtual.lerRenderBuffer( 3, 1, detectorTeste.getImagem() );
+            detectorTeste.executar();
+        }
+        
+        System.out.println();
         
         tela.clear();
         frameBufferOlhoVirtual.copiar(
@@ -163,8 +157,9 @@ public class Renderizador extends OpenGL implements GLEventListener {
     public void dispose( GLAutoDrawable drawable ) {
         executando = false;
         
-        detectorOlhoVirtual.close();
-        detectorSmartphone.close();
+        detectorBordaOlhoVirtual.close();
+        detectorBordaSmartphone.close();
+        detectorTeste.close();
         texturaOlhoVirtual.close();
         texturaSmartphone.close();
         frameBufferOlhoVirtual.close();

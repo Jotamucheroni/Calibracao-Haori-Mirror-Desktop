@@ -1,11 +1,13 @@
 package opengl.renderbuffer;
 
+import java.nio.ByteBuffer;
+
 import com.jogamp.opengl.GL4;
 
 import opengl.RenderBuffer;
 
 public class FrameBufferObject extends FrameBuffer implements AutoCloseable {
-    public static final int numCompCor = 3;
+    public static final int numeroComponentesCor = RenderBuffer.numeroComponentesCor;
     
     private int numRenderBuffer;
     
@@ -30,14 +32,6 @@ public class FrameBufferObject extends FrameBuffer implements AutoCloseable {
         this( 1, largura, altura );
     }
     
-    public FrameBufferObject( int numRenderBuffer ) {
-        this( numRenderBuffer, 1, 1 );
-    }
-    
-    public FrameBufferObject() {
-        this( 1, 1, 1 );
-    }
-    
     public void setNumRenderBuffer( int numRenderBuffer ) {
         if ( numRenderBuffer < 1 )
             numRenderBuffer = 1;
@@ -54,7 +48,7 @@ public class FrameBufferObject extends FrameBuffer implements AutoCloseable {
     }
     
     public int getNumBytes() {
-        return getNumPix() * FrameBufferObject.numCompCor;
+        return getNumPix() * FrameBufferObject.numeroComponentesCor;
     }
     
     private RenderBuffer[] rb;
@@ -127,6 +121,82 @@ public class FrameBufferObject extends FrameBuffer implements AutoCloseable {
         int largura, int altura
     ) {
         copiar( destino, 0, 0, largura, altura, 1, 1 );
+    }
+    
+    public void lerRenderBuffer(
+        int numero,
+        int numeroComponentesCor,
+        int x, int y, int largura, int altura,
+        ByteBuffer destino
+    ) {
+        if ( destino == null )
+            return;
+        
+        if ( numero < 1 )
+            numero = 1;
+        else if ( numero > numRenderBuffer )
+            numero = numRenderBuffer;
+        
+        int formato;
+        switch ( numeroComponentesCor ) {
+            case 1:
+                formato = GL4.GL_RED;
+                break;
+            case 3:
+                formato = GL4.GL_RGB;
+                break;
+            default:
+                formato = GL4.GL_RGBA;
+                break;
+        }
+        
+        bindRead();
+        gl4.glReadBuffer( GL4.GL_COLOR_ATTACHMENT0 + ( numero - 1 ) );
+        gl4.glReadPixels(
+            x, y, largura, altura, 
+            formato, GL4.GL_UNSIGNED_BYTE,
+            destino
+        );
+    }
+    
+    public void lerRenderBuffer(
+        int numero,
+        int x, int y, int largura, int altura,
+        ByteBuffer destino
+    ) {
+        lerRenderBuffer( numero, 4, x, y, largura, altura, destino );
+    }
+    
+    public void lerRenderBuffer(
+        int numero,
+        int numeroComponentesCor,
+        int largura, int altura,
+        ByteBuffer destino
+    ) {
+        lerRenderBuffer( numero, numeroComponentesCor, 0, 0, largura, altura, destino );
+    }
+    
+    public void lerRenderBuffer(
+        int numero,
+        int largura, int altura,
+        ByteBuffer destino
+    ) {
+        lerRenderBuffer( numero, 4, 0, 0, largura, altura, destino );
+    }
+    
+    public void lerRenderBuffer(
+        int numero,
+        int numeroComponentesCor,
+        ByteBuffer destino
+    ) {
+        lerRenderBuffer( numero, numeroComponentesCor, 0, 0, getLargura(), getAltura(), destino );
+    }
+    
+    public void lerRenderBuffer(
+        int numero,
+        ByteBuffer destino
+    ) {
+        lerRenderBuffer( numero, 4, 0, 0, getLargura(), getAltura(), destino );
     }
     
     @Override

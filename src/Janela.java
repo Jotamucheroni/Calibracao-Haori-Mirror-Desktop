@@ -17,8 +17,8 @@ public class Janela extends JFrame implements Runnable {
     Janela() {
         capacidades = new GLCapabilities( GLProfile.getDefault() );
         capacidades.setRedBits( 8 );
-        capacidades.setBlueBits( 8 );
         capacidades.setGreenBits( 8 );
+        capacidades.setBlueBits( 8 );
         capacidades.setAlphaBits( 8 );
         
         canvas = new GLCanvas( capacidades );

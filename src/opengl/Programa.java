@@ -208,7 +208,7 @@ public class Programa extends OpenGL {
                 
                 saida[0] = pixelCentral;
                 saida[1] = sobel;
-                saida[2] = ( sobel.g > 1.0 ) ? vec4( 1.0 ) : vec4( 0.0 );
+                saida[2] = ( sobel.r > 1.5 ) ? vec4( 1.0 ) : vec4( 0.0 );
             }
             """
         );
