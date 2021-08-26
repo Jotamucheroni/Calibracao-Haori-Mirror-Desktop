@@ -6,7 +6,7 @@ public class DetectorBorda implements AutoCloseable {
     private int tamanhoImagem;
     private int numeroComponentesCor;
     
-    private ByteBuffer imagem;
+    private ByteBuffer imagem, visImagem;
     
     DetectorBorda( int tamanhoImagem, int numeroComponentesCor ) {
         setTamanhoImagem( tamanhoImagem );
@@ -21,7 +21,9 @@ public class DetectorBorda implements AutoCloseable {
         if ( tamanhoImagem < 1 )
             tamanhoImagem = 1;
         
-        this.tamanhoImagem = tamanhoImagem;
+        synchronized( this ) {
+            this.tamanhoImagem = tamanhoImagem;
+        }
     }
     
     public void setNumeroComponentesCor( int numeroComponentesCor ) {
@@ -30,7 +32,9 @@ public class DetectorBorda implements AutoCloseable {
         else if ( numeroComponentesCor > 4 )
             numeroComponentesCor = 4;
         
-        this.numeroComponentesCor = numeroComponentesCor;
+        synchronized( this ) {
+            this.numeroComponentesCor = numeroComponentesCor;
+        }
     }
     
     public ByteBuffer getImagem() {
@@ -41,15 +45,28 @@ public class DetectorBorda implements AutoCloseable {
     
     public void alocar() {
         imagem = ByteBuffer.allocateDirect( tamanhoImagem );
+        
+        synchronized( this ) {
+            visImagem = imagem.asReadOnlyBuffer();
+        }
     }
     
-    private Object sincronizador = new Object();
-    public int saida = 0;
+    private int saida = 0;
+    private final Object sincronizador = new Object();
     
-    private Thread detector = new Thread(
+    private final Thread detector = new Thread(
         () ->
         {
-            int contador;
+            int
+                contador,
+                tamanhoImagem, numeroComponentesCor;
+            ByteBuffer imagem;
+            
+            synchronized ( this ) {
+                tamanhoImagem = this.tamanhoImagem;
+                numeroComponentesCor = this.numeroComponentesCor;
+                imagem = this.visImagem;
+            }
             
             while ( true ) {
                 contador = 0;
@@ -58,7 +75,9 @@ public class DetectorBorda implements AutoCloseable {
                     if ( Byte.toUnsignedInt( imagem.get() ) == 255 )
                         contador++;
                 }
-                saida = contador;
+                synchronized( this ) {
+                    saida = contador;
+                }
                 
                 synchronized( sincronizador ) {
                     try {
@@ -71,17 +90,22 @@ public class DetectorBorda implements AutoCloseable {
         }
     );
     
+    public int getSaida() {
+        synchronized ( this ) {
+            return saida;
+        }
+    }
+    
     // Verifica se todos os parâmetros obrigatórios foram devidamente inicializados
     public boolean preparado() {
-        return imagem != null;
+        synchronized ( this ) {
+            return imagem != null && visImagem != null;
+        }
     }
     
     // Verifica se o objeto está preparado e se não há outra execução ainda em curso
     public boolean pronto() {
-        if ( !detector.isAlive() || detector.getState() == Thread.State.WAITING )
-            return true;
-        
-        return false;
+        return !detector.isAlive() || detector.getState() == Thread.State.WAITING;
     }
     
     // Realiza a detecção de borda

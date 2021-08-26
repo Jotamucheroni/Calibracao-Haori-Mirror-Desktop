@@ -56,9 +56,7 @@ public class RenderBuffer extends OpenGL implements AutoCloseable {
     
     private void alocar() {
         gl4.glBindRenderbuffer( GL4.GL_RENDERBUFFER, id );
-        gl4.glRenderbufferStorage(
-            GL4.GL_RENDERBUFFER, GL4.GL_RGBA8, largura, altura
-        );
+        gl4.glRenderbufferStorage( GL4.GL_RENDERBUFFER, GL4.GL_RGBA8, largura, altura );
     }
     
     @Override

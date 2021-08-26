@@ -120,7 +120,7 @@ public class Renderizador extends OpenGL implements GLEventListener {
         frameBufferOlhoVirtual.draw( imagemOlhoVirtual );
         
         if ( detectorBordaOlhoVirtual.pronto() ) {
-            System.out.println( "Píxeis(1): " + detectorBordaOlhoVirtual.saida );
+            System.out.println( "Píxeis(1): " + detectorBordaOlhoVirtual.getSaida() );
             frameBufferOlhoVirtual.lerRenderBuffer( 1, 1, detectorBordaOlhoVirtual.getImagem() );
             detectorBordaOlhoVirtual.executar();
         }
@@ -129,13 +129,13 @@ public class Renderizador extends OpenGL implements GLEventListener {
         frameBufferSmartphone.draw( imagemSmartphone );
         
         if ( detectorBordaSmartphone.pronto() ) {
-            System.out.println( "Píxeis(2): " + detectorBordaSmartphone.saida );
+            System.out.println( "Píxeis(2): " + detectorBordaSmartphone.getSaida() );
             frameBufferOlhoVirtual.lerRenderBuffer( 2, 1, detectorBordaSmartphone.getImagem() );
             detectorBordaSmartphone.executar();
         }
         
         if ( detectorTeste.pronto() ) {
-            System.out.println( "Píxeis(3): " + detectorTeste.saida );
+            System.out.println( "Píxeis(3): " + detectorTeste.getSaida() );
             frameBufferOlhoVirtual.lerRenderBuffer( 3, 1, detectorTeste.getImagem() );
             detectorTeste.executar();
         }
