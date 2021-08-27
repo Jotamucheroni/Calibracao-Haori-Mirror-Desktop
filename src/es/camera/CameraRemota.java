@@ -3,6 +3,8 @@ package es.camera;
 import java.io.DataInputStream;
 import java.io.IOException;
 
+import javax.microedition.io.StreamConnection;
+
 public class CameraRemota extends Camera implements Runnable {
     private DataInputStream entradaRemota;
     
@@ -13,15 +15,30 @@ public class CameraRemota extends Camera implements Runnable {
         setNumCompCor( numCompCor );
     }
     
+    public CameraRemota( StreamConnection entradaRemota, int largImg, int altImg, int numCompCor ) {
+        setEntradaRemota( entradaRemota );
+        setLargImg( largImg );
+        setAltImg( altImg );
+        setNumCompCor( numCompCor );
+    }
+    
     public CameraRemota( DataInputStream entradaRemota, int largImg, int altImg ) {
         this( entradaRemota, largImg, altImg, 3 );
     }
     
+    public CameraRemota( StreamConnection entradaRemota, int largImg, int altImg ) {
+        this( entradaRemota, largImg, altImg, 3 );
+    }
+    
     public CameraRemota( int largImg, int altImg, int numCompCor ) {
-        this( null, largImg, altImg, numCompCor );
+        this( (DataInputStream) null, largImg, altImg, numCompCor );
     }
     
     public CameraRemota( DataInputStream entradaRemota, int numCompCor ) {
+        this( entradaRemota, 640, 480, numCompCor );
+    }
+    
+    public CameraRemota( StreamConnection entradaRemota, int numCompCor ) {
         this( entradaRemota, 640, 480, numCompCor );
     }
     
@@ -29,12 +46,24 @@ public class CameraRemota extends Camera implements Runnable {
         this( entradaRemota, 640, 480, 3 );
     }
     
+    public CameraRemota( StreamConnection entradaRemota ) {
+        this( entradaRemota, 640, 480, 3 );
+    }
+    
     public CameraRemota() {
-        this( null, 640, 480, 3 );
+        this( (DataInputStream) null, 640, 480, 3 );
     }
     
     public void setEntradaRemota( DataInputStream entradaRemota ) {
         this.entradaRemota = entradaRemota;
+    }
+    
+    public void setEntradaRemota( StreamConnection entradaRemota ) {
+        try {
+            this.entradaRemota = entradaRemota.openDataInputStream();
+        } catch ( IOException e ) {
+            e.printStackTrace();
+        }
     }
     
     public DataInputStream getEntradaRemota() {

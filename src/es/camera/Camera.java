@@ -54,8 +54,11 @@ public abstract class Camera implements AutoCloseable {
     }
     
     public ByteBuffer getImagem() {
+        if ( visBuffer == null )
+            return null;
+            
         visBuffer.rewind();
-
+        
         return visBuffer;
     }
     

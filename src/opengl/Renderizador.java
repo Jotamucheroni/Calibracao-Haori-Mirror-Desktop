@@ -1,9 +1,5 @@
 package opengl;
 
-import java.nio.ByteBuffer;
-import java.io.DataInputStream;
-import java.io.IOException;
-
 import com.jogamp.opengl.GL4;
 import com.jogamp.opengl.GLAutoDrawable;
 import com.jogamp.opengl.GLEventListener;
@@ -75,27 +71,8 @@ public class Renderizador extends OpenGL implements GLEventListener {
         detectorTeste = new DetectorBorda( frameBufferOlhoVirtual.getNumPix(), 1 );
         detectorTeste.alocar();
         
-        // Inicia a comunicação por Bluetooth para receber as imagens da câmera do smartphone
         bluetooth = new Bluetooth();
-        /* new Thread(
-            () -> {
-                try {
-                    DataInputStream entradaRemota;
-                    
-                    synchronized( bluetooth ) {
-                        entradaRemota = 
-                            bluetooth.conectarDispositivo( "304B0745112F" ).openDataInputStream();
-                    }
-                    
-                    synchronized( cameraSmartphone ) {
-                        cameraSmartphone.setEntradaRemota( entradaRemota );
-                        cameraSmartphone.ligar();
-                    }
-                } catch ( IOException e ) {
-                    e.printStackTrace();
-                }
-            }
-        ).start(); */
+        bluetooth.conectarDispositivo( "304B0745112F" ); // Smartphone
     }
     
     private final Tela tela = Tela.getInstance();
@@ -109,18 +86,19 @@ public class Renderizador extends OpenGL implements GLEventListener {
     
     @Override
     public void display( GLAutoDrawable drawable ) {
-        texturaOlhoVirtual.carregarImagem( cameraOlhoVirtual.getImagem() );
-        
-        synchronized( cameraSmartphone ) {
-            if( cameraSmartphone.ligada() )
-                texturaSmartphone.carregarImagem( cameraSmartphone.getImagem() );
+        if ( !cameraSmartphone.ligada() && bluetooth.getConectado() ) {
+            cameraSmartphone.setEntradaRemota( bluetooth.getConexao() );
+            cameraSmartphone.ligar();
         }
+        
+        texturaOlhoVirtual.carregarImagem( cameraOlhoVirtual.getImagem() );
+        texturaSmartphone.carregarImagem( cameraSmartphone.getImagem() );
         
         frameBufferOlhoVirtual.clear();
         frameBufferOlhoVirtual.draw( imagemOlhoVirtual );
         
         if ( detectorBordaOlhoVirtual.pronto() ) {
-            System.out.println( "Píxeis(1): " + detectorBordaOlhoVirtual.getSaida() );
+            // System.out.println( "Píxeis(1): " + detectorBordaOlhoVirtual.getSaida() );
             frameBufferOlhoVirtual.lerRenderBuffer( 1, 1, detectorBordaOlhoVirtual.getImagem() );
             detectorBordaOlhoVirtual.executar();
         }
@@ -129,18 +107,18 @@ public class Renderizador extends OpenGL implements GLEventListener {
         frameBufferSmartphone.draw( imagemSmartphone );
         
         if ( detectorBordaSmartphone.pronto() ) {
-            System.out.println( "Píxeis(2): " + detectorBordaSmartphone.getSaida() );
+            // System.out.println( "Píxeis(2): " + detectorBordaSmartphone.getSaida() );
             frameBufferOlhoVirtual.lerRenderBuffer( 2, 1, detectorBordaSmartphone.getImagem() );
             detectorBordaSmartphone.executar();
         }
         
         if ( detectorTeste.pronto() ) {
-            System.out.println( "Píxeis(3): " + detectorTeste.getSaida() );
+            // System.out.println( "Píxeis(3): " + detectorTeste.getSaida() );
             frameBufferOlhoVirtual.lerRenderBuffer( 3, 1, detectorTeste.getImagem() );
             detectorTeste.executar();
         }
         
-        System.out.println();
+        // System.out.println();
         
         tela.clear();
         frameBufferOlhoVirtual.copiar(
@@ -165,9 +143,7 @@ public class Renderizador extends OpenGL implements GLEventListener {
         frameBufferOlhoVirtual.close();
         cameraOlhoVirtual.close();
         cameraSmartphone.close();
-        synchronized( bluetooth ) {
-            bluetooth.close();
-        }
+        bluetooth.close();
     }
     
     public boolean getExecutando() {
