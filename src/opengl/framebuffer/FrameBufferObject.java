@@ -1,4 +1,4 @@
-package opengl.renderbuffer;
+package opengl.framebuffer;
 
 import java.nio.ByteBuffer;
 
@@ -19,7 +19,7 @@ public class FrameBufferObject extends FrameBuffer implements AutoCloseable {
         int[] bufferId = new int[1];
         gl4.glGenFramebuffers( 1, bufferId, 0 );
         setId( bufferId[0] );
-        alocar();
+        // alocar();
         
         int[] drawBuffers = new int[numRenderBuffer];
         for ( int i = 0; i < numRenderBuffer; i++ )
@@ -53,7 +53,7 @@ public class FrameBufferObject extends FrameBuffer implements AutoCloseable {
     
     private RenderBuffer[] rb;
     
-    private void alocar() {
+    public void alocar() {
         rb = new RenderBuffer[getNumRenderBuffer()];
         bindDraw();
         for ( int i = 0; i < rb.length; i++ ) {

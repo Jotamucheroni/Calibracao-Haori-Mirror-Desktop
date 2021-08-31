@@ -1,4 +1,4 @@
-package opengl.renderbuffer;
+package opengl.framebuffer;
 
 import com.jogamp.opengl.GL4;
 

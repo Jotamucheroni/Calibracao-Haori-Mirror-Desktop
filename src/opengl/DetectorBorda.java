@@ -8,12 +8,12 @@ public class DetectorBorda implements AutoCloseable {
     
     private ByteBuffer imagem, visImagem;
     
-    DetectorBorda( int tamanhoImagem, int numeroComponentesCor ) {
+    public DetectorBorda( int tamanhoImagem, int numeroComponentesCor ) {
         setTamanhoImagem( tamanhoImagem );
         setNumeroComponentesCor( numeroComponentesCor );
     }
     
-    DetectorBorda( int tamanhoImagem ) {
+    public DetectorBorda( int tamanhoImagem ) {
         this( tamanhoImagem, 4 );
     }
     
@@ -35,6 +35,14 @@ public class DetectorBorda implements AutoCloseable {
         synchronized( this ) {
             this.numeroComponentesCor = numeroComponentesCor;
         }
+    }
+    
+    public int getTamanhoImagem() {
+        return tamanhoImagem;
+    }
+    
+    public int getNumeroComponentesCor() {
+        return numeroComponentesCor;
     }
     
     public ByteBuffer getImagem() {
