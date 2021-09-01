@@ -11,17 +11,6 @@ import es.dispositivo.DispositivoRemoto;
 import opengl.framebuffer.Tela;
 
 public class Renderizador extends OpenGL implements GLEventListener {
-    public static final float[] 
-        refQuad = {
-            // Coordenadas  Textura
-            -1.0f,  1.0f,   0.0f, 0.0f,
-            -1.0f, -1.0f,   0.0f, 1.0f,
-            1.0f, -1.0f,    1.0f, 1.0f,
-            1.0f,  1.0f,    1.0f, 0.0f
-        };
-    
-    public static final int[] refElementos = { 0, 1, 2, 2, 3, 0 };
-    
     private Dispositivo olhoVirtual;
     private DispositivoRemoto smartphone;
     private Dispositivo[] dispositivo;

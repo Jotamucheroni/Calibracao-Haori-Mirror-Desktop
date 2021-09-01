@@ -1,13 +1,10 @@
 package es.dispositivo;
 
-import com.jogamp.opengl.GL4;
-
 import es.camera.Camera;
 
 import opengl.Textura;
 import opengl.framebuffer.FrameBufferObject;
 import opengl.Objeto;
-import opengl.Renderizador;
 import opengl.DetectorBorda;
 
 public class Dispositivo implements AutoCloseable {
@@ -154,7 +151,7 @@ public class Dispositivo implements AutoCloseable {
         
         setObjeto(
             new Objeto(
-                GL4.GL_TRIANGLES, 2, 2, Renderizador.refQuad, Renderizador.refElementos, textura
+                2, 2, Objeto.getRefQuad(), Objeto.getRefElementos(), textura
             ) 
         );
     }
