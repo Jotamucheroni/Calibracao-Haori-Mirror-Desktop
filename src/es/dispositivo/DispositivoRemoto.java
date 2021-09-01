@@ -5,6 +5,8 @@ import java.io.DataInputStream;
 import javax.microedition.io.StreamConnection;
 
 import es.camera.CameraRemota;
+import es.Bluetooth;
+
 import opengl.Textura;
 import opengl.framebuffer.FrameBufferObject;
 import opengl.Objeto;
@@ -93,5 +95,9 @@ public class DispositivoRemoto extends Dispositivo {
     
     public void setEntradaRemota( StreamConnection entradaRemota ) {
         getCameraRemota().setEntradaRemota( entradaRemota );
+    }
+    
+    public void esperarEntradaRemota( Bluetooth bluetooth ) {
+        getCameraRemota().esperarEntradaRemota( bluetooth );
     }
 }

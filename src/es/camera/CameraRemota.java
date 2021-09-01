@@ -2,11 +2,18 @@ package es.camera;
 
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
 import javax.microedition.io.StreamConnection;
 
+import es.Bluetooth;
+
 public class CameraRemota extends Camera implements Runnable {
     private DataInputStream entradaRemota;
+    
+    private final Object
+        travaLigada = new Object(),
+        travaEntradaRemota = new Object();
     
     public CameraRemota( DataInputStream entradaRemota, int largImg, int altImg, int numCompCor ) {
         setEntradaRemota( entradaRemota );
@@ -55,59 +62,132 @@ public class CameraRemota extends Camera implements Runnable {
     }
     
     public void setEntradaRemota( DataInputStream entradaRemota ) {
-        this.entradaRemota = entradaRemota;
+        synchronized( travaEntradaRemota ) {
+            this.entradaRemota = entradaRemota;
+        }
     }
     
     public void setEntradaRemota( StreamConnection entradaRemota ) {
+        if ( entradaRemota == null ) {
+            setEntradaRemota( (DataInputStream) null );
+            
+            return;
+        }
+            
         try {
-            this.entradaRemota = entradaRemota.openDataInputStream();
+            setEntradaRemota( entradaRemota.openDataInputStream() );
         } catch ( IOException e ) {
             e.printStackTrace();
         }
     }
     
-    public DataInputStream getEntradaRemota() {
-        return entradaRemota;
+    Thread esperaEntradaRemota;
+    
+    public void esperarEntradaRemota( Bluetooth bluetooth ) {
+        if ( bluetooth == null )
+            return;
+        
+        esperaEntradaRemota = new Thread(
+            () ->
+            {
+                setEntradaRemota( bluetooth.esperarConexao() );
+                ligar();
+            }
+        );
+        esperaEntradaRemota.start();
     }
     
-    private byte[] vetorByte;
+    @Override
+    public ByteBuffer getImagem() {
+        synchronized( travaLigada ) {
+            if ( visBuffer == null )
+                return null;
+                
+            visBuffer.rewind();
+            
+            return visBuffer;
+        }
+    }
+    
+    @Override
+    public boolean ligada() {
+        synchronized( travaLigada ) {
+            return ligada;
+        }
+    }
+    
+    public DataInputStream getEntradaRemota() {
+        synchronized( travaEntradaRemota ) {
+            return entradaRemota;
+        }
+    }
+    
+    // private byte[] vetorByte;
     private Thread atualizaBuffer;
     
     @Override
     public void ligar() {
-        if ( ligada || entradaRemota == null )
-            return;
+        synchronized( travaEntradaRemota ) {
+            if ( entradaRemota == null )
+                return;
+        }
         
-        setBuffer();
-        vetorByte = new byte[getLargImg() * getAltImg() * getNumCompCor()];
-        atualizaBuffer = new Thread( this );
-        ligada = true;
-        atualizaBuffer.start();
-    }
-    
-    @Override
-    public void desligar() {
-        if ( !ligada )
-            return;
-        
-        ligada = false;
-        try {
-            atualizaBuffer.join();
-        } 
-        catch ( InterruptedException ignored ) {
-            return;
+        synchronized( travaLigada ) {
+            if ( ligada )
+                return;
+            
+            if ( Thread.currentThread().isInterrupted() )
+                return;
+                
+            setBuffer();
+            // vetorByte = new byte[getLargImg() * getAltImg() * getNumCompCor()];
+            atualizaBuffer = new Thread( this );
+            atualizaBuffer.start();
+            ligada = true;
         }
     }
     
     @Override
     public void run() {
         try {
-            while( ligada ) {
+            DataInputStream entradaRemota;
+            ByteBuffer buffer;
+            
+            synchronized( travaEntradaRemota ) {
+                entradaRemota = this.entradaRemota;
+            }
+            
+            synchronized( travaLigada ) {
+                buffer = this.buffer;
+            }
+                
+            byte[] vetorByte = new byte[buffer.capacity()];
+            
+            while( !Thread.currentThread().isInterrupted() ) {
                 entradaRemota.readFully( vetorByte );
                 buffer.rewind();
                 buffer.put( vetorByte );
             }
         } 
         catch ( IOException ignored ) {}
+    }
+    
+    @Override
+    public void desligar() {
+        synchronized ( travaLigada ) {
+            if ( !ligada )
+                return;
+            
+            ligada = false;
+            
+            atualizaBuffer.interrupt();
+        }
+    }
+    
+    @Override
+    public void close() {
+        if( esperaEntradaRemota != null )
+                esperaEntradaRemota.interrupt();
+        desligar();
     }
 }

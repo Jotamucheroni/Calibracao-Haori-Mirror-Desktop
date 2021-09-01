@@ -7,7 +7,7 @@ public abstract class Camera implements AutoCloseable {
     private int numCompCor;
     protected ByteBuffer buffer, visBuffer;
     
-    protected boolean ligada;
+    protected boolean ligada = false;
     
     public void setLargImg( int largImg ) {
         if ( largImg < 1 )

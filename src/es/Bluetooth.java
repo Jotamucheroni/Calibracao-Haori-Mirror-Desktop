@@ -216,6 +216,7 @@ public class Bluetooth implements AutoCloseable {
                     if ( conexao != null ) {
                         System.out.println( "Conexão bem-sucedida!" );
                         conectado = true;
+                        travaConexao.notifyAll();
                     }
                 } catch ( IOException ignored ) {}
             }
@@ -278,6 +279,19 @@ public class Bluetooth implements AutoCloseable {
     
     public StreamConnection getConexao() {
         synchronized ( travaConexao ) {
+            return conexao;
+        }
+    }
+    
+    public StreamConnection esperarConexao() {
+        synchronized ( travaConexao ) {
+            if ( !conectado )
+                try {
+                    travaConexao.wait();
+                } catch ( InterruptedException ignored ) {
+                    return null;
+                }
+            
             return conexao;
         }
     }

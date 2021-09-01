@@ -8,6 +8,7 @@ import es.camera.CameraLocal;
 import es.camera.CameraRemota;
 import es.dispositivo.Dispositivo;
 import es.dispositivo.DispositivoRemoto;
+
 import opengl.framebuffer.Tela;
 
 public class Renderizador extends OpenGL implements GLEventListener {
@@ -22,17 +23,18 @@ public class Renderizador extends OpenGL implements GLEventListener {
         // Executar sempre primeiro
         gl4 = drawable.getGL().getGL4();
         gl4.glClearColor( 0.0f, 0.0f, 0.0f, 1.0f );
-
+        
+        bluetooth = new Bluetooth();
+        bluetooth.conectarDispositivo( "304B0745112F" ); // Smartphone
+        
         olhoVirtual = new Dispositivo( "Olho virtual", new CameraLocal( 0, 640, 480, 1 ) );
         olhoVirtual.alocar();
         olhoVirtual.ligar();
         smartphone = new DispositivoRemoto( "Smartphone", new CameraRemota( 320, 240, 1 ) );
         smartphone.alocar();
+        smartphone.esperarEntradaRemota( bluetooth );
         
         dispositivo = new Dispositivo[] { olhoVirtual, smartphone };
-        
-        bluetooth = new Bluetooth();
-        bluetooth.conectarDispositivo( "304B0745112F" ); // Smartphone
     }
     
     private final Tela tela = Tela.getInstance();
@@ -46,11 +48,6 @@ public class Renderizador extends OpenGL implements GLEventListener {
     
     @Override
     public void display( GLAutoDrawable drawable ) {        
-        if ( !smartphone.getLigado() && bluetooth.getConectado() ) {
-            smartphone.setEntradaRemota( bluetooth.getConexao() );
-            smartphone.ligar();
-        }
-        
         for ( Dispositivo disp : dispositivo ) {
             disp.atualizarTextura();
             disp.draw();
