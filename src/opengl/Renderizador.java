@@ -14,7 +14,7 @@ public class Renderizador extends OpenGL implements GLEventListener {
     private Dispositivo olhoVirtual;
     private DispositivoRemoto smartphone;
     private Dispositivo[] dispositivo;
-      
+    
     private Bluetooth bluetooth;
     
     @Override

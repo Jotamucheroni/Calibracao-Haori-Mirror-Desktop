@@ -230,9 +230,7 @@ public class Objeto extends OpenGL {
         gl4.glUniformMatrix4fv( pontMatrizTrans, 1, true, matrizTrans, 0 );
         
         gl4.glBindVertexArray( vao[0] );
-        
         gl4.glDrawElements( GL4.GL_TRIANGLES, numElementos, GL4.GL_UNSIGNED_INT, 0 );
-        
         gl4.glBindVertexArray( 0 );
         
         gl4.glUseProgram( 0 );

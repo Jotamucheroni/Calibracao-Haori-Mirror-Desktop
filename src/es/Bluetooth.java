@@ -16,11 +16,20 @@ import javax.microedition.io.StreamConnection;
 public class Bluetooth implements AutoCloseable {
     private LocalDevice localDevice;
     private DiscoveryAgent discoveryAgent;
+    
     private boolean pesquisando, conectado, ligado;
-    private Object travaPesquisa, travaConexao, travaLigado;
+    private final Object
+        travaPesquisa = new Object(),
+        travaConexao = new Object(),
+        travaLigado = new Object();
+    
     private TreeSet<RemoteDevice> remoteDevicesPesquisa, remoteDevicesConexao;
     
     public Bluetooth() {
+        pesquisando = false;
+        conectado = false;
+        ligado = false;
+        
         try {
             localDevice = LocalDevice.getLocalDevice();
             localDevice.setDiscoverable( DiscoveryAgent.GIAC );
@@ -32,13 +41,13 @@ public class Bluetooth implements AutoCloseable {
             );
             
             remoteDevicesConexao = new TreeSet<RemoteDevice>( remoteDevicesPesquisa );
-            
-            pesquisando = false;    travaPesquisa = new Object();
-            conectado = false;      travaConexao = new Object();
-            ligado = true;          travaLigado = new Object();
         } catch ( IOException e ) {
             e.printStackTrace();
+            
+            return;
         }
+        
+        ligado = true;
     }
     
     public static void printDevice( RemoteDevice btDevice ) {            
