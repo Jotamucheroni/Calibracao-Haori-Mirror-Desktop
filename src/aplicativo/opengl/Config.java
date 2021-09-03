@@ -1,4 +1,4 @@
-package opengl;
+package aplicativo.opengl;
 
 import java.util.logging.Logger;
 import java.util.Arrays;

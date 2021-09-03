@@ -1,11 +1,10 @@
-package es.dispositivo;
+package aplicativo.es.dispositivo;
 
-import es.camera.Camera;
-
-import opengl.Textura;
-import opengl.framebuffer.FrameBufferObject;
-import opengl.Objeto;
-import opengl.DetectorBorda;
+import aplicativo.es.camera.Camera;
+import aplicativo.opengl.DetectorPontos;
+import aplicativo.opengl.Objeto;
+import aplicativo.opengl.Textura;
+import aplicativo.opengl.framebuffer.FrameBufferObject;
 
 public class Dispositivo implements AutoCloseable {
     private String id;
@@ -15,26 +14,26 @@ public class Dispositivo implements AutoCloseable {
     private FrameBufferObject frameBufferObject;
     private Objeto objeto;
     
-    private DetectorBorda detectorBorda;
+    private DetectorPontos detectorPontos;
     
     public Dispositivo(
         String id,
         Camera camera, Textura textura, FrameBufferObject frameBufferObject, Objeto objeto,
-        DetectorBorda detectorBorda
+        DetectorPontos detectorPontos
     ) {
         setId( id );
         setCamera( camera );
         setTextura( textura );
         setFrameBufferObject( frameBufferObject );
         setObjeto( objeto );
-        setDetectorBorda( detectorBorda );
+        setDetectorPontos( detectorPontos );
     }
     
     public Dispositivo(
         Camera camera, Textura textura, FrameBufferObject frameBufferObject, Objeto objeto,
-        DetectorBorda detectorBorda
+        DetectorPontos detectorPontos
     ) {
-        this( null, camera, textura, frameBufferObject, objeto, detectorBorda );
+        this( null, camera, textura, frameBufferObject, objeto, detectorPontos );
     }
     
     public Dispositivo(
@@ -43,7 +42,7 @@ public class Dispositivo implements AutoCloseable {
     ) {
         this( id, camera, textura, frameBufferObject, objeto, null );
         
-        setDetectorBorda();
+        setDetectorPontos();
     }
     
     public Dispositivo(
@@ -59,7 +58,7 @@ public class Dispositivo implements AutoCloseable {
         this( id, camera, textura, frameBufferObject, null, null );
         
         setObjeto();
-        setDetectorBorda();
+        setDetectorPontos();
     }
     
     public Dispositivo(
@@ -76,7 +75,7 @@ public class Dispositivo implements AutoCloseable {
         
         setFrameBufferObject();
         setObjeto();
-        setDetectorBorda();
+        setDetectorPontos();
     }
     
     public Dispositivo(
@@ -94,7 +93,7 @@ public class Dispositivo implements AutoCloseable {
         setTextura();
         setFrameBufferObject();
         setObjeto();
-        setDetectorBorda();
+        setDetectorPontos();
     }
     
     public Dispositivo(
@@ -156,32 +155,36 @@ public class Dispositivo implements AutoCloseable {
         );
     }
     
-    public void setDetectorBorda( DetectorBorda detector ) {
-        this.detectorBorda = detector;
+    public void setDetectorPontos( DetectorPontos detectorPontos ) {
+        this.detectorPontos = detectorPontos;
     }
     
-    private void setDetectorBorda() {
+    private void setDetectorPontos() {
         if ( frameBufferObject == null )
             return;
         
-        DetectorBorda inicializadorDetectorBorda = new DetectorBorda(
+        DetectorPontos inicializadorDetectorPontos = new DetectorPontos(
             frameBufferObject.getNumPix(), 1
         );
         
         if ( textura == null ) {
-            setDetectorBorda( inicializadorDetectorBorda );
+            setDetectorPontos( inicializadorDetectorPontos );
             
             return;
         }
         
         if ( !textura.getMonocromatica() ) {
-            inicializadorDetectorBorda.setTamanhoImagem( frameBufferObject.getNumBytes() );
-            inicializadorDetectorBorda.setNumeroComponentesCor(
+            inicializadorDetectorPontos.setTamanhoImagem( frameBufferObject.getNumBytes() );
+            inicializadorDetectorPontos.setNumeroComponentesCor(
                 FrameBufferObject.numeroComponentesCor
             );
         }
         
-        setDetectorBorda( inicializadorDetectorBorda );
+        setDetectorPontos( inicializadorDetectorPontos );
+    }
+    
+    public String getId() {
+        return id;
     }
     
     public Camera getCamera() {
@@ -200,22 +203,29 @@ public class Dispositivo implements AutoCloseable {
         return objeto;
     }
     
-    public DetectorBorda getDetectorBorda() {
-        return detectorBorda;
+    public DetectorPontos getDetectorPontos() {
+        return detectorPontos;
     }
     
     public boolean getLigado() {
         if( camera == null )
             return false;
-            
-        return camera.ligada();
+        
+        return camera.getLigada();
     }
     
     public void ligar() {
         if ( camera == null )
             return;
-            
+        
         camera.ligar();
+    }
+    
+    public void desligar() {
+        if ( camera == null )
+            return;
+        
+        camera.desligar();
     }
     
     public void alocar() {
@@ -225,14 +235,14 @@ public class Dispositivo implements AutoCloseable {
         if ( frameBufferObject != null )
             frameBufferObject.alocar();
         
-        if ( detectorBorda != null )
-            detectorBorda.alocar();
+        if ( detectorPontos != null )
+            detectorPontos.alocar();
     }
     
     public void atualizarTextura() {
         if ( textura == null || camera == null )
             return;
-            
+        
         textura.carregarImagem( camera.getImagem() );
     }
     
@@ -245,16 +255,16 @@ public class Dispositivo implements AutoCloseable {
     }
     
     public void atualizarImagemDetector( int numeroRenderBuffer ) {
-        if ( detectorBorda == null || frameBufferObject == null )
+        if ( detectorPontos == null || frameBufferObject == null )
             return;
         
-        if ( detectorBorda.pronto() ) {
-            System.out.println( "Saída [" + id + "]:\t" + detectorBorda.getSaida() );
+        if ( detectorPontos.pronto() ) {
+            // System.out.println( "Saída [" + id + "]:\t" + detectorPontos.getSaida() );
             frameBufferObject.lerRenderBuffer(
                 numeroRenderBuffer,
-                detectorBorda.getNumeroComponentesCor(), detectorBorda.getImagem()
+                detectorPontos.getNumeroComponentesCor(), detectorPontos.getImagem()
             );
-            detectorBorda.executar();
+            detectorPontos.executar();
         }
     }
     
@@ -264,9 +274,16 @@ public class Dispositivo implements AutoCloseable {
     
     @Override
     public void close() {
-        detectorBorda.close();
-        frameBufferObject.close();
-        textura.close();
-        camera.close();
+        if ( detectorPontos != null )
+            detectorPontos.close();
+        
+        if ( frameBufferObject != null )
+            frameBufferObject.close();
+        
+        if ( textura != null )
+            textura.close();
+        
+        if ( camera != null )
+            camera.close();
     }
 }

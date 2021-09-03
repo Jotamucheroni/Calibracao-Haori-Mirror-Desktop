@@ -1,4 +1,4 @@
-package opengl;
+package aplicativo.opengl;
 
 import java.nio.ByteBuffer;
 
@@ -28,10 +28,6 @@ public class Textura extends OpenGL implements AutoCloseable {
     
     public Textura( int largura, int altura ) {
         this( largura, altura, false );
-    }
-    
-    public Textura( boolean monocromatica ) {
-        this( 1, 1, monocromatica );
     }
     
     public Textura() {
@@ -86,6 +82,10 @@ public class Textura extends OpenGL implements AutoCloseable {
         );
         
         alocado = true;
+    }
+    
+    public boolean getAlocado() {
+        return alocado;
     }
     
     public void carregarImagem( ByteBuffer imagem ) {

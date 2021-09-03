@@ -1,4 +1,4 @@
-package opengl;
+package aplicativo.opengl;
 
 import com.jogamp.opengl.GL4;
 
@@ -16,8 +16,6 @@ public class RenderBuffer extends OpenGL implements AutoCloseable {
         int[] bufferId = new int[1];
         gl4.glGenRenderbuffers( 1, bufferId, 0 );
         id = bufferId[0];
-        
-        alocar();
     }
     
     public void setLargura( int largura ) {
@@ -54,9 +52,17 @@ public class RenderBuffer extends OpenGL implements AutoCloseable {
         return getNumPix() * RenderBuffer.numeroComponentesCor;
     }
     
-    private void alocar() {
+    private boolean alocado = false;
+    
+    public void alocar() {
         gl4.glBindRenderbuffer( GL4.GL_RENDERBUFFER, id );
         gl4.glRenderbufferStorage( GL4.GL_RENDERBUFFER, GL4.GL_RGBA8, largura, altura );
+        
+        alocado = true;
+    }
+    
+    public boolean getAlocado() {
+        return alocado;
     }
     
     @Override

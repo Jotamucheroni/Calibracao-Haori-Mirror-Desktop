@@ -1,4 +1,4 @@
-package es.camera;
+package aplicativo.es.camera;
 
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
@@ -11,6 +11,21 @@ import org.bytedeco.javacv.FrameGrabber.Exception;
 
 public class CameraLocal extends Camera implements Runnable {
     private int numCamera;
+    private OpenCVFrameGrabber grabber;
+    
+    public static void imprimirDispositivos() {
+        String nomeArquivoDispositivo;
+        
+        System.out.println( "Dispositivos de vídeo disponíveis: " );        
+        for ( int i = 0; i <= 10; i++ ) {
+            nomeArquivoDispositivo = "/dev/video" + i;
+            
+            if ( Files.exists( Paths.get( nomeArquivoDispositivo ) ) ) {
+                System.out.println( i + " - " + nomeArquivoDispositivo );
+                i++;
+            }
+        }
+    }
     
     public CameraLocal( int numCamera, int largImg, int altImg, int numCompCor ) {
         setCamera( numCamera );
@@ -39,14 +54,8 @@ public class CameraLocal extends Camera implements Runnable {
         if ( numCamera < 0 )
             numCamera = 0;
         
-        String caminhoVideo = "/dev/video" + numCamera;
-        while ( ! Files.exists( Paths.get( caminhoVideo ) )
-                && numCamera <= 10 ) {
-            numCamera++;
-            caminhoVideo = "/dev/video" + numCamera;
-        }
-        
         this.numCamera = numCamera;
+        grabber = new OpenCVFrameGrabber( numCamera );
     }
     
     public int getCamera() {
@@ -57,33 +66,23 @@ public class CameraLocal extends Camera implements Runnable {
     
     @Override
     public void run() {
-        OpenCVFrameGrabber grabber = new OpenCVFrameGrabber( numCamera );
-        switch ( getNumCompCor() ) {
-            case 1:
-                grabber.setImageMode( FrameGrabber.ImageMode.GRAY );
-                break;
-            default:
-                grabber.setImageMode( FrameGrabber.ImageMode.COLOR );
-                break;
-        }
-        grabber.setImageWidth( getLargImg() );
-        grabber.setImageHeight( getAltImg() );
-        
         try {
             grabber.start();
             
             Frame imagem;           
-            while( ligada ) {
+            while( !Thread.currentThread().isInterrupted() ) {
                 buffer.rewind();
                 imagem = grabber.grab();
                 buffer.put( (ByteBuffer) imagem.image[0] );
                 imagem.close();
             }
-            grabber.close();
+            // grabber.close();
+            grabber.stop();
         } catch ( Exception ignored )  {
             try {
                 ligada = false;
-                grabber.close();
+                // grabber.close();
+                grabber.stop();
             } catch ( Exception ignored2 ) {
                 return;
             }
@@ -96,9 +95,21 @@ public class CameraLocal extends Camera implements Runnable {
             return;
         
         setBuffer();
+        
+        switch ( getNumCompCor() ) {
+            case 1:
+                grabber.setImageMode( FrameGrabber.ImageMode.GRAY );
+                break;
+            default:
+                grabber.setImageMode( FrameGrabber.ImageMode.COLOR );
+                break;
+        }
+        grabber.setImageWidth( getLargImg() );
+        grabber.setImageHeight( getAltImg() );
+        
         atualizaBuffer = new Thread( this );
-        ligada = true;
         atualizaBuffer.start();
+        ligada = true;
     }
     
     public void desligar() {
@@ -106,11 +117,17 @@ public class CameraLocal extends Camera implements Runnable {
             return;
         
         ligada = false;
+        atualizaBuffer.interrupt();
         try {
             atualizaBuffer.join();
-        } 
-        catch ( InterruptedException ignored ) {
-            return;
-        }
+        } catch ( InterruptedException ignored ) {}
+    }
+    
+    @Override
+    public void close() {
+        desligar();
+        try {
+            grabber.close();
+        } catch ( Exception ignored ) {}
     }
 }

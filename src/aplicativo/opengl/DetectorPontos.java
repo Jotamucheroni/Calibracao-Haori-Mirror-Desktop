@@ -1,19 +1,19 @@
-package opengl;
+package aplicativo.opengl;
 
 import java.nio.ByteBuffer;
 
-public class DetectorBorda implements AutoCloseable {
+public class DetectorPontos implements AutoCloseable {
     private int tamanhoImagem;
     private int numeroComponentesCor;
     
     private ByteBuffer imagem, visImagem;
     
-    public DetectorBorda( int tamanhoImagem, int numeroComponentesCor ) {
+    public DetectorPontos( int tamanhoImagem, int numeroComponentesCor ) {
         setTamanhoImagem( tamanhoImagem );
         setNumeroComponentesCor( numeroComponentesCor );
     }
     
-    public DetectorBorda( int tamanhoImagem ) {
+    public DetectorPontos( int tamanhoImagem ) {
         this( tamanhoImagem, 4 );
     }
     
@@ -46,10 +46,15 @@ public class DetectorBorda implements AutoCloseable {
     }
     
     public ByteBuffer getImagem() {
+        if ( imagem == null )
+            return null;
+        
         imagem.rewind();
         
         return imagem;
     }
+    
+    private boolean alocado = false;
     
     public void alocar() {
         imagem = ByteBuffer.allocateDirect( tamanhoImagem );
@@ -57,6 +62,12 @@ public class DetectorBorda implements AutoCloseable {
         synchronized( this ) {
             visImagem = imagem.asReadOnlyBuffer();
         }
+        
+        alocado = true;
+    }
+    
+    public boolean getAlocado() {
+        return alocado;
     }
     
     private int saida = 0;
@@ -76,7 +87,7 @@ public class DetectorBorda implements AutoCloseable {
                 imagem = this.visImagem;
             }
             
-            while ( true ) {
+            while ( !Thread.currentThread().isInterrupted() ) {
                 contador = 0;
                 for( int i = 0; i < tamanhoImagem; i += numeroComponentesCor ) {
                     imagem.position( i );
@@ -131,7 +142,6 @@ public class DetectorBorda implements AutoCloseable {
     
     @Override
     public void close() {
-        if ( detector.isAlive() )
-            detector.interrupt();
+        detector.interrupt();
     }
 }

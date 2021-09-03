@@ -1,15 +1,15 @@
-package opengl;
+package aplicativo.opengl;
 
 import com.jogamp.opengl.GLAutoDrawable;
 import com.jogamp.opengl.GLEventListener;
 
-import es.Bluetooth;
-import es.camera.CameraLocal;
-import es.camera.CameraRemota;
-import es.dispositivo.Dispositivo;
-import es.dispositivo.DispositivoRemoto;
-
-import opengl.framebuffer.Tela;
+import aplicativo.Aplicativo;
+import aplicativo.es.Bluetooth;
+import aplicativo.es.camera.CameraLocal;
+import aplicativo.es.camera.CameraRemota;
+import aplicativo.es.dispositivo.Dispositivo;
+import aplicativo.es.dispositivo.DispositivoRemoto;
+import aplicativo.opengl.framebuffer.Tela;
 
 public class Renderizador extends OpenGL implements GLEventListener {
     private Dispositivo olhoVirtual;
@@ -27,9 +27,16 @@ public class Renderizador extends OpenGL implements GLEventListener {
         bluetooth = new Bluetooth();
         bluetooth.conectarDispositivo( "304B0745112F" ); // Smartphone
         
-        olhoVirtual = new Dispositivo( "Olho virtual", new CameraLocal( 0, 640, 480, 1 ) );
+        int numCameraLocal = 0;
+        CameraLocal.imprimirDispositivos();
+        System.out.print( "Escolha a câmera informando o índice: " );   
+        numCameraLocal = Aplicativo.entrada.nextInt();
+        olhoVirtual = new Dispositivo(
+            "Olho virtual", new CameraLocal( numCameraLocal, 640, 480, 1 )
+        );
         olhoVirtual.alocar();
         olhoVirtual.ligar();
+        
         smartphone = new DispositivoRemoto( "Smartphone", new CameraRemota( 320, 240, 1 ) );
         smartphone.alocar();
         smartphone.esperarEntradaRemota( bluetooth );
@@ -54,7 +61,7 @@ public class Renderizador extends OpenGL implements GLEventListener {
             disp.atualizarImagemDetector( 3 );
         }
         
-        System.out.println();
+        // System.out.println();
         
         tela.clear();
         olhoVirtual.getFrameBufferObject().copiar(

@@ -1,23 +1,22 @@
-package es.dispositivo;
+package aplicativo.es.dispositivo;
 
 import java.io.DataInputStream;
 
 import javax.microedition.io.StreamConnection;
 
-import es.camera.CameraRemota;
-import es.Bluetooth;
-
-import opengl.Textura;
-import opengl.framebuffer.FrameBufferObject;
-import opengl.Objeto;
-import opengl.DetectorBorda;
+import aplicativo.es.Bluetooth;
+import aplicativo.es.camera.CameraRemota;
+import aplicativo.opengl.DetectorPontos;
+import aplicativo.opengl.Objeto;
+import aplicativo.opengl.Textura;
+import aplicativo.opengl.framebuffer.FrameBufferObject;
 
 public class DispositivoRemoto extends Dispositivo {
     public DispositivoRemoto(
         String id,
         CameraRemota cameraRemota,
         Textura textura, FrameBufferObject frameBufferObject, Objeto objeto,
-        DetectorBorda detectorBorda
+        DetectorPontos detectorBorda
     ) {
         super( id, cameraRemota, textura, frameBufferObject, objeto, detectorBorda );
     }
@@ -25,7 +24,7 @@ public class DispositivoRemoto extends Dispositivo {
     public DispositivoRemoto(
         CameraRemota cameraRemota,
         Textura textura, FrameBufferObject frameBufferObject, Objeto objeto,
-        DetectorBorda detectorBorda
+        DetectorPontos detectorBorda
     ) {
         super( null, cameraRemota, textura, frameBufferObject, objeto, detectorBorda );
     }

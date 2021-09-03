@@ -1,4 +1,4 @@
-package es.camera;
+package aplicativo.es.camera;
 
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -6,7 +6,7 @@ import java.nio.ByteBuffer;
 
 import javax.microedition.io.StreamConnection;
 
-import es.Bluetooth;
+import aplicativo.es.Bluetooth;
 
 public class CameraRemota extends Camera implements Runnable {
     private DataInputStream entradaRemota;
@@ -73,7 +73,7 @@ public class CameraRemota extends Camera implements Runnable {
             
             return;
         }
-            
+        
         try {
             setEntradaRemota( entradaRemota.openDataInputStream() );
         } catch ( IOException e ) {
@@ -100,19 +100,14 @@ public class CameraRemota extends Camera implements Runnable {
     @Override
     public ByteBuffer getImagem() {
         synchronized( travaLigada ) {
-            if ( visBuffer == null )
-                return null;
-                
-            visBuffer.rewind();
-            
-            return visBuffer;
+            return super.getImagem();
         }
     }
     
     @Override
-    public boolean ligada() {
+    public boolean getLigada() {
         synchronized( travaLigada ) {
-            return ligada;
+            return super.getLigada();
         }
     }
     
@@ -122,7 +117,6 @@ public class CameraRemota extends Camera implements Runnable {
         }
     }
     
-    // private byte[] vetorByte;
     private Thread atualizaBuffer;
     
     @Override
@@ -138,9 +132,8 @@ public class CameraRemota extends Camera implements Runnable {
             
             if ( Thread.currentThread().isInterrupted() )
                 return;
-                
+            
             setBuffer();
-            // vetorByte = new byte[getLargImg() * getAltImg() * getNumCompCor()];
             atualizaBuffer = new Thread( this );
             atualizaBuffer.start();
             ligada = true;
@@ -160,7 +153,7 @@ public class CameraRemota extends Camera implements Runnable {
             synchronized( travaLigada ) {
                 buffer = this.buffer;
             }
-                
+            
             byte[] vetorByte = new byte[buffer.capacity()];
             
             while( !Thread.currentThread().isInterrupted() ) {

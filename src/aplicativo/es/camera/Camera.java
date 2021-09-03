@@ -1,4 +1,4 @@
-package es.camera;
+package aplicativo.es.camera;
 
 import java.nio.ByteBuffer;
 
@@ -62,7 +62,7 @@ public abstract class Camera implements AutoCloseable {
         return visBuffer;
     }
     
-    public boolean ligada() {
+    public boolean getLigada() {
         return ligada;
     }
     

@@ -1,4 +1,4 @@
-package opengl;
+package aplicativo.opengl;
 
 import javax.imageio.ImageIO;
 
@@ -20,7 +20,7 @@ public class Imagem extends Textura {
         setMonocromatica( monocromatica );
     }
     
-    Imagem( String caminhoArquivo ) {
+    public Imagem( String caminhoArquivo ) {
         this( caminhoArquivo, false );
     }
     
@@ -46,7 +46,7 @@ public class Imagem extends Textura {
         return caminhoArquivo;
     }
     
-    private byte[] toBGR( byte[] imagemABGR ) {
+    private byte[] ABGRparaBGR( byte[] imagemABGR ) {
         byte[] imagemBGR = new byte[imagemABGR.length - imagemABGR.length / 4];
         
         for ( int i = 1, j = 0; i < imagemABGR.length; i += 4, j += 3 ) {
@@ -62,7 +62,7 @@ public class Imagem extends Textura {
         if ( bufferImagem == null )
             return;
         
-        byte[] imagem = toBGR(
+        byte[] imagem = ABGRparaBGR(
             ( (DataBufferByte) bufferImagem.getData().getDataBuffer() ).getData()
         );
         

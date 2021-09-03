@@ -1,4 +1,4 @@
-package opengl;
+package aplicativo.opengl;
 
 import java.nio.charset.StandardCharsets;
 import java.util.logging.Logger;

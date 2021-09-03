@@ -5,7 +5,7 @@
             "type": "java",
             "name": "Executar",
             "request": "launch",
-            "mainClass": "Aplicativo",
+            "mainClass": "aplicativo.Aplicativo",
             "vmArgs": [
                 "--add-exports=java.desktop/sun.awt=ALL-UNNAMED", "-Djogl.disable.openglcore=false"
             ],

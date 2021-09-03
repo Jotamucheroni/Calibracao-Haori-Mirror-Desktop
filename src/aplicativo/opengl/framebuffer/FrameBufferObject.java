@@ -1,10 +1,10 @@
-package opengl.framebuffer;
+package aplicativo.opengl.framebuffer;
 
 import java.nio.ByteBuffer;
 
 import com.jogamp.opengl.GL4;
 
-import opengl.RenderBuffer;
+import aplicativo.opengl.RenderBuffer;
 
 public class FrameBufferObject extends FrameBuffer implements AutoCloseable {
     public static final int numeroComponentesCor = RenderBuffer.numeroComponentesCor;
@@ -19,7 +19,6 @@ public class FrameBufferObject extends FrameBuffer implements AutoCloseable {
         int[] bufferId = new int[1];
         gl4.glGenFramebuffers( 1, bufferId, 0 );
         setId( bufferId[0] );
-        // alocar();
         
         int[] drawBuffers = new int[numRenderBuffer];
         for ( int i = 0; i < numRenderBuffer; i++ )
@@ -58,11 +57,14 @@ public class FrameBufferObject extends FrameBuffer implements AutoCloseable {
         bindDraw();
         for ( int i = 0; i < rb.length; i++ ) {
             rb[i] = new RenderBuffer( getLargura(), getAltura() );
+            rb[i].alocar();
             gl4.glFramebufferRenderbuffer(
                 GL4.GL_DRAW_FRAMEBUFFER, GL4.GL_COLOR_ATTACHMENT0 + i,
                 GL4.GL_RENDERBUFFER, rb[i].getId()
             );
         }
+        
+        setAlocado( true );
     }
     
     public void copiar(
@@ -70,21 +72,24 @@ public class FrameBufferObject extends FrameBuffer implements AutoCloseable {
         int x, int y, int largura, int altura,
         int numColunas, int numLinhas
     ) {
+        if ( destino == null || !getAlocado() )
+            return;
+        
         if( x < 0 )
             x = 0;
-            
+        
         if( y < 0 )
             y = 0;
-            
+        
         if( largura < 1 )
             largura = 1;
-            
+        
         if( altura < 1 )
             altura = 1;
-            
+        
         if( numColunas < 1 )
             numColunas = 1;
-            
+        
         if( numLinhas < 1 )
             numLinhas = 1;
         
@@ -129,7 +134,7 @@ public class FrameBufferObject extends FrameBuffer implements AutoCloseable {
         int x, int y, int largura, int altura,
         ByteBuffer destino
     ) {
-        if ( destino == null )
+        if ( destino == null || !getAlocado() )
             return;
         
         if ( numero < 1 )

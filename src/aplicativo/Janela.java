@@ -1,3 +1,4 @@
+package aplicativo;
 import javax.swing.JFrame;
 import javax.swing.WindowConstants;
 
@@ -7,7 +8,7 @@ import com.jogamp.opengl.GLCapabilities;
 import com.jogamp.opengl.GLProfile;
 import com.jogamp.opengl.awt.GLCanvas;
 
-import opengl.Renderizador;
+import aplicativo.opengl.Renderizador;
 
 public class Janela extends JFrame implements Runnable {
     GLCapabilities capacidades;

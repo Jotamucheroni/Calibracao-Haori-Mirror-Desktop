@@ -1,14 +1,16 @@
-package opengl.framebuffer;
+package aplicativo.opengl.framebuffer;
 
 import com.jogamp.opengl.GL4;
 
-import opengl.Objeto;
-import opengl.OpenGL;
+import aplicativo.opengl.Objeto;
+import aplicativo.opengl.OpenGL;
 
 public abstract class FrameBuffer extends OpenGL {
     private int largura, altura;
     
     private int id;
+    
+    private boolean alocado = false;
     
     public void setLargura( int largura ) {
         if ( largura < 1 )
@@ -31,6 +33,10 @@ public abstract class FrameBuffer extends OpenGL {
         this.id = id;
     }
     
+    protected void setAlocado( boolean alocado ) {
+        this.alocado = alocado;
+    }
+    
     public int getLargura() {
         return largura;
     }
@@ -41,6 +47,10 @@ public abstract class FrameBuffer extends OpenGL {
     
     public int getId() {
         return id;
+    }
+    
+    public boolean getAlocado() {
+        return alocado;
     }
     
     public void bindDraw() {
@@ -56,11 +66,17 @@ public abstract class FrameBuffer extends OpenGL {
     }
     
     public void clear() {
+        if ( !alocado )
+            return;
+        
         bindDraw();
         gl4.glClear( GL4.GL_COLOR_BUFFER_BIT );
     }
     
     public void draw( int x, int y, int largura, int altura, Objeto objeto ) {
+        if ( !alocado || objeto == null )
+            return;
+        
         bindDraw();
         gl4.glViewport( x, y, largura, altura );
         objeto.draw();
@@ -75,6 +91,9 @@ public abstract class FrameBuffer extends OpenGL {
     }
     
     public void draw( int x, int y, int largura, int altura, Objeto[] objeto ) {
+        if ( !alocado || objeto == null )
+            return;
+        
         bindDraw();
         gl4.glViewport( x, y, largura, altura );
         

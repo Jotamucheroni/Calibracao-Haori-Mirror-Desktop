@@ -1,4 +1,4 @@
-package opengl;
+package aplicativo.opengl;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
