@@ -7,7 +7,7 @@ import javax.microedition.io.StreamConnection;
 import aplicativo.es.Bluetooth;
 import aplicativo.es.camera.CameraRemota;
 import aplicativo.opengl.DetectorPontos;
-import aplicativo.opengl.Objeto;
+import aplicativo.opengl.Desenho;
 import aplicativo.opengl.Textura;
 import aplicativo.opengl.framebuffer.FrameBufferObject;
 
@@ -15,33 +15,33 @@ public class DispositivoRemoto extends Dispositivo {
     public DispositivoRemoto(
         String id,
         CameraRemota cameraRemota,
-        Textura textura, FrameBufferObject frameBufferObject, Objeto objeto,
+        Textura textura, FrameBufferObject frameBufferObject, Desenho desenho,
         DetectorPontos detectorBorda
     ) {
-        super( id, cameraRemota, textura, frameBufferObject, objeto, detectorBorda );
+        super( id, cameraRemota, textura, frameBufferObject, desenho, detectorBorda );
     }
     
     public DispositivoRemoto(
         CameraRemota cameraRemota,
-        Textura textura, FrameBufferObject frameBufferObject, Objeto objeto,
+        Textura textura, FrameBufferObject frameBufferObject, Desenho desenho,
         DetectorPontos detectorBorda
     ) {
-        super( null, cameraRemota, textura, frameBufferObject, objeto, detectorBorda );
+        super( null, cameraRemota, textura, frameBufferObject, desenho, detectorBorda );
     }
     
     public DispositivoRemoto(
         String id,
         CameraRemota cameraRemota,
-        Textura textura, FrameBufferObject frameBufferObject, Objeto objeto
+        Textura textura, FrameBufferObject frameBufferObject, Desenho desenho
     ) {
-        super( id, cameraRemota, textura, frameBufferObject, objeto );
+        super( id, cameraRemota, textura, frameBufferObject, desenho );
     }
     
     public DispositivoRemoto(
         CameraRemota cameraRemota,
-        Textura textura, FrameBufferObject frameBufferObject, Objeto objeto
+        Textura textura, FrameBufferObject frameBufferObject, Desenho desenho
     ) {
-        super( null, cameraRemota, textura, frameBufferObject, objeto );
+        super( null, cameraRemota, textura, frameBufferObject, desenho );
     }
     
     public DispositivoRemoto(

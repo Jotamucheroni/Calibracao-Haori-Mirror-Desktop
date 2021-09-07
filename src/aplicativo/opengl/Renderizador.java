@@ -18,6 +18,8 @@ public class Renderizador extends OpenGL implements GLEventListener {
     
     private Bluetooth bluetooth;
     
+    private Desenho linhasCentrais;
+    
     @Override
     public void init( GLAutoDrawable drawable ) {
         // Executar sempre primeiro
@@ -42,6 +44,17 @@ public class Renderizador extends OpenGL implements GLEventListener {
         smartphone.esperarEntradaRemota( bluetooth );
         
         dispositivo = new Dispositivo[] { olhoVirtual, smartphone };
+        
+        linhasCentrais = new Desenho( 
+            2, 3,
+            new float[]{
+               -1.0f,   0.0f,   1.0f,   0.0f,   0.0f,
+                1.0f,   0.0f,   1.0f,   0.0f,   0.0f,
+                0.0f,   1.0f,   1.0f,   0.0f,   0.0f,
+                0.0f,  -1.0f,   1.0f,   0.0f,   0.0f
+            },
+            Desenho.LINHAS
+        );
     }
     
     private final Tela tela = Tela.getInstance();
@@ -59,6 +72,8 @@ public class Renderizador extends OpenGL implements GLEventListener {
             disp.atualizarTextura();
             disp.draw();
             disp.atualizarImagemDetector( 3 );
+            
+            disp.getFrameBufferObject().draw( linhasCentrais );
         }
         
         // System.out.println();
@@ -78,6 +93,7 @@ public class Renderizador extends OpenGL implements GLEventListener {
     public void dispose( GLAutoDrawable drawable ) {
         executando = false;
         
+        linhasCentrais.close();
         olhoVirtual.close();
         smartphone.close();
         bluetooth.close();

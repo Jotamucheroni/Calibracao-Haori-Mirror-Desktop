@@ -104,6 +104,10 @@ public class Textura extends OpenGL implements AutoCloseable {
         gl4.glBindTexture( GL4.GL_TEXTURE_2D, id );
     }
     
+    public void unbind() {
+        gl4.glBindTexture( GL4.GL_TEXTURE_2D, 0 );
+    }
+    
     @Override
     public void close() {
         gl4.glDeleteTextures( 1, new int[]{ id }, 0 );

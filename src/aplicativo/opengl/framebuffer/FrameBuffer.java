@@ -2,7 +2,7 @@ package aplicativo.opengl.framebuffer;
 
 import com.jogamp.opengl.GL4;
 
-import aplicativo.opengl.Objeto;
+import aplicativo.opengl.Desenho;
 import aplicativo.opengl.OpenGL;
 
 public abstract class FrameBuffer extends OpenGL {
@@ -73,39 +73,39 @@ public abstract class FrameBuffer extends OpenGL {
         gl4.glClear( GL4.GL_COLOR_BUFFER_BIT );
     }
     
-    public void draw( int x, int y, int largura, int altura, Objeto objeto ) {
-        if ( !alocado || objeto == null )
+    public void draw( int x, int y, int largura, int altura, Desenho desenho ) {
+        if ( !alocado || desenho == null )
             return;
         
         bindDraw();
         gl4.glViewport( x, y, largura, altura );
-        objeto.draw();
+        desenho.draw();
     }
     
-    public void draw( int largura, int altura, Objeto objeto ) {
-        draw( 0, 0, largura, altura, objeto );
+    public void draw( int largura, int altura, Desenho desenho ) {
+        draw( 0, 0, largura, altura, desenho );
     }
     
-    public void draw( Objeto objeto ) {
-        draw( 0, 0, this.largura, this.altura, objeto );
+    public void draw( Desenho desenho ) {
+        draw( 0, 0, this.largura, this.altura, desenho );
     }
     
-    public void draw( int x, int y, int largura, int altura, Objeto[] objeto ) {
-        if ( !alocado || objeto == null )
+    public void draw( int x, int y, int largura, int altura, Desenho[] desenho ) {
+        if ( !alocado || desenho == null )
             return;
         
         bindDraw();
         gl4.glViewport( x, y, largura, altura );
         
-        for( Objeto obj : objeto )
+        for( Desenho obj : desenho )
             obj.draw();
     }
     
-    public void draw( int largura, int altura, Objeto[] objeto ) {
-        draw( 0, 0, largura, altura, objeto );
+    public void draw( int largura, int altura, Desenho[] desenho ) {
+        draw( 0, 0, largura, altura, desenho );
     }
     
-    public void draw( Objeto[] objeto ) {
-        draw( 0, 0, this.largura, this.altura, objeto );
+    public void draw( Desenho[] desenho ) {
+        draw( 0, 0, this.largura, this.altura, desenho );
     }
 }
