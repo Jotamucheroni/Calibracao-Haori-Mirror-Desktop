@@ -131,7 +131,7 @@ public class Bluetooth implements AutoCloseable {
             
             pesquisando = false;
             discoveryAgent.cancelInquiry( discoveryListener );
-        
+            
             System.out.println( "Pesquisa de dispositivos encerrada." );
         }
     }
