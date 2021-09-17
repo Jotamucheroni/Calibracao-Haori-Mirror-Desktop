@@ -2,6 +2,7 @@ package aplicativo.es.dispositivo;
 
 import aplicativo.es.camera.Camera;
 import aplicativo.opengl.DetectorPontos;
+import aplicativo.opengl.Programa;
 import aplicativo.opengl.Desenho;
 import aplicativo.opengl.Textura;
 import aplicativo.opengl.framebuffer.FrameBufferObject;
@@ -137,7 +138,7 @@ public class Dispositivo implements AutoCloseable {
     }
     
     private void setFrameBufferObject() {
-        setFrameBufferObject( new FrameBufferObject( 3, 640, 480 ) );
+        setFrameBufferObject( new FrameBufferObject( Programa.MAXIMO_SAIDAS, 640, 480 ) );
     }
     
     public void setObjeto( Desenho desenho ) {
@@ -199,7 +200,7 @@ public class Dispositivo implements AutoCloseable {
         return frameBufferObject;
     }
     
-    public Desenho getObjeto() {
+    public Desenho getDesenho() {
         return desenho;
     }
     
@@ -259,7 +260,6 @@ public class Dispositivo implements AutoCloseable {
             return;
         
         if ( detectorPontos.pronto() ) {
-            // System.out.println( "Saída [" + id + "]:\t" + detectorPontos.getSaida() );
             frameBufferObject.lerRenderBuffer(
                 numeroRenderBuffer,
                 detectorPontos.getNumeroComponentesCor(), detectorPontos.getImagem()

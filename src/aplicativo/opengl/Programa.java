@@ -100,7 +100,8 @@ public class Programa extends OpenGL {
         return codigo.toString();
     }
     
-    private static final int numSaidas = 3;
+    public static final int MAXIMO_PARAMETROS_TEXTURA = 2;
+    public static final int MAXIMO_SAIDAS = 8;
     
     public static String gerarCodigoFragmentShader(
         boolean cor, boolean textura, boolean texturaMonocromatica
@@ -115,25 +116,44 @@ public class Programa extends OpenGL {
         if ( cor )
             codigo.append( "in vec4 corFrag;\n" );
         
-        if ( textura )
+        if ( textura ) {
             codigo.append(
                 """
                 in vec2 texFrag;
                 
                 layout(binding = 0) uniform sampler2D imagem;
                 
+                float matrizSobelGx[3][3] = float[3][3](
+                    float[3]( -1.0,  0.0,  1.0 ),
+                    float[3]( -2.0,  0.0,  2.0 ),
+                    float[3]( -1.0,  0.0,  1.0 )
+                );
+                float matrizSobelGy[3][3] = float[3][3](
+                    float[3](  1.0,  2.0,  1.0 ),
+                    float[3](  0.0,  0.0,  0.0 ),
+                    float[3]( -1.0, -2.0, -1.0 )
+                );
+                
                 """
             );
+            codigo
+                .append( "uniform float parametroTextura[" )
+                .append( MAXIMO_PARAMETROS_TEXTURA )
+                .append( "];\n" )
+                .append( "\n" );
+        }
+        else
+            codigo.append( "\n" );
         
         codigo
-            .append( "out vec4 saida[" ).append( numSaidas ).append( "];\n" )
+            .append( "out vec4 saida[" ).append( MAXIMO_SAIDAS ).append( "];\n" )
             .append( "\n" )
             .append( "void main() {\n" );
         
         if ( !textura ) {
             codigo.append( "\t" );
             
-            for( int i = numSaidas; i > 0; i-- )
+            for( int i = MAXIMO_SAIDAS; i > 0; i-- )
                 codigo.append( "saida[" ).append( i - 1 ).append( "] = " );
             
             if ( cor )
@@ -162,21 +182,10 @@ public class Programa extends OpenGL {
                 ivec2 tamanho = textureSize( imagem, 0 );
                 vec2 dist = vec2( 1.0 / float( tamanho.x ), 1.0 / float( tamanho.y ) );
                 
-                float gx[3][3] = float[3][3](
-                    float[3]( -1.0,  0.0,  1.0 ),
-                    float[3]( -2.0,  0.0,  2.0 ),
-                    float[3]( -1.0,  0.0,  1.0 )
-                );
-                float gy[3][3] = float[3][3](
-                    float[3](  1.0,  2.0,  1.0 ),
-                    float[3](  0.0,  0.0,  0.0 ),
-                    float[3]( -1.0, -2.0, -1.0 )
-                );
-                
                 vec4 corTex;
                 
-                vec4 dx = vec4( 0.0 );
-                vec4 dy = vec4( 0.0 );
+                vec4 sobelDx = vec4( 0.0 );
+                vec4 sobelDy = vec4( 0.0 );
                 
                 int i, j;
                 for ( int y = -1; y <= 1; y++ )
@@ -200,15 +209,28 @@ public class Programa extends OpenGL {
         codigo.append(
             """
                         
-                        dx += gx[i][j] * corTex;
-                        dy += gy[i][j] * corTex;
+                        sobelDx += matrizSobelGx[i][j] * corTex;
+                        sobelDy += matrizSobelGy[i][j] * corTex;
                     }
                 
-                vec4 sobel = sqrt( dx * dx + dy * dy );
+                sobelDx = abs( sobelDx ) / 4.0;
+                sobelDy = abs( sobelDy ) / 4.0;
                 
+                vec4 sobel = sqrt( sobelDx * sobelDx + sobelDy * sobelDy );
+                vec4 anguloSobel = vec4( 0.0 );
+                
+                if ( sobelDx.r >= sobelDy.r && sobelDx.r != 0.0 )
+                    anguloSobel = vec4( sobelDy.r / sobelDx.r );
+                else if ( sobelDy.r != 0.0 )
+                    anguloSobel = vec4( sobelDx.r / sobelDy.r );
+                
+                bool condicaoIntensidadeSobel = sobel.r >= parametroTextura[0];
+                bool condicaoAnguloSobel = anguloSobel.r >= parametroTextura[1];
+                    
                 saida[0] = pixelCentral;
                 saida[1] = sobel;
-                saida[2] = ( sobel.r > 1.5 ) ? vec4( 1.0 ) : vec4( 0.0 );
+                saida[2] = condicaoIntensidadeSobel && condicaoAnguloSobel
+                    ? vec4( 1.0 ) : vec4( 0.0 );
             }
             """
         );
