@@ -1,5 +1,5 @@
 {
-    "java.dependency.packagePresentation": "flat",
+    "java.dependency.packagePresentation": "hierarchical",
     "java.project.sourcePaths": [
         "src"
     ],
