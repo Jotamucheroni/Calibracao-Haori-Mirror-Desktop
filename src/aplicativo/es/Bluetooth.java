@@ -71,8 +71,9 @@ public class Bluetooth implements AutoCloseable {
                 if ( !pesquisando )
                     return;
                 
-                if ( remoteDevicesPesquisa.add( btDevice ) )
-                    printDevice( btDevice );
+                remoteDevicesPesquisa.add( btDevice );
+                /* if ( remoteDevicesPesquisa.add( btDevice ) )
+                    printDevice( btDevice ); */
             }
         }
         
@@ -111,7 +112,7 @@ public class Bluetooth implements AutoCloseable {
             if ( pesquisando )
                 return;
             
-            System.out.println( "Pesquisa de dispositivos iniciada:" );
+            // System.out.println( "Pesquisa de dispositivos iniciada:" );
             
             remoteDevicesPesquisa.clear();
             pesquisando = true;
@@ -132,7 +133,7 @@ public class Bluetooth implements AutoCloseable {
             pesquisando = false;
             discoveryAgent.cancelInquiry( discoveryListener );
             
-            System.out.println( "Pesquisa de dispositivos encerrada." );
+            // System.out.println( "Pesquisa de dispositivos encerrada." );
         }
     }
     
@@ -163,9 +164,9 @@ public class Bluetooth implements AutoCloseable {
                 try {
                     for ( RemoteDevice btDevice : remoteDevicesConexao )
                         if ( btDevice.getBluetoothAddress().equals( enderecoDispositivo ) ) {
-                            System.out.println( "Encontrado!" );
+                            /* System.out.println( "Encontrado!" );
                             printDevice( btDevice );
-                            System.out.println( "Procurando serviço..." );
+                            System.out.println( "Procurando serviço..." ); */
                             discoveryAgent.searchServices(
                                 new int[]{ 0x0100 },
                                 new UUID[]{ new UUID( "7427f3add28e4267a5b5f358165eac26", false ) },
@@ -189,32 +190,31 @@ public class Bluetooth implements AutoCloseable {
             }
             
             synchronized( travaConexao ) {
-                String mensagem;
-                if ( servRecord.length > 1 )
-                    mensagem = " serviços encontrados!";
-                else
-                    mensagem = " serviço encontrado!";
-                System.out.println( servRecord.length + mensagem );
-
+                /* System.out.println(
+                    servRecord.length > 1 ? 
+                        servRecord.length + " serviços encontrados!" :
+                        "Serviço encontrado!"
+                ); */
+                
                 String url = servRecord[0].getConnectionURL(
                     ServiceRecord.NOAUTHENTICATE_NOENCRYPT,
                     false
                 );
-                Object serviceName = servRecord[0].getAttributeValue( 0x0100 ).getValue();
+                /* Object serviceName = servRecord[0].getAttributeValue( 0x0100 ).getValue();
                 
                 System.out.println(
                         "Serviço \"" 
                     +   ( ( serviceName == null ) ? "Nome indisponível" : serviceName )
                     +   "\" encontrado. URL: "
                     +   ( ( url == null ) ? "URL indisponível" : "<" + url + ">" )
-                );
+                ); */
                 
-                System.out.println( "Conectando a " + url );
+                // System.out.println( "Conectando a " + url );
                 try {
                     conexao = (StreamConnection) Connector.open( url );
                     
                     if ( conexao != null ) {
-                        System.out.println( "Conexão bem-sucedida!" );
+                        // System.out.println( "Conexão bem-sucedida!" );
                         conectado = true;
                         travaConexao.notifyAll();
                     }
@@ -239,7 +239,7 @@ public class Bluetooth implements AutoCloseable {
             encerrarPesquisa();
             remoteDevicesConexao.clear();
             this.enderecoDispositivo = enderecoDispositivo;
-            System.out.println( "Procurando smartphone..." );
+            // System.out.println( "Procurando smartphone..." );
             try {
                 discoveryAgent.startInquiry( DiscoveryAgent.GIAC, connectionListener );
             } catch ( IOException ignored ) {}
@@ -260,7 +260,7 @@ public class Bluetooth implements AutoCloseable {
     
     public void reconectarDispositivo( String enderecoDispositivo ) {
         synchronized ( travaConexao ) {
-            System.out.println( "Reconectando..." );
+            // System.out.println( "Reconectando..." );
             
             desconectarDispositivo();
             conectarDispositivo( enderecoDispositivo );
