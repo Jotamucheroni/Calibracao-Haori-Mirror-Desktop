@@ -19,14 +19,14 @@ public class CameraRemota extends Camera implements Runnable {
         setEntradaRemota( entradaRemota );
         setLargImg( largImg );
         setAltImg( altImg );
-        setNumCompCor( numCompCor );
+        setNumeroComponentesCor( numCompCor );
     }
     
     public CameraRemota( StreamConnection entradaRemota, int largImg, int altImg, int numCompCor ) {
         setEntradaRemota( entradaRemota );
         setLargImg( largImg );
         setAltImg( altImg );
-        setNumCompCor( numCompCor );
+        setNumeroComponentesCor( numCompCor );
     }
     
     public CameraRemota( DataInputStream entradaRemota, int largImg, int altImg ) {

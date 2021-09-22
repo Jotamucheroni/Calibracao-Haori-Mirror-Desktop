@@ -3,60 +3,66 @@ package aplicativo.es.camera;
 import java.nio.ByteBuffer;
 
 public abstract class Camera implements AutoCloseable {
-    private int largImg, altImg;
-    private int numCompCor;
-    protected ByteBuffer buffer, visBuffer;
+    private int 
+        larguraImagem, alturaImagem,
+        numeroComponentesCorImagem;
+    protected ByteBuffer
+        buffer, visBuffer;
     
     protected boolean ligada = false;
     
-    public void setLargImg( int largImg ) {
-        if ( largImg < 1 )
-            largImg = 1;
+    public void setLargImg( int larguraImagem ) {
+        if ( larguraImagem < 1 )
+            larguraImagem = 1;
         
-        this.largImg = largImg;
+        this.larguraImagem = larguraImagem;
     }
     
-    public void setAltImg( int altImg ) {
-        if ( altImg < 1 )
-            altImg = 1;
+    public void setAltImg( int alturaImagem ) {
+        if ( alturaImagem < 1 )
+            alturaImagem = 1;
         
-        this.altImg = altImg;
+        this.alturaImagem = alturaImagem;
     }
     
-    public void setNumCompCor( int numCompCor ) {
-        if ( numCompCor < 1 )
-            numCompCor = 1;
-        else if ( numCompCor > 4 )
-            numCompCor = 4;
+    public void setNumeroComponentesCor( int numeroComponentesCor ) {
+        if ( numeroComponentesCor < 1 )
+            numeroComponentesCor = 1;
+        else if ( numeroComponentesCor > 4 )
+            numeroComponentesCor = 4;
         
-        this.numCompCor = numCompCor;
+        this.numeroComponentesCorImagem = numeroComponentesCor;
     }
     
     protected void setBuffer() {
-        buffer = ByteBuffer.allocateDirect( getTamImg() );
+        buffer = ByteBuffer.allocateDirect( getNumeroBytesImagem() );
         visBuffer = buffer.asReadOnlyBuffer();
     }
     
-    public int getLargImg() {
-        return largImg;
+    public int getLarguraImagem() {
+        return larguraImagem;
     }
     
-    public int getAltImg() {
-        return altImg;
+    public int getAlturaImagem() {
+        return alturaImagem;
     }
     
-    public int getNumCompCor() {
-        return numCompCor;
+    public int getNumeroComponentesCorImagem() {
+        return numeroComponentesCorImagem;
     }
     
-    public int getTamImg() {
-        return largImg * altImg * numCompCor;
+    public int getNumeroPixeisImagem() {
+        return larguraImagem * alturaImagem;
+    }
+    
+    public int getNumeroBytesImagem() {
+        return getNumeroPixeisImagem() * numeroComponentesCorImagem;
     }
     
     public ByteBuffer getImagem() {
         if ( visBuffer == null )
             return null;
-            
+        
         visBuffer.rewind();
         
         return visBuffer;

@@ -31,7 +31,7 @@ public class CameraLocal extends Camera implements Runnable {
         setCamera( numCamera );
         setLargImg( largImg );
         setAltImg( altImg );
-        setNumCompCor( numCompCor );
+        setNumeroComponentesCor( numCompCor );
     }
     
     public CameraLocal( int numCamera, int largImg, int altImg ) {
@@ -76,12 +76,10 @@ public class CameraLocal extends Camera implements Runnable {
                 buffer.put( (ByteBuffer) imagem.image[0] );
                 imagem.close();
             }
-            // grabber.close();
             grabber.stop();
         } catch ( Exception ignored )  {
             try {
                 ligada = false;
-                // grabber.close();
                 grabber.stop();
             } catch ( Exception ignored2 ) {
                 return;
@@ -96,7 +94,7 @@ public class CameraLocal extends Camera implements Runnable {
         
         setBuffer();
         
-        switch ( getNumCompCor() ) {
+        switch ( getNumeroComponentesCorImagem() ) {
             case 1:
                 grabber.setImageMode( FrameGrabber.ImageMode.GRAY );
                 break;
@@ -104,8 +102,8 @@ public class CameraLocal extends Camera implements Runnable {
                 grabber.setImageMode( FrameGrabber.ImageMode.COLOR );
                 break;
         }
-        grabber.setImageWidth( getLargImg() );
-        grabber.setImageHeight( getAltImg() );
+        grabber.setImageWidth( getLarguraImagem() );
+        grabber.setImageHeight( getAlturaImagem() );
         
         atualizaBuffer = new Thread( this );
         atualizaBuffer.start();
