@@ -6,16 +6,18 @@ import java.util.Scanner;
 public class Parametros {
     private static int instancia = 0;
     
-    private String id;
-    private String[] nome;
-    private float[] valor;
+    private final String id, prefixoId;
+    
+    private final String[] nome;
+    private final float[] valor;
     
     public Parametros( String id, String[] nome, float[] valor ) {
         if ( id == null )
             id = "Grupo " + instancia;
-        
         instancia++;
+        
         this.id = id;
+        prefixoId = "\u001B[96m[" + id + "]\u001B[0m";
         
         if ( valor == null )
             valor = new float[1];
@@ -145,11 +147,10 @@ public class Parametros {
         
         Thread linhaAtual = Thread.currentThread();  
         float valor;
-        String prefixo = 
-            "\u001B[96m[" + getId() + "]\u001B[95m[" + getNome( indice ) + "]\u001B[0m ";
+        String prefixo = prefixoId + "\u001B[95m[" + getNome( indice ) + "]\u001B[0m";
         
         do {
-            saida.print( prefixo + "Valor: " );
+            saida.print( prefixo + " Valor: " );
             
             valor = entrada.nextFloat();
             
@@ -182,15 +183,14 @@ public class Parametros {
         }
         
         int indice;
-        String prefixo = "\u001B[96m[" + getId() + "]\u001B[0m ";
         
         do {
-            saida.println( prefixo + "Parâmetros:" );
+            saida.println( prefixoId + " Parâmetros:" );
             
             for ( int i = 0; i < valor.length; i++ )
-                saida.println( prefixo + "  " + i + " - "  + getNome( i ) );
+                saida.println( prefixoId + "   " + i + " - "  + getNome( i ) );
             
-            saida.print( prefixo + "Escolha o parâmetro pelo índice (-1 para voltar): " );
+            saida.print( prefixoId + " Escolha o parâmetro pelo índice (-1 para voltar): " );
             
             indice = entrada.nextInt();
             
