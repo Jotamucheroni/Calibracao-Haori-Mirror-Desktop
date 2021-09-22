@@ -11,12 +11,11 @@ import com.jogamp.opengl.awt.GLCanvas;
 import aplicativo.opengl.Renderizador;
 
 public class Janela extends JFrame implements Runnable {
-    GLCapabilities capacidades;
     Renderizador renderizadorOpenGL;
     GLCanvas canvas;
     
     Janela() {
-        capacidades = new GLCapabilities( GLProfile.getDefault() );
+        GLCapabilities capacidades = new GLCapabilities( GLProfile.getDefault() );
         capacidades.setRedBits( 8 );
         capacidades.setGreenBits( 8 );
         capacidades.setBlueBits( 8 );
