@@ -5,58 +5,39 @@ import java.util.logging.Logger;
 
 import com.jogamp.opengl.GL4;
 
-public class Programa extends OpenGL {
+public class Programa extends OpenGL implements AutoCloseable {
     private static Logger log = Logger.getLogger( Programa.class.getName() );
     
-    public static int loadShader( int type, String shaderCode ) {
-        int shader = gl4.glCreateShader( type );
+    private final int id;
+    
+    public Programa( boolean cor, boolean textura, boolean texturaMonocromatica ) {
+        id = gl4.glCreateProgram();
         
-        gl4.glShaderSource(
-            shader, 1, new String[]{ shaderCode }, new int[]{ shaderCode.length() }, 0
+        int vertexShader = compilarShader(
+            GL4.GL_VERTEX_SHADER, gerarCodigoVertexShader( cor, textura )
         );
-        gl4.glCompileShader( shader );      
-        int[] compilado = new int[1];
-        gl4.glGetShaderiv( shader, GL4.GL_COMPILE_STATUS, compilado, 0 );
-         
-        // Verifica se houve erro de compilação
-        if ( compilado[0] == 0 ) {
-            int[] tamLog = new int[1];
-            gl4.glGetShaderiv( shader, GL4.GL_INFO_LOG_LENGTH, tamLog, 0 );
-            
-            byte[] b =  new byte[tamLog[0]];
-            gl4.glGetShaderInfoLog( shader, tamLog[0], null, 0, b, 0 );
-            String infoLog = new String( b, StandardCharsets.UTF_8 );
-            log.info(
-                    "\nUm programa não pôde ser compilado:\n" 
-                +   infoLog
-                +   "\n"
-                +   "Código fonte:"
-            );
-            
-            int i = 1;
-            for( String linha: shaderCode.split( "\n" ) ) {
-                System.out.println( i + "\t" + linha );
-                i++;
-            }
-        }
+        int fragmentShader = compilarShader(
+            GL4.GL_FRAGMENT_SHADER, gerarCodigoFragmentShader( cor, textura, texturaMonocromatica )
+        );
         
-        return shader;
+        gl4.glAttachShader( id, vertexShader );
+        gl4.glAttachShader( id, fragmentShader );
+        gl4.glLinkProgram( id );
     }
     
-    public static int gerarPrograma( String vertexShaderCode, String fragmentShaderCode ) {
-        int program = gl4.glCreateProgram();
-        
-        int vertexShader = loadShader( GL4.GL_VERTEX_SHADER, vertexShaderCode );
-        int fragmentShader = loadShader( GL4.GL_FRAGMENT_SHADER, fragmentShaderCode );
-        
-        gl4.glAttachShader( program, vertexShader );
-        gl4.glAttachShader( program, fragmentShader );
-        gl4.glLinkProgram( program );
-        
-        return program;
+    public Programa( boolean cor, boolean textura ) {
+        this( cor, textura, false );
     }
     
-    public static String gerarCodigoVertexShader( boolean cor, boolean textura ) {
+    public Programa( boolean cor ) {
+        this( cor, false, false );
+    }
+    
+    public Programa() {
+        this( false, false, false );
+    }
+    
+    private static String gerarCodigoVertexShader( boolean cor, boolean textura ) {
         StringBuilder codigo = new StringBuilder(
             """
             #version 460
@@ -103,7 +84,7 @@ public class Programa extends OpenGL {
     public static final int MAXIMO_PARAMETROS_TEXTURA = 2;
     public static final int MAXIMO_SAIDAS = 8;
     
-    public static String gerarCodigoFragmentShader(
+    private static String gerarCodigoFragmentShader(
         boolean cor, boolean textura, boolean texturaMonocromatica
     ) {
         StringBuilder codigo = new StringBuilder(
@@ -234,14 +215,66 @@ public class Programa extends OpenGL {
             }
             """
         );
-            
+        
         return codigo.toString();
     }
     
-    public static int gerarPrograma( boolean cor, boolean textura, boolean texturaMonocromatica ) {
-        return gerarPrograma(
-            gerarCodigoVertexShader( cor, textura ),
-            gerarCodigoFragmentShader( cor, textura, texturaMonocromatica )
+    private static int compilarShader( int tipo, String codigoShader ) {
+        int shader = gl4.glCreateShader( tipo );
+        
+        gl4.glShaderSource(
+            shader, 1, new String[]{ codigoShader }, new int[]{ codigoShader.length() }, 0
         );
+        gl4.glCompileShader( shader );      
+        int[] compilado = new int[1];
+        gl4.glGetShaderiv( shader, GL4.GL_COMPILE_STATUS, compilado, 0 );
+        
+        if ( compilado[0] == 0 ) {
+            int[] tamLog = new int[1];
+            gl4.glGetShaderiv( shader, GL4.GL_INFO_LOG_LENGTH, tamLog, 0 );
+            
+            byte[] b =  new byte[tamLog[0]];
+            gl4.glGetShaderInfoLog( shader, tamLog[0], null, 0, b, 0 );
+            String infoLog = new String( b, StandardCharsets.UTF_8 );
+            log.info(
+                    "\nUm programa não pôde ser compilado:\n" 
+                +   infoLog
+                +   "\n"
+                +   "Código fonte:"
+            );
+            
+            int i = 1;
+            for( String linha: codigoShader.split( "\n" ) ) {
+                System.out.println( i + "\t" + linha );
+                i++;
+            }
+        }
+        
+        return shader;
+    }
+    
+    public int getId() {
+        return id;
+    }
+    
+    public int getAttribLocation( String nomeAtributo ) {
+        return gl4.glGetAttribLocation( id, nomeAtributo );
+    }
+    
+    public int getUniformLocation( String nomeUniforme ) {
+        return gl4.glGetUniformLocation( id, nomeUniforme );
+    }
+    
+    public void ativar() {
+        gl4.glUseProgram( id );
+    }
+    
+    public void desativar() {
+        gl4.glUseProgram( 0 );
+    }
+    
+    @Override
+    public void close(){
+        gl4.glDeleteProgram( id );
     }
 }
