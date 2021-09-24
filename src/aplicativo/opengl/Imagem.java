@@ -10,61 +10,74 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 public class Imagem extends Textura {
-    private String caminhoArquivo;
-    private BufferedImage bufferImagem;
-    
-    public Imagem( String caminhoArquivo, boolean monocromatica ) {
-        super();
+    public Imagem( BufferedImage bufferedImage ) {
+        super(
+            bufferedImage.getWidth(), bufferedImage.getHeight(),
+            bufferedImage.getColorModel().getNumComponents()
+        );
         
-        setCaminhoArquivo( caminhoArquivo );
-        setMonocromatica( monocromatica );
+        carregar( bufferedImage );
     }
     
     public Imagem( String caminhoArquivo ) {
-        this( caminhoArquivo, false );
+        this( getBufferedImage( caminhoArquivo ) );
     }
     
-    public void setCaminhoArquivo( String caminhoArquivo ) {
-        this.caminhoArquivo = caminhoArquivo;
-        
-        bufferImagem = null;
-        
-        if ( caminhoArquivo == null )
-            return;
-        
+    private static BufferedImage getBufferedImage( String caminhoArquivo ) {
         try {
-            bufferImagem = ImageIO.read( new File( caminhoArquivo ) );
-            setLargura( bufferImagem.getWidth() );
-            setAltura( bufferImagem.getHeight() );
-            alocar();
+            return ImageIO.read( new File( caminhoArquivo ) );
         } catch ( IOException e ) {
             e.printStackTrace();
         }
-    }
-    
-    public String getCaminhoArquivo() {
-        return caminhoArquivo;
-    }
-    
-    private byte[] ABGRparaBGR( byte[] imagemABGR ) {
-        byte[] imagemBGR = new byte[imagemABGR.length - imagemABGR.length / 4];
         
-        for ( int i = 1, j = 0; i < imagemABGR.length; i += 4, j += 3 ) {
-            imagemBGR[j] = imagemABGR[i];
-            imagemBGR[j + 1] = imagemABGR[i + 1];
-            imagemBGR[j + 2] = imagemABGR[i + 2]; 
+        return null;
+    }
+        
+    public static byte[] inverterComponentes( byte[] imagemOriginal, int numeroComponentesCor ) {
+        byte[] imagemComponentesInvertidos = new byte[imagemOriginal.length];
+        
+        for ( int i = 0; i < imagemOriginal.length; i += numeroComponentesCor )
+            for ( int j = 0; j < numeroComponentesCor; j++ )
+                imagemComponentesInvertidos[i + j] =
+                    imagemOriginal[i + numeroComponentesCor - j - 1];
+        
+        return imagemComponentesInvertidos;
+    }
+    
+    public static byte[] converterARGBparaRGBA( byte[] imagemARGB ) {
+        byte[] imagemRGBA = new byte[imagemARGB.length];
+        
+        for ( int i = 0; i < imagemARGB.length; i += 4 ) {
+            imagemRGBA[i] = imagemARGB[i + 1];
+            imagemRGBA[i + 1] = imagemARGB[i + 2];
+            imagemRGBA[i + 2] = imagemARGB[i + 3];
+            imagemRGBA[i + 3] = imagemARGB[i];
         }
         
-        return imagemBGR;
+        return imagemRGBA;
     }
     
-    public void carregar() {
-        if ( bufferImagem == null )
+    public void carregar( BufferedImage bufferedImage ) {
+        if ( bufferedImage == null )
             return;
         
-        byte[] imagem = ABGRparaBGR(
-            ( (DataBufferByte) bufferImagem.getData().getDataBuffer() ).getData()
-        );
+        byte[] imagem = ( (DataBufferByte) bufferedImage.getData().getDataBuffer() ).getData();
+        
+        if (
+            bufferedImage.getWidth() != getLargura() ||
+            bufferedImage.getHeight() != getAltura() ||
+            bufferedImage.getColorModel().getNumComponents() != getNumeroComponentesCor()
+        )
+            return;
+        
+        int tipo = bufferedImage.getType();
+        if (
+            tipo == BufferedImage.TYPE_3BYTE_BGR || tipo == BufferedImage.TYPE_INT_BGR ||
+            tipo == BufferedImage.TYPE_4BYTE_ABGR || tipo == BufferedImage.TYPE_4BYTE_ABGR_PRE
+        )
+            imagem = inverterComponentes( imagem, getNumeroComponentesCor() );
+        else if ( tipo == BufferedImage.TYPE_INT_ARGB || tipo == BufferedImage.TYPE_INT_ARGB_PRE)
+            imagem = converterARGBparaRGBA( imagem );
         
         ByteBuffer bb = ByteBuffer.allocateDirect( imagem.length );
         bb.order( ByteOrder.nativeOrder() );
@@ -72,5 +85,9 @@ public class Imagem extends Textura {
         bb.position( 0 );
         
         carregarImagem( bb );
+    }
+    
+    public void carregar( String caminhoArquivo ) {
+        carregar( getBufferedImage( caminhoArquivo ) );
     }
 }
