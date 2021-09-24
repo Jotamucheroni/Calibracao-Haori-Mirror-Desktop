@@ -7,64 +7,73 @@ import com.jogamp.opengl.GL4;
 import aplicativo.opengl.RenderBuffer;
 
 public class FrameBufferObject extends FrameBuffer implements AutoCloseable {
-    public static final int numeroComponentesCor = RenderBuffer.numeroComponentesCor;
+    private final int
+        numeroRenderBuffer,
+        numeroComponentesCor;
     
-    private int numRenderBuffer;
+    private final RenderBuffer[] renderBuffer;
     
-    public FrameBufferObject( int numRenderBuffer, int largura, int altura ) {
-        setNumRenderBuffer( numRenderBuffer );
-        setLargura( largura );
-        setAltura( altura );
-        
+    public FrameBufferObject(
+        int numeroRenderBuffer, int largura, int altura, int numeroComponentesCor
+    ) {
         int[] bufferId = new int[1];
         gl4.glGenFramebuffers( 1, bufferId, 0 );
         setId( bufferId[0] );
         
-        int[] drawBuffers = new int[numRenderBuffer];
-        for ( int i = 0; i < numRenderBuffer; i++ )
+        if ( numeroRenderBuffer < 1 )
+            numeroRenderBuffer = 1;
+        this.numeroRenderBuffer = numeroRenderBuffer;
+        
+        int[] drawBuffers = new int[this.numeroRenderBuffer];
+        for ( int i = 0; i < this.numeroRenderBuffer; i++ )
             drawBuffers[i] = GL4.GL_COLOR_ATTACHMENT0 + i;
         bindDraw();
-        gl4.glDrawBuffers( numRenderBuffer, drawBuffers, 0 );
+        gl4.glDrawBuffers( numeroRenderBuffer, drawBuffers, 0 );
+        
+        setLargura( largura );
+        setAltura( altura );
+        
+        if ( numeroComponentesCor < 1 )
+            numeroComponentesCor = 1;
+        else if ( numeroComponentesCor > 4 )
+            numeroComponentesCor = 4;
+        this.numeroComponentesCor = numeroComponentesCor;
+        
+        renderBuffer = new RenderBuffer[getNumeroRenderBuffer()];
+        int
+            larguraFinal = getLargura(),
+            alturaFinal = getAltura();
+        
+        for ( int i = 0; i < renderBuffer.length; i++ ) {
+            renderBuffer[i] = new RenderBuffer(
+                larguraFinal, alturaFinal, this.numeroComponentesCor
+            );
+            gl4.glFramebufferRenderbuffer(
+                GL4.GL_DRAW_FRAMEBUFFER, GL4.GL_COLOR_ATTACHMENT0 + i,
+                GL4.GL_RENDERBUFFER, renderBuffer[i].getId()
+            );
+        }
+        unbindDraw();
+    }
+    
+    public FrameBufferObject( int numeroRenderBuffer, int largura, int altura ) {
+        this( numeroRenderBuffer, largura, altura, 4 );
     }
     
     public FrameBufferObject( int largura, int altura ) {
-        this( 1, largura, altura );
+        this( 1, largura, altura, 4 );
     }
     
-    public void setNumRenderBuffer( int numRenderBuffer ) {
-        if ( numRenderBuffer < 1 )
-            numRenderBuffer = 1;
-        
-        this.numRenderBuffer = numRenderBuffer;
+    public int getNumeroRenderBuffer() {
+        return numeroRenderBuffer;
     }
     
-    public int getNumRenderBuffer() {
-        return numRenderBuffer;
+    public int getNumeroComponentesCor() {
+        return numeroComponentesCor;
     }
     
-    public int getNumPix() {
-        return getLargura() * getAltura();
-    }
-    
-    public int getNumBytes() {
-        return getNumPix() * FrameBufferObject.numeroComponentesCor;
-    }
-    
-    private RenderBuffer[] rb;
-    
-    public void alocar() {
-        rb = new RenderBuffer[getNumRenderBuffer()];
-        bindDraw();
-        for ( int i = 0; i < rb.length; i++ ) {
-            rb[i] = new RenderBuffer( getLargura(), getAltura() );
-            rb[i].alocar();
-            gl4.glFramebufferRenderbuffer(
-                GL4.GL_DRAW_FRAMEBUFFER, GL4.GL_COLOR_ATTACHMENT0 + i,
-                GL4.GL_RENDERBUFFER, rb[i].getId()
-            );
-        }
-        
-        setAlocado( true );
+    public int getNumeroBytes() {
+        return getNumeroPixeis() * numeroComponentesCor;
     }
     
     public void copiar(
@@ -72,7 +81,7 @@ public class FrameBufferObject extends FrameBuffer implements AutoCloseable {
         int x, int y, int largura, int altura,
         int numColunas, int numLinhas
     ) {
-        if ( destino == null || !getAlocado() )
+        if ( destino == null )
             return;
         
         if( x < 0 )
@@ -111,6 +120,8 @@ public class FrameBufferObject extends FrameBuffer implements AutoCloseable {
                 GL4.GL_COLOR_BUFFER_BIT, GL4.GL_LINEAR
             );
         }
+        destino.unbindDraw();
+        unbindRead();
     }
     
     public void copiar(
@@ -134,13 +145,13 @@ public class FrameBufferObject extends FrameBuffer implements AutoCloseable {
         int x, int y, int largura, int altura,
         ByteBuffer destino
     ) {
-        if ( destino == null || !getAlocado() )
+        if ( destino == null )
             return;
         
         if ( numero < 1 )
             numero = 1;
-        else if ( numero > numRenderBuffer )
-            numero = numRenderBuffer;
+        else if ( numero > numeroRenderBuffer )
+            numero = numeroRenderBuffer;
         
         int formato;
         switch ( numeroComponentesCor ) {
@@ -150,6 +161,7 @@ public class FrameBufferObject extends FrameBuffer implements AutoCloseable {
             case 3:
                 formato = GL4.GL_RGB;
                 break;
+            case 4:
             default:
                 formato = GL4.GL_RGBA;
                 break;
@@ -206,8 +218,8 @@ public class FrameBufferObject extends FrameBuffer implements AutoCloseable {
     
     @Override
     public void close() {
-        for ( RenderBuffer r : rb )
-            r.close();
+        for ( RenderBuffer rb : renderBuffer )
+            rb.close();
         gl4.glDeleteFramebuffers( 1, new int[]{ getId() }, 0 );
     }
 }

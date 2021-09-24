@@ -5,7 +5,6 @@ public class Tela extends FrameBuffer {
     
     private Tela() {
         setId( 0 );
-        setAlocado( true );
     }
     
     public static Tela getInstance() {
@@ -13,5 +12,15 @@ public class Tela extends FrameBuffer {
             instancia = new Tela();
         
         return instancia;
+    }
+    
+    @Override
+    public void setLargura( int largura ) {
+        super.setLargura( largura );
+    }
+    
+    @Override
+    public void setAltura( int altura ) {
+        super.setAltura( altura );
     }
 }

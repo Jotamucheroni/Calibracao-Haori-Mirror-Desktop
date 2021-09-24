@@ -6,25 +6,9 @@ import aplicativo.opengl.Desenho;
 import aplicativo.opengl.OpenGL;
 
 public abstract class FrameBuffer extends OpenGL {
-    private int largura, altura;
-    
-    private int id;
-    
-    private boolean alocado = false;
-    
-    public void setLargura( int largura ) {
-        if ( largura < 1 )
-            largura = 1;
-        
-        this.largura = largura;
-    }
-    
-    public void setAltura( int altura ) {
-        if ( altura < 1 )
-            altura = 1;
-        
-        this.altura = altura;
-    }
+    private int
+        id,
+        largura, altura;
     
     protected void setId( int id ) {
         if ( id < 0 )
@@ -33,8 +17,22 @@ public abstract class FrameBuffer extends OpenGL {
         this.id = id;
     }
     
-    protected void setAlocado( boolean alocado ) {
-        this.alocado = alocado;
+    protected void setLargura( int largura ) {
+        if ( largura < 1 )
+            largura = 1;
+        
+        this.largura = largura;
+    }
+    
+    protected void setAltura( int altura ) {
+        if ( altura < 1 )
+            altura = 1;
+        
+        this.altura = altura;
+    }
+    
+    public int getId() {
+        return id;
     }
     
     public int getLargura() {
@@ -45,12 +43,8 @@ public abstract class FrameBuffer extends OpenGL {
         return altura;
     }
     
-    public int getId() {
-        return id;
-    }
-    
-    public boolean getAlocado() {
-        return alocado;
+    public int getNumeroPixeis() {
+        return largura * altura;
     }
     
     public void bindDraw() {
@@ -65,21 +59,32 @@ public abstract class FrameBuffer extends OpenGL {
         gl4.glBindFramebuffer( GL4.GL_FRAMEBUFFER, id );
     }
     
+    public void unbindDraw() {
+        gl4.glBindFramebuffer( GL4.GL_DRAW_FRAMEBUFFER, 0 );
+    }
+    
+    public void unbindRead() {
+        gl4.glBindFramebuffer( GL4.GL_READ_FRAMEBUFFER, 0 );
+    }
+    
+    public void unbind() {
+        gl4.glBindFramebuffer( GL4.GL_FRAMEBUFFER, 0 );
+    }
+    
     public void clear() {
-        if ( !alocado )
-            return;
-        
         bindDraw();
         gl4.glClear( GL4.GL_COLOR_BUFFER_BIT );
+        unbindDraw();
     }
     
     public void draw( int x, int y, int largura, int altura, Desenho desenho ) {
-        if ( !alocado || desenho == null )
+        if ( desenho == null )
             return;
         
         bindDraw();
         gl4.glViewport( x, y, largura, altura );
         desenho.draw();
+        unbindDraw();
     }
     
     public void draw( int largura, int altura, Desenho desenho ) {
@@ -91,14 +96,15 @@ public abstract class FrameBuffer extends OpenGL {
     }
     
     public void draw( int x, int y, int largura, int altura, Desenho[] desenho ) {
-        if ( !alocado || desenho == null )
+        if ( desenho == null )
             return;
         
         bindDraw();
         gl4.glViewport( x, y, largura, altura );
         
-        for( Desenho obj : desenho )
-            obj.draw();
+        for( Desenho des : desenho )
+            des.draw();
+        unbindDraw();
     }
     
     public void draw( int largura, int altura, Desenho[] desenho ) {
