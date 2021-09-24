@@ -2,47 +2,96 @@ package aplicativo.opengl;
 
 import java.nio.ByteBuffer;
 
+/* import java.util.Deque;
+import java.util.List;
+import java.util.Vector; */
+
 public class DetectorPontos implements AutoCloseable {
-    private int tamanhoImagem;
-    private int numeroComponentesCor;
+    private final int
+        larguraImagem, alturaImagem,
+        numeroComponentesCorImagem;
     
-    private ByteBuffer imagem, visImagem;
+    private final ByteBuffer imagem, visImagem;
     
-    public DetectorPontos( int tamanhoImagem, int numeroComponentesCor ) {
-        setTamanhoImagem( tamanhoImagem );
-        setNumeroComponentesCor( numeroComponentesCor );
-    }
+    // private final List<Deque<Ponto>> listaPontos = new Vector<Deque<Ponto>>( 16 );
+    private final Object travaDetector = new Object();
+    private final Thread detector;
     
-    public DetectorPontos( int tamanhoImagem ) {
-        this( tamanhoImagem, 4 );
-    }
+    private final Object travaSaida = new Object();
+    private int saida = 0;
     
-    public void setTamanhoImagem( int tamanhoImagem ) {
-        if ( tamanhoImagem < 1 )
-            tamanhoImagem = 1;
+    public DetectorPontos( int larguraImagem, int alturaImagem, int numeroComponentesCorImagem ) {
+        if ( larguraImagem < 1 )
+            larguraImagem = 1;
+        this.larguraImagem = larguraImagem;
         
-        synchronized( this ) {
-            this.tamanhoImagem = tamanhoImagem;
-        }
-    }
-    
-    public void setNumeroComponentesCor( int numeroComponentesCor ) {
-        if ( numeroComponentesCor < 1 )
-            numeroComponentesCor = 1;
-        else if ( numeroComponentesCor > 4 )
-            numeroComponentesCor = 4;
+        if ( alturaImagem < 1 )
+            alturaImagem = 1;
+        this.alturaImagem = alturaImagem;
         
-        synchronized( this ) {
-            this.numeroComponentesCor = numeroComponentesCor;
-        }
+        if ( numeroComponentesCorImagem < 1 )
+            numeroComponentesCorImagem = 1;
+        else if ( numeroComponentesCorImagem > 4 )
+            numeroComponentesCorImagem = 4;
+        this.numeroComponentesCorImagem = numeroComponentesCorImagem;
+        
+        imagem = ByteBuffer.allocateDirect( getNumeroBytesImagem() );
+        visImagem = imagem.asReadOnlyBuffer();
+        
+        detector = new Thread(
+            () ->
+            {
+                int contador;
+                
+                do {
+                    contador = 0;
+                    
+                    for(
+                        int i = 0; i < visImagem.capacity(); i += this.numeroComponentesCorImagem
+                    ) {
+                        visImagem.position( i );
+                        if ( Byte.toUnsignedInt( visImagem.get() ) == 255 )
+                            contador++;
+                    }
+                    
+                    synchronized( travaSaida ) {
+                        saida = contador;
+                    }
+                    
+                    synchronized( travaDetector ) {
+                        try {
+                            travaDetector.wait();
+                        } catch ( InterruptedException ignorada ) {
+                            return;
+                        }
+                    }
+                } while ( !Thread.currentThread().isInterrupted() );
+            }
+        );
     }
     
-    public int getTamanhoImagem() {
-        return tamanhoImagem;
+    public DetectorPontos( int larguraImagem, int alturaImagem ) {
+        this( larguraImagem, alturaImagem, 4 );
     }
     
-    public int getNumeroComponentesCor() {
-        return numeroComponentesCor;
+    public int getLarguraImagem() {
+        return larguraImagem;
+    }
+    
+    public int getAlturaImagem() {
+        return alturaImagem;
+    }
+    
+    public int getNumeroComponentesCorImagem() {
+        return numeroComponentesCorImagem;
+    }
+    
+    public int getNumeroPixeisImagem() {
+        return larguraImagem * alturaImagem;
+    }
+    
+    public int getNumeroBytesImagem() {
+        return getNumeroPixeisImagem() * numeroComponentesCorImagem;
     }
     
     public ByteBuffer getImagem() {
@@ -54,89 +103,25 @@ public class DetectorPontos implements AutoCloseable {
         return imagem;
     }
     
-    private boolean alocado = false;
-    
-    public void alocar() {
-        imagem = ByteBuffer.allocateDirect( tamanhoImagem );
-        
-        synchronized( this ) {
-            visImagem = imagem.asReadOnlyBuffer();
-        }
-        
-        alocado = true;
-    }
-    
-    public boolean getAlocado() {
-        return alocado;
-    }
-    
-    private int saida = 0;
-    private final Object sincronizador = new Object();
-    
-    private final Thread detector = new Thread(
-        () ->
-        {
-            int
-                contador,
-                tamanhoImagem, numeroComponentesCor;
-            ByteBuffer imagem;
-            
-            synchronized ( this ) {
-                tamanhoImagem = this.tamanhoImagem;
-                numeroComponentesCor = this.numeroComponentesCor;
-                imagem = this.visImagem;
-            }
-            
-            while ( !Thread.currentThread().isInterrupted() ) {
-                contador = 0;
-                for( int i = 0; i < tamanhoImagem; i += numeroComponentesCor ) {
-                    imagem.position( i );
-                    if ( Byte.toUnsignedInt( imagem.get() ) == 255 )
-                        contador++;
-                }
-                synchronized( this ) {
-                    saida = contador;
-                }
-                
-                synchronized( sincronizador ) {
-                    try {
-                        sincronizador.wait();
-                    } catch ( InterruptedException e ) {
-                        return;
-                    }
-                }
-            }
-        }
-    );
-    
     public int getSaida() {
-        synchronized ( this ) {
+        synchronized ( travaSaida ) {
             return saida;
         }
     }
     
-    // Verifica se todos os parâmetros obrigatórios foram devidamente inicializados
-    public boolean preparado() {
-        synchronized ( this ) {
-            return imagem != null && visImagem != null;
-        }
+    public boolean ocupado() {
+        return detector.isAlive() && detector.getState() != Thread.State.WAITING;
     }
     
-    // Verifica se o objeto está preparado e se não há outra execução ainda em curso
-    public boolean pronto() {
-        return !detector.isAlive() || detector.getState() == Thread.State.WAITING;
-    }
-    
-    // Realiza a detecção de borda
     public void executar() {
-        if ( !preparado() || !pronto() )
+        if ( !ocupado() )
             return;
         
         if ( !detector.isAlive() )
             detector.start();
         else
-            synchronized( sincronizador ) {
-                sincronizador.notify();
+            synchronized( travaDetector ) {
+                travaDetector.notify();
             }
     }
     

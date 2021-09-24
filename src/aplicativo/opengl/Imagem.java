@@ -82,7 +82,7 @@ public class Imagem extends Textura {
         ByteBuffer bb = ByteBuffer.allocateDirect( imagem.length );
         bb.order( ByteOrder.nativeOrder() );
         bb.put( imagem );
-        bb.position( 0 );
+        bb.rewind();
         
         carregarImagem( bb );
     }
