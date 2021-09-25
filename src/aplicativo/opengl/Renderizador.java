@@ -33,13 +33,11 @@ public class Renderizador extends OpenGL implements GLEventListener {
         olhoVirtual = new Dispositivo(
             "Olho virtual", new CameraLocal( Aplicativo.lerNumeroCameraLocal(), 640, 480, 1 )
         );
-        olhoVirtual.alocar();
         olhoVirtual.ligar();
         
         smartphone = new DispositivoRemoto(
             "Smartphone", new CameraRemota( 320, 240, 1 )
         );
-        smartphone.alocar();
         smartphone.esperarEntradaRemota( bluetooth );
         
         dispositivo = new Dispositivo[] { olhoVirtual, smartphone };
@@ -76,7 +74,6 @@ public class Renderizador extends OpenGL implements GLEventListener {
     
     @Override
     public void display( GLAutoDrawable drawable ) {
-        
         for ( int i = 0; i < dispositivo.length; i++ ) {
             Dispositivo disp = dispositivo[i];
             
@@ -90,19 +87,20 @@ public class Renderizador extends OpenGL implements GLEventListener {
             }
             
             disp.draw();
-            // disp.atualizarImagemDetector( 3 );
-            
             disp.getFrameBufferObject().draw( linhasCentrais );
         }
         
         tela.clear();
         olhoVirtual.getFrameBufferObject().copiar(
             tela, 0, tela.getAltura() / 2, tela.getLargura(), tela.getAltura() / 2, 3, 1
-        );
-        
+        );      
         smartphone.getFrameBufferObject().copiar(
             tela, 0, 0, tela.getLargura(), tela.getAltura() / 2, 3, 1
         );
+        
+        olhoVirtual.atualizarImagemDetector( 3 );        
+        if ( Aplicativo.getImprimindo() )
+            Aplicativo.imprimir( olhoVirtual.getDetectorPontos().getSaida() );
     }
     
     private boolean executando = true;
