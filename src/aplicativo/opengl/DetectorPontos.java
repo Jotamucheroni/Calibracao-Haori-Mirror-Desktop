@@ -114,7 +114,7 @@ public class DetectorPontos implements AutoCloseable {
     }
     
     public void executar() {
-        if ( !ocupado() )
+        if ( ocupado() )
             return;
         
         if ( !detector.isAlive() )
