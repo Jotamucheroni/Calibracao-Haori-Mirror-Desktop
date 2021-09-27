@@ -100,7 +100,7 @@ public class Renderizador extends OpenGL implements GLEventListener {
         
         olhoVirtual.atualizarImagemDetector( 3 );        
         if ( Aplicativo.getImprimindo() )
-            Aplicativo.imprimir( olhoVirtual.getDetectorPontos().getSaida() );
+            Aplicativo.imprimir( olhoVirtual.getDetectorPontos().getNumeroPontos() );
     }
     
     private boolean executando = true;

@@ -1,11 +1,11 @@
 package aplicativo.es.dispositivo;
 
 import aplicativo.es.camera.Camera;
-import aplicativo.opengl.DetectorPontos;
 import aplicativo.opengl.Programa;
 import aplicativo.opengl.Desenho;
 import aplicativo.opengl.Textura;
 import aplicativo.opengl.framebuffer.FrameBufferObject;
+import aplicativo.pontos.DetectorPontos;
 
 public class Dispositivo implements AutoCloseable {
     private static int instancia = 0;
