@@ -42,11 +42,14 @@ public class DetectorPontos implements AutoCloseable {
             {
                 final List<Ponto2D> listaPontos = new ArrayList<Ponto2D>( getNumeroPixeisImagem() );
                 final int
-                    par = 1 - this.larguraImagem % 2,
-                    raioMaximo = ( this.larguraImagem - 1 - par ) / 2;
+                    parLargura = 1 - this.larguraImagem % 2,
+                    parAltura = 1 - this.alturaImagem % 2,
+                    raioMaximoLargura = ( this.larguraImagem - 1 - parLargura ) / 2,
+                    raioMaximoAltura = ( this.alturaImagem - 1 - parAltura ) / 2;
                 final Ponto2D
                     centroImagem = new Ponto2D(
-                        ( this.larguraImagem - 1 - par ) / 2,  ( this.alturaImagem - 1 - par ) / 2
+                        ( this.larguraImagem - 1 - parLargura ) / 2,
+                        ( this.alturaImagem - 1 - parAltura ) / 2
                     ),
                     cantoSuperiorEsquerdo   = new Ponto2D(),
                     cantoSuperiorDireito    = new Ponto2D(),
@@ -60,23 +63,33 @@ public class DetectorPontos implements AutoCloseable {
                     
                     System.out.print( "ponto: " );
                     
-                    if ( par == 0 )
-                        adicionarPonto( listaPontos, centroImagem.x, centroImagem.y );
+                    adicionarPonto( listaPontos, centroImagem.x, centroImagem.y );
+                    if ( parLargura == 1 )
+                        adicionarPonto( listaPontos, centroImagem.x + 1, centroImagem.y );
+                    if ( parLargura == 1 && parAltura == 1 )
+                        adicionarPonto( listaPontos, centroImagem.x + 1, centroImagem.y + 1 );
+                    if ( parAltura == 1 )
+                        adicionarPonto( listaPontos, centroImagem.x, centroImagem.y + 1 );
                     
-                    for( int raio = 0; raio <= raioMaximo; raio += 1 ) {
+                    int raio;
+                    for(
+                        raio = 1;
+                        raio <= raioMaximoLargura && raio <= raioMaximoAltura;
+                        raio += 1
+                    ) {
                         // System.out.println( "raio: " + raio );
                         
                         cantoSuperiorEsquerdo.setCoordenadas(
                             centroImagem.x - raio, centroImagem.y - raio
                         );
                         cantoSuperiorDireito.setCoordenadas(
-                            centroImagem.x + par + raio, centroImagem.y - raio
+                            centroImagem.x + parLargura + raio, centroImagem.y - raio
                         );
                         cantoInferiorDireito.setCoordenadas(
-                            centroImagem.x + par + raio, centroImagem.y + par + raio
+                            centroImagem.x + parLargura + raio, centroImagem.y + parAltura + raio
                         );
                         cantoInferiorEsquerdo.setCoordenadas(
-                            centroImagem.x - raio, centroImagem.y + par + raio
+                            centroImagem.x - raio, centroImagem.y + parAltura + raio
                         );
                         
                         for(
@@ -97,6 +110,22 @@ public class DetectorPontos implements AutoCloseable {
                         
                         for( ; y > cantoSuperiorEsquerdo.y; y-- ) 
                             adicionarPonto( listaPontos, x, y );
+                    }
+                    
+                    for ( ; raio <= raioMaximoAltura; raio++ ) {
+                        for( int l = 0; l < this.larguraImagem; l++ )
+                            adicionarPonto( listaPontos, l, centroImagem.y - raio );
+                        
+                        for( int l = this.larguraImagem - 1; l >= 0 ; l-- )
+                            adicionarPonto( listaPontos, l, centroImagem.y + parAltura + raio );
+                    }
+                    
+                    for ( ; raio <= raioMaximoLargura; raio++ ) {
+                        for( int a = 0; a < this.alturaImagem; a++ )
+                            adicionarPonto( listaPontos, centroImagem.x + parLargura + raio, a );
+                        
+                        for( int a = this.alturaImagem - 1; a >= 0; a-- )
+                            adicionarPonto( listaPontos, centroImagem.x - raio, a );
                     }
                     
                     /* long dif = System.currentTimeMillis() - t;
