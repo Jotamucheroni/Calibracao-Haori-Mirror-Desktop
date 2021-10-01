@@ -77,6 +77,10 @@ public class Ponto3D extends Ponto2D {
         return new float[]{ x, y, z };
     }
     
+    public float getDistanciaZ( Ponto3D ponto ) {
+        return Math.abs( z - ponto.z );
+    }
+    
     public float getDistancia( Ponto3D ponto ) {
         float
             diferencaX = x - ponto.x,
@@ -86,6 +90,25 @@ public class Ponto3D extends Ponto2D {
         return (float) Math.sqrt(
             diferencaX * diferencaX + diferencaY * diferencaY + diferencaZ * diferencaZ
         );
+    }
+    
+    public void copiar( Ponto3D ponto ) {
+        x = ponto.x;
+        y = ponto.y;
+        z = ponto.z;
+    }
+    
+    public void soma( Ponto3D ponto ) {
+        x += ponto.x;
+        y += ponto.y;
+        z += ponto.z;
+    }
+    
+    @Override
+    public void multiplicacaoEscalar( float escalar ) {
+        x *= escalar;
+        y *= escalar;
+        z *= escalar;
     }
     
     @Override

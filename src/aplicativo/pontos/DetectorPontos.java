@@ -1,9 +1,9 @@
 package aplicativo.pontos;
 
 import java.nio.ByteBuffer;
+
 import java.util.Collections;
 import java.util.List;
-
 import java.util.ArrayList;
 
 public class DetectorPontos implements AutoCloseable {
@@ -16,8 +16,13 @@ public class DetectorPontos implements AutoCloseable {
     private final Object travaDetector = new Object();
     private final Thread detector;
     
+    private final List<Ponto2D> listaPontosAuxiliar = new ArrayList<Ponto2D>();
+    private final List<GrupoPontos> listaGrupoPontosAuxiliar = new ArrayList<GrupoPontos>();
+    private final List<Ponto2D> listaPontosAgrupadosAuxiliar = new ArrayList<Ponto2D>();
+    
     private final Object travaSaida = new Object();
     private List<Ponto2D> listaPontos = new ArrayList<Ponto2D>();
+    private List<Ponto2D> listaPontosAgrupados = new ArrayList<Ponto2D>();
     
     public DetectorPontos( int larguraImagem, int alturaImagem, int numeroComponentesCorImagem ) {
         if ( larguraImagem < 1 )
@@ -40,36 +45,45 @@ public class DetectorPontos implements AutoCloseable {
         detector = new Thread(
             () ->
             {
-                final List<Ponto2D> listaPontos = new ArrayList<Ponto2D>( getNumeroPixeisImagem() );
                 final int
                     parLargura = 1 - this.larguraImagem % 2,
                     parAltura = 1 - this.alturaImagem % 2,
                     raioMaximoLargura = ( this.larguraImagem - 1 - parLargura ) / 2,
                     raioMaximoAltura = ( this.alturaImagem - 1 - parAltura ) / 2;
+                
                 final Ponto2D
                     centroImagem = new Ponto2D(
                         ( this.larguraImagem - 1 - parLargura ) / 2,
                         ( this.alturaImagem - 1 - parAltura ) / 2
                     ),
-                    cantoSuperiorEsquerdo   = new Ponto2D(),
-                    cantoSuperiorDireito    = new Ponto2D(),
-                    cantoInferiorEsquerdo   = new Ponto2D(),
-                    cantoInferiorDireito    = new Ponto2D();
+                    centroRealImagem        =   centroImagem.clone(),
+                    origem                  =   new Ponto2D( 0, 0 ),
+                    cantoSuperiorEsquerdo   =   new Ponto2D(),
+                    cantoSuperiorDireito    =   new Ponto2D(),
+                    cantoInferiorEsquerdo   =   new Ponto2D(),
+                    cantoInferiorDireito    =   new Ponto2D();
+                
+                if ( parLargura == 1 )
+                    centroRealImagem.x += 0.5;
+                if ( parAltura == 1 )
+                    centroRealImagem.y += 0.5;
+                
                 float x, y;
                 
                 do {
                     // long t = System.currentTimeMillis();
-                    listaPontos.clear();
                     
-                    System.out.print( "ponto: " );
+                    listaPontosAuxiliar.clear();
+                    listaGrupoPontosAuxiliar.clear();
+                    listaPontosAgrupadosAuxiliar.clear();
                     
-                    adicionarPonto( listaPontos, centroImagem.x, centroImagem.y );
+                    adicionarPonto( 0, centroImagem.x, centroImagem.y );
                     if ( parLargura == 1 )
-                        adicionarPonto( listaPontos, centroImagem.x + 1, centroImagem.y );
+                        adicionarPonto( 0, centroImagem.x + 1, centroImagem.y );
                     if ( parLargura == 1 && parAltura == 1 )
-                        adicionarPonto( listaPontos, centroImagem.x + 1, centroImagem.y + 1 );
+                        adicionarPonto( 0, centroImagem.x + 1, centroImagem.y + 1 );
                     if ( parAltura == 1 )
-                        adicionarPonto( listaPontos, centroImagem.x, centroImagem.y + 1 );
+                        adicionarPonto( 0, centroImagem.x, centroImagem.y + 1 );
                     
                     int raio;
                     for(
@@ -77,8 +91,6 @@ public class DetectorPontos implements AutoCloseable {
                         raio <= raioMaximoLargura && raio <= raioMaximoAltura;
                         raio += 1
                     ) {
-                        // System.out.println( "raio: " + raio );
-                        
                         cantoSuperiorEsquerdo.setCoordenadas(
                             centroImagem.x - raio, centroImagem.y - raio
                         );
@@ -100,47 +112,51 @@ public class DetectorPontos implements AutoCloseable {
                             
                             x++
                         )
-                            adicionarPonto( listaPontos, x, y );
+                            adicionarPonto( raio, x, y );
                         
                         for( ; y < cantoInferiorDireito.y; y++ )
-                            adicionarPonto( listaPontos, x, y );
+                            adicionarPonto( raio, x, y );
                         
                         for( ; x > cantoInferiorEsquerdo.x; x-- ) 
-                            adicionarPonto( listaPontos, x, y );
+                            adicionarPonto( raio, x, y );
                         
                         for( ; y > cantoSuperiorEsquerdo.y; y-- ) 
-                            adicionarPonto( listaPontos, x, y );
+                            adicionarPonto( raio, x, y );
                     }
                     
                     for ( ; raio <= raioMaximoAltura; raio++ ) {
                         for( int l = 0; l < this.larguraImagem; l++ )
-                            adicionarPonto( listaPontos, l, centroImagem.y - raio );
+                            adicionarPonto( raio, l, centroImagem.y - raio );
                         
                         for( int l = this.larguraImagem - 1; l >= 0 ; l-- )
-                            adicionarPonto( listaPontos, l, centroImagem.y + parAltura + raio );
+                            adicionarPonto( raio, l, centroImagem.y + parAltura + raio );
                     }
                     
                     for ( ; raio <= raioMaximoLargura; raio++ ) {
                         for( int a = 0; a < this.alturaImagem; a++ )
-                            adicionarPonto( listaPontos, centroImagem.x + parLargura + raio, a );
+                            adicionarPonto( raio, centroImagem.x + parLargura + raio, a );
                         
                         for( int a = this.alturaImagem - 1; a >= 0; a-- )
-                            adicionarPonto( listaPontos, centroImagem.x - raio, a );
+                            adicionarPonto( raio, centroImagem.x - raio, a );
                     }
                     
-                    /* long dif = System.currentTimeMillis() - t;
-                    System.out.println( "Tempo: " + dif );
-                    System.out.println( "Quadros/s: " + 1 / ( (float) dif / 1000 ) ); */
-                    System.out.println();
+                    for ( GrupoPontos grupo : listaGrupoPontosAuxiliar )
+                        if ( grupo.getEstado() == GrupoPontos.Estado.VALIDO ) 
+                            listaPontosAgrupadosAuxiliar.add( grupo.getPixelCentral() );
+                    
+                    deslocarCentro( listaPontosAgrupadosAuxiliar, centroRealImagem );
+                    limparEOrdenar( listaPontosAgrupadosAuxiliar, origem );
                     
                     synchronized( travaSaida ) {
-                        this.listaPontos = new ArrayList<Ponto2D>( listaPontos );
+                        this.listaPontos =
+                            new ArrayList<Ponto2D>( listaPontosAuxiliar );
+                        this.listaPontosAgrupados =
+                            new ArrayList<Ponto2D>( listaPontosAgrupadosAuxiliar );
                     }
                     
-                    System.out.println( listaPontos.size() );
-                    for ( Ponto2D ponto : listaPontos )
-                        System.out.print( ponto );
-                    System.out.println();
+                    /* System.out.println( 
+                        "Quadros/s: " + 1 / ( (float) ( System.currentTimeMillis() - t ) / 1000 )
+                    ); */
                     
                     synchronized( travaDetector ) {
                         try {
@@ -158,11 +174,251 @@ public class DetectorPontos implements AutoCloseable {
         this( larguraImagem, alturaImagem, 4 );
     }
     
-    private void adicionarPonto( List<Ponto2D> listaPontos, float x, float y ) {
-        System.out.print( (int) ( y * this.larguraImagem + x ) + " " );
+    private final ArrayList<GrupoPontos> listaGruposExclusao = new ArrayList<GrupoPontos>();
+    
+    private void adicionarPonto( int iteracao, float x, float y ) {
         visImagem.position( (int) ( y * this.larguraImagem + x ) );
-        if ( Byte.toUnsignedInt( visImagem.get() ) == 255 )
-            listaPontos.add( new Ponto2D( x, y ) );
+        if ( Byte.toUnsignedInt( visImagem.get() ) == 255 ) {
+            Ponto2D ponto = new Ponto2D( x, y );
+            
+            listaPontosAuxiliar.add( ponto );
+            
+            listaGruposExclusao.clear();
+            boolean adicionado = false;
+            for ( GrupoPontos grupo : listaGrupoPontosAuxiliar ) {
+                GrupoPontos.Resultado resultado = grupo.adicionar( ponto, iteracao );
+                
+                if ( resultado == GrupoPontos.Resultado.ADICIONADO ) {
+                    adicionado = true;
+                    break;
+                }
+                else if ( resultado == GrupoPontos.Resultado.ENCERRADO )
+                    listaGruposExclusao.add( grupo );
+            }
+            
+            if ( !adicionado ) {
+                GrupoPontos grupo = new GrupoPontos();
+                grupo.adicionar( ponto );
+                
+                listaGrupoPontosAuxiliar.add( grupo );
+            }
+            
+            for ( GrupoPontos grupo : listaGruposExclusao ) {
+                listaGrupoPontosAuxiliar.remove( grupo );
+                if ( grupo.getEstado() == GrupoPontos.Estado.VALIDO )
+                    listaPontosAgrupadosAuxiliar.add( grupo.getPixelCentral() );
+            }
+        }
+    }
+    
+    private void deslocarCentro( List<Ponto2D> listaPontos, Ponto2D novoCentro ) {
+        Ponto2D deslocamento = novoCentro.clone();
+        deslocamento.multiplicacaoEscalar( -1 );
+        
+        for ( Ponto2D ponto : listaPontos )
+            ponto.soma( deslocamento );
+    }
+    
+    private void limparEOrdenar( List<Ponto2D> listaPontos, Ponto2D referencia ) {
+        if ( listaPontos == null || listaPontos.size() < 4 )
+            return;
+        
+        Ponto2D
+            cantoSuperiorEsquerdo = null,
+            cantoSuperiorDireito = null,
+            cantoInferiorDireito = null,
+            cantoInferiorEsquerdo = null;
+        
+        for ( Ponto2D ponto : listaPontos ) {
+            if (
+                ponto.x <= referencia.x    &&
+                ponto.y >= referencia.y    &&
+                
+                (
+                    cantoSuperiorEsquerdo == null ||
+                    
+                    referencia.getDistanciaTabuleiro( ponto ) <
+                    referencia.getDistanciaTabuleiro( cantoSuperiorEsquerdo )
+                )
+            )
+                cantoSuperiorEsquerdo = ponto;
+            
+            else if (
+                ponto.x > referencia.x     &&
+                ponto.y >= referencia.y    &&
+                
+                (
+                    cantoSuperiorDireito == null ||
+                    
+                    referencia.getDistanciaTabuleiro( ponto ) <
+                    referencia.getDistanciaTabuleiro( cantoSuperiorDireito )
+                )
+            )
+                cantoSuperiorDireito = ponto;
+            
+            else if (
+                ponto.x > referencia.x     &&
+                ponto.y < referencia.y     &&
+                
+                (
+                    cantoInferiorDireito == null ||
+                    
+                    referencia.getDistanciaTabuleiro( ponto ) <
+                    referencia.getDistanciaTabuleiro( cantoInferiorDireito )
+                )
+            )
+                cantoInferiorDireito = ponto;
+            
+            else if (
+                ponto.x <= referencia.x    &&
+                ponto.y < referencia.y     &&
+                
+                (
+                    cantoInferiorEsquerdo == null ||
+                    
+                    referencia.getDistanciaTabuleiro( ponto ) <
+                    referencia.getDistanciaTabuleiro( cantoInferiorEsquerdo )
+                )
+            )
+                cantoInferiorEsquerdo = ponto;
+        }
+        
+        if (
+            cantoSuperiorEsquerdo   ==  null    ||
+            cantoSuperiorDireito    ==  null    ||
+            cantoInferiorDireito    ==  null    ||
+            cantoInferiorEsquerdo   ==  null
+        )
+            return;
+        
+        float
+            ladoQuadradoAux = cantoSuperiorDireito.x - cantoSuperiorEsquerdo.x,
+            ladoQuadrado = ladoQuadradoAux;
+        
+        if (
+            ( ladoQuadradoAux = cantoSuperiorDireito.y - cantoInferiorDireito.y ) > ladoQuadrado
+        )
+            ladoQuadrado = ladoQuadradoAux;
+        if (
+            ( ladoQuadradoAux = cantoInferiorDireito.x - cantoInferiorEsquerdo.x ) > ladoQuadrado
+        )
+            ladoQuadrado = ladoQuadradoAux;
+        if (
+            ( ladoQuadradoAux = cantoSuperiorEsquerdo.y - cantoInferiorEsquerdo.y ) > ladoQuadrado
+        )
+            ladoQuadrado = ladoQuadradoAux;
+        
+        final float 
+            limite = ladoQuadrado / 3,
+            limiteEsquerdo = (
+                cantoSuperiorEsquerdo.x < cantoInferiorEsquerdo.x ?
+                    cantoSuperiorEsquerdo.x :
+                    cantoInferiorEsquerdo.x
+            ) - limite,
+            limiteDireito = (
+                cantoSuperiorDireito.x > cantoInferiorDireito.x ?
+                    cantoSuperiorDireito.x :
+                    cantoInferiorDireito.x
+            ) + 4 * ladoQuadrado + limite,
+            limiteSuperior = (
+                cantoSuperiorEsquerdo.y > cantoSuperiorDireito.y ?
+                    cantoSuperiorEsquerdo.y :
+                    cantoSuperiorDireito.y
+            ) + 2 * ladoQuadrado + limite,
+            limiteInferior = (
+                cantoInferiorEsquerdo.y < cantoInferiorDireito.y ?
+                    cantoInferiorEsquerdo.y :
+                    cantoInferiorDireito.y
+            ) - 2 * ladoQuadrado - limite;
+        
+        listaPontos.removeIf(
+            ponto -> 
+                ponto.x < limiteEsquerdo    ||
+                ponto.x > limiteDireito     ||
+                ponto.y > limiteSuperior    ||
+                ponto.y < limiteInferior
+        );
+        
+        final float diferencaMaxima = ladoQuadrado / 3;
+        
+        listaPontos.sort(
+            ( p1, p2 ) -> 
+            {
+                if ( Math.abs( p1.x - p2.x ) < diferencaMaxima )
+                    return (int) ( p2.y - p1.y );
+                
+                return (int) ( p1.x - p2.x );
+            }
+        );
+        
+        for( int i = 1; i < listaPontos.size(); i++ ) {
+            if (
+                Math.abs( listaPontos.get( i ).x - listaPontos.get( i - 1 ).x ) > diferencaMaxima
+            ) {
+                listaPontos.add( i, null );
+                i++;
+            }
+        }
+        
+        Ponto2D pontoLista, pontoColuna, pontoMinimo;
+        
+        List<Ponto2D> coluna = new ArrayList<Ponto2D>();
+        List<Ponto2D> listaRemocao = new ArrayList<Ponto2D>();
+        
+        float distancia, distanciaMinima;
+        
+        for ( int i = 0; i < listaPontos.size(); i++ ) {
+            pontoLista = listaPontos.get( i );
+            
+            if ( pontoLista == null || i == listaPontos.size() - 1 ) {
+                if ( i == listaPontos.size() - 1 )
+                    coluna.add( pontoLista );
+                
+                while ( coluna.size() > 4 ) {
+                    distanciaMinima = -1;
+                    pontoMinimo = null;
+                    
+                    for ( int j = 1; j < coluna.size() - 1; j++ ) {
+                        pontoColuna = coluna.get( j );
+                        
+                        distancia = 
+                                ( coluna.get( j - 1 ).y - pontoColuna.y )
+                            +   ( pontoColuna.y -  coluna.get( j + 1 ).y );
+                        
+                        if ( distancia < distanciaMinima || pontoMinimo == null ) {
+                            distanciaMinima = distancia;
+                            pontoMinimo = pontoColuna;
+                        }
+                    }
+                    
+                    coluna.remove( pontoMinimo );
+                    listaRemocao.add( pontoMinimo );
+                }
+                
+                if ( coluna.size() < 3 )
+                    listaRemocao.addAll( coluna );
+                
+                coluna.clear();
+                
+                continue;
+            }
+            
+            coluna.add( pontoLista );
+        }
+        
+        if ( coluna.size() < 3 )
+            listaRemocao.addAll( coluna );
+        
+        listaPontos.removeAll( listaRemocao );
+        
+        if ( listaPontos.size() > 0 && listaPontos.get( listaPontos.size() - 1 ) == null )
+            listaPontos.remove( listaPontos.size() - 1 );
+        
+        for ( int i = 1; i < listaPontos.size(); i++ )
+            if ( listaPontos.get( i ) == null && listaPontos.get( i - 1 ) == null ) {
+                listaPontos.remove( i );
+                i--;
+            }
     }
     
     public int getLarguraImagem() {
@@ -203,6 +459,12 @@ public class DetectorPontos implements AutoCloseable {
     public List<Ponto2D> getListaPontos() {
         synchronized ( travaSaida ) {
             return Collections.unmodifiableList( listaPontos );
+        }
+    }
+    
+    public List<Ponto2D> getListaPontosAgrupados() {
+        synchronized ( travaSaida ) {
+            return Collections.unmodifiableList( listaPontosAgrupados );
         }
     }
     

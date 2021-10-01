@@ -72,7 +72,15 @@ public class Ponto2D {
         return new float[]{ x, y };
     }
     
-    public float getDistancia( Ponto2D ponto ) {
+    public float getDistanciaX( Ponto2D ponto ) {
+        return Math.abs( x - ponto.x );
+    }
+    
+    public float getDistanciaY( Ponto2D ponto ) {
+        return Math.abs( y - ponto.y );
+    }
+    
+    public float getDistanciaEuclidiana( Ponto2D ponto ) {
         float
             diferencaX = x - ponto.x,
             diferencaY = y - ponto.y;
@@ -80,9 +88,32 @@ public class Ponto2D {
         return (float) Math.sqrt( diferencaX * diferencaX + diferencaY * diferencaY );
     }
     
+    public float getDistanciaTabuleiro( Ponto2D ponto ) {
+        float
+            diferencaX = Math.abs( x - ponto.x ),
+            diferencaY = Math.abs( y - ponto.y );
+        
+        return diferencaX >= diferencaY ? diferencaX : diferencaY ;
+    }
+    
+    public void copiar( Ponto2D ponto ) {
+        x = ponto.x;
+        y = ponto.y;
+    }
+    
+    public void soma( Ponto2D ponto ) {
+        x += ponto.x;
+        y += ponto.y;
+    }
+    
+    public void multiplicacaoEscalar( float escalar ) {
+        x *= escalar;
+        y *= escalar;
+    }
+    
     @Override
     public String toString() {
-        return "( " + x + ", " + y + " )";
+        return "( " + (int) x + ", " + (int) y + " )";
     }
     
     @Override
