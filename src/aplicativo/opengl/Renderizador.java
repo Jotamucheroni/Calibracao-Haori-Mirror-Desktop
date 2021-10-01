@@ -30,24 +30,25 @@ public class Renderizador extends OpenGL implements GLEventListener {
         bluetooth = new Bluetooth();
         bluetooth.conectarDispositivo( "304B0745112F" );    // Smartphone
         
+        Desenho desenho;
+        
         olhoVirtual = new Dispositivo(
             "Olho virtual", new CameraLocal( Aplicativo.lerNumeroCameraLocal(), 640, 480, 1 )
         );
         olhoVirtual.ligar();
+        desenho = olhoVirtual.getDesenho();
+        desenho.setParametroTextura( 0, 0.2f );
+        desenho.setParametroTextura( 1, 0.4f );
         
         smartphone = new DispositivoRemoto(
             "Smartphone", new CameraRemota( 320, 240, 1 )
         );
         smartphone.esperarEntradaRemota( bluetooth );
+        desenho = smartphone.getDesenho();
+        desenho.setParametroTextura( 0, 0.25f );
+        desenho.setParametroTextura( 1, 0.75f );
         
         dispositivo = new Dispositivo[] { olhoVirtual, smartphone };
-        
-        for ( Dispositivo disp : dispositivo ) {
-            Desenho desenho = disp.getDesenho();
-            
-            for ( int i = 0; i < NUMERO_PARAMETROS_TEXTURA; i++ )
-                desenho.setParametroTextura( i, 0.0f );
-        }
         
         linhasCentrais = new Desenho( 
             2, 3,
@@ -87,6 +88,7 @@ public class Renderizador extends OpenGL implements GLEventListener {
             }
             
             disp.draw();
+            disp.atualizarImagemDetector( 3 );
             disp.getFrameBufferObject().draw( linhasCentrais );
         }
         
@@ -98,9 +100,8 @@ public class Renderizador extends OpenGL implements GLEventListener {
             tela, 0, 0, tela.getLargura(), tela.getAltura() / 2, 3, 1
         );
         
-        olhoVirtual.atualizarImagemDetector( 3 );        
         if ( Aplicativo.getImprimindo() )
-            Aplicativo.imprimir( olhoVirtual.getDetectorPontos().getNumeroPontos() );
+            Aplicativo.imprimir( dispositivo );
     }
     
     private boolean executando = true;

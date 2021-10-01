@@ -1,15 +1,20 @@
 package aplicativo;
 
 import java.io.IOException;
+
 import java.util.Scanner;
+import java.util.List;
 
 import aplicativo.es.camera.CameraLocal;
+import aplicativo.es.dispositivo.Dispositivo;
+import aplicativo.pontos.Ponto2D;
 
 public class Aplicativo {
     public final static Scanner ENTRADA = new Scanner( System.in );
     private static Thread entradaAssincrona;
     
-    //  0.2, 0.4f - Olho virtual
+    //  0.20, 0.4 - Olho virtual
+    //  0.25, 0.75 - Smartphone
     public final static Parametros[] PARAMETROS = new Parametros[2];
     
     public static void main( String[] args ) {
@@ -48,12 +53,52 @@ public class Aplicativo {
         }
     }
     
-    public static void imprimir( Object objeto ) {
+    private static String apagarLinha = "\u001B[2K\r";
+    private static int lista = 0;
+    private static int numeroLinhas = 0; 
+    
+    public static void imprimir( Dispositivo[] dispositivo ) {
         synchronized ( travaImpressao ) {
             if ( !imprimindo )
                 return;
             
-            System.out.print( "\u001B[1K\rSaída: " + objeto );
+            List<Ponto2D> listaPontos =
+                dispositivo[lista].getDetectorPontos().getListaPontosAgrupados();
+            
+            System.out.print( "\u001B[s" );
+            System.out.println( apagarLinha + "Lista de pontos: " );
+            
+            for ( int i = 1; i <= numeroLinhas; i++ )
+                System.out.println( apagarLinha );
+            
+            if ( numeroLinhas > 0 )
+                System.out.print( "\u001B[" + numeroLinhas + "A" );
+            
+            int
+                linhas = 0,
+                colunas = 0;
+            String tabulacao = "";
+            for ( Ponto2D ponto : listaPontos ) {
+                if ( ponto == null ) {
+                    if ( linhas > numeroLinhas )
+                        numeroLinhas = linhas;
+                    
+                    System.out.print( "\u001B[" + linhas + "A" );
+                    colunas += 20;
+                    tabulacao = "\u001B[" + colunas + "C";
+                    linhas = 0;
+                    
+                    continue;
+                }
+                
+                System.out.println( tabulacao + ponto );
+                linhas++;
+            }
+            
+            if ( linhas > numeroLinhas )
+                numeroLinhas = linhas;
+            
+            System.out.print( "\u001B[u" );
         }
     }
     
@@ -110,12 +155,17 @@ public class Aplicativo {
                             break;
                         
                         case 'I':
+                            System.out.print( "Lista de pontos a ser impressa: " );
+                            lista = ENTRADA.nextInt();
+                            
                             System.out.println();
                             System.out.println( "\u001B[1mImpressão de saída iniciada\u001B[0m" );
                             System.out.println( "Pressione <Enter> para parar" );
                             System.out.println();
                             
                             synchronized ( travaImpressao ) {
+                                System.out.print( "\u001B[?25l" );
+                                numeroLinhas = 0;
                                 imprimindo = true;
                             }
                             
@@ -125,6 +175,8 @@ public class Aplicativo {
                             
                             synchronized ( travaImpressao ) {
                                 imprimindo = false;
+                                System.out.print( "\u001B[10B\n" );
+                                System.out.print( "\u001B[?25h" );
                             }
                             
                             break;
