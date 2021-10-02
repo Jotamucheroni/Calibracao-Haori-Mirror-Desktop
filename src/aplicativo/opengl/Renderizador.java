@@ -10,6 +10,7 @@ import aplicativo.es.camera.CameraRemota;
 import aplicativo.es.dispositivo.Dispositivo;
 import aplicativo.es.dispositivo.DispositivoRemoto;
 import aplicativo.opengl.framebuffer.Tela;
+import aplicativo.pontos.DetectorPontos;
 
 public class Renderizador extends OpenGL implements GLEventListener {
     private Bluetooth bluetooth;
@@ -24,11 +25,11 @@ public class Renderizador extends OpenGL implements GLEventListener {
     
     @Override
     public void init( GLAutoDrawable drawable ) {
-        gl4 = drawable.getGL().getGL4();    // Executar sempre primeiro
+        gl4 = drawable.getGL().getGL4();
         gl4.glClearColor( 0.0f, 0.0f, 0.0f, 1.0f );
         
         bluetooth = new Bluetooth();
-        bluetooth.conectarDispositivo( "304B0745112F" );    // Smartphone
+        bluetooth.conectarDispositivo( "304B0745112F" );
         
         Desenho desenho;
         
@@ -39,6 +40,7 @@ public class Renderizador extends OpenGL implements GLEventListener {
         desenho = olhoVirtual.getDesenho();
         desenho.setParametroTextura( 0, 0.2f );
         desenho.setParametroTextura( 1, 0.4f );
+        olhoVirtual.getDetectorPontos().setMaximoColunasAEsquerda( 2 );
         
         smartphone = new DispositivoRemoto(
             "Smartphone", new CameraRemota( 320, 240, 1 )
@@ -47,6 +49,7 @@ public class Renderizador extends OpenGL implements GLEventListener {
         desenho = smartphone.getDesenho();
         desenho.setParametroTextura( 0, 0.25f );
         desenho.setParametroTextura( 1, 0.75f );
+        smartphone.getDetectorPontos().setMinimoPontosColuna( 2 );
         
         dispositivo = new Dispositivo[] { olhoVirtual, smartphone };
         
@@ -83,8 +86,17 @@ public class Renderizador extends OpenGL implements GLEventListener {
             if ( Aplicativo.PARAMETROS[i].getAtualizado() ) {
                 Desenho desenho = disp.getDesenho();
                 
-                for ( int n = 0; n < NUMERO_PARAMETROS_TEXTURA; n++ )
+                int n;
+                for ( n = 0; n < NUMERO_PARAMETROS_TEXTURA; n++ )
                     desenho.setParametroTextura( n, Aplicativo.PARAMETROS[i].getValor( n ) );
+                
+                DetectorPontos detector = disp.getDetectorPontos();
+                
+                detector.setMaximoColunasAEsquerda( (int) Aplicativo.PARAMETROS[i].getValor( n ) );
+                detector.setMaximoColunasADireita( (int) Aplicativo.PARAMETROS[i].getValor( n + 1 ) );
+                detector.setMaximoLinhasAcima( (int) Aplicativo.PARAMETROS[i].getValor( n + 2 ) );
+                detector.setMaximoLinhasAbaixo( (int) Aplicativo.PARAMETROS[i].getValor( n + 3 ) );
+                detector.setMinimoPontosColuna( (int) Aplicativo.PARAMETROS[i].getValor( n + 4 ) );
             }
             
             disp.draw();

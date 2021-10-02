@@ -18,10 +18,18 @@ public class Aplicativo {
     public final static Parametros[] PARAMETROS = new Parametros[2];
     
     public static void main( String[] args ) {
+        String[] nomeParametro = {
+            "Intensidade gradiente", "Ângulo gradiente",
+            "Máximo de colunas à esquerda", "Máximo de colunas à direita",
+            "Máximo de linhas acima", "Máximo de linhas abaixo",
+            "Mínimo de pontos por coluna"
+        };
         PARAMETROS[0] = new Parametros(
-            "Olho virtual", new String[]{ "Intensidade gradiente", "Ângulo gradiente" }, 2
+            "Olho virtual", nomeParametro, new float[] { 0.2f, 0.4f, 2, 5, 3, 3, 3 }
         );
-        PARAMETROS[1] = PARAMETROS[0].clone( "Smartphone" );
+        PARAMETROS[1] = new Parametros(
+            "Smartphone", nomeParametro, new float[] { 0.25f, 0.75f, 5, 5, 3, 3, 2 }
+        );
         
         Thread janela = new Thread( new Janela() );
         janela.start();
@@ -84,7 +92,7 @@ public class Aplicativo {
                         numeroLinhas = linhas;
                     
                     System.out.print( "\u001B[" + linhas + "A" );
-                    colunas += 20;
+                    colunas += 15;
                     tabulacao = "\u001B[" + colunas + "C";
                     linhas = 0;
                     

@@ -219,6 +219,83 @@ public class DetectorPontos implements AutoCloseable {
             ponto.soma( deslocamento );
     }
     
+    private int
+        maximoColunasAEsquerda = 5,
+        maximoColunasADireita = 5,
+        maximoLinhasAcima = 3,
+        maximoLinhasAbaixo = 3;
+    
+    public void setMaximoColunasAEsquerda( int numeroColunas ) {
+        if ( numeroColunas < 0 )
+            numeroColunas = 0;
+        
+        maximoColunasAEsquerda = numeroColunas;
+    }
+    
+    public void setMaximoColunasADireita( int numeroColunas ) {
+        if ( numeroColunas < 0 )
+            numeroColunas = 0;
+        
+        maximoColunasADireita = numeroColunas;
+    }
+    
+    public void setMaximoLinhasAcima( int numeroLinhas ) {
+        if ( numeroLinhas < 0 )
+            numeroLinhas = 0;
+        
+        maximoLinhasAcima = numeroLinhas;
+    }
+    
+    public void setMaximoLinhasAbaixo( int numeroLinhas ) {
+        if ( numeroLinhas < 0 )
+            numeroLinhas = 0;
+        
+        maximoLinhasAbaixo = numeroLinhas;
+    }
+    
+    public int getMaximoColunasAEsquerda() {
+        return maximoColunasAEsquerda;
+    }
+    
+    public int getMaximoColunasADireita() {
+        return maximoColunasADireita;
+    }
+    
+    public int getMaximoLinhasAcima() {
+        return maximoLinhasAcima;
+    }
+    
+    public int getMaximoLinhasAbaixo() {
+        return maximoLinhasAbaixo;
+    }
+    
+    private int minimoPontosColuna = maximoLinhasAcima;
+    
+    public void setMinimoPontosColuna( int numeroPontos ) {
+        if ( numeroPontos < 0 )
+            numeroPontos = 0;
+        
+        minimoPontosColuna = numeroPontos;
+    }
+    
+    public int getMinimoPontosColuna() {
+        return minimoPontosColuna;
+    }
+    
+    private void removerNulos( List<Ponto2D> listaPontos ) {
+        for ( int i = 1; i < listaPontos.size(); i++ )
+            if ( listaPontos.get( i ) == null && listaPontos.get( i - 1 ) == null ) {
+                listaPontos.remove( i );
+                i--;
+            }
+        
+        if ( listaPontos.size() > 0 && listaPontos.get( listaPontos.size() - 1 ) == null )
+            listaPontos.remove( listaPontos.size() - 1 );
+        
+        if ( listaPontos.size() > 0 && listaPontos.get( 0 ) == null )
+            listaPontos.remove( 0 );
+    }
+    
     private void limparEOrdenar( List<Ponto2D> listaPontos, Ponto2D referencia ) {
         if ( listaPontos == null || listaPontos.size() < 4 )
             return;
@@ -309,27 +386,27 @@ public class DetectorPontos implements AutoCloseable {
             ladoQuadrado = ladoQuadradoAux;
         
         final float 
-            limite = ladoQuadrado / 3,
+            diferencaMaxima = ladoQuadrado / 3,
             limiteEsquerdo = (
                 cantoSuperiorEsquerdo.x < cantoInferiorEsquerdo.x ?
                     cantoSuperiorEsquerdo.x :
                     cantoInferiorEsquerdo.x
-            ) - limite,
+            ) - ( maximoColunasAEsquerda - 1 ) * ladoQuadrado - diferencaMaxima,
             limiteDireito = (
                 cantoSuperiorDireito.x > cantoInferiorDireito.x ?
                     cantoSuperiorDireito.x :
                     cantoInferiorDireito.x
-            ) + 4 * ladoQuadrado + limite,
+            ) + ( maximoColunasADireita - 1 ) * ladoQuadrado + diferencaMaxima,
             limiteSuperior = (
                 cantoSuperiorEsquerdo.y > cantoSuperiorDireito.y ?
                     cantoSuperiorEsquerdo.y :
                     cantoSuperiorDireito.y
-            ) + 2 * ladoQuadrado + limite,
+            ) + ( maximoLinhasAcima - 1 ) * ladoQuadrado + diferencaMaxima,
             limiteInferior = (
                 cantoInferiorEsquerdo.y < cantoInferiorDireito.y ?
                     cantoInferiorEsquerdo.y :
                     cantoInferiorDireito.y
-            ) - 2 * ladoQuadrado - limite;
+            ) - ( maximoLinhasAbaixo - 1 ) * ladoQuadrado - diferencaMaxima;
         
         listaPontos.removeIf(
             ponto -> 
@@ -339,7 +416,8 @@ public class DetectorPontos implements AutoCloseable {
                 ponto.y < limiteInferior
         );
         
-        final float diferencaMaxima = ladoQuadrado / 3;
+        if ( listaPontos.size() < 4 )
+            return;
         
         listaPontos.sort(
             ( p1, p2 ) -> 
@@ -351,14 +429,61 @@ public class DetectorPontos implements AutoCloseable {
             }
         );
         
+        Ponto2D pontoAtual, pontoAnterior;
+        List<Float>
+            listaDistancia = new ArrayList<Float>(),
+            listaPrimeiraLinha = new ArrayList<Float>(),
+            listaUltimaLinha = new ArrayList<Float>();
+        
+        listaPrimeiraLinha.add( listaPontos.get( 0 ).y );
         for( int i = 1; i < listaPontos.size(); i++ ) {
+            pontoAtual = listaPontos.get( i );
+            pontoAnterior = listaPontos.get( i - 1 );
+            
             if (
-                Math.abs( listaPontos.get( i ).x - listaPontos.get( i - 1 ).x ) > diferencaMaxima
+                Math.abs( pontoAtual.x - pontoAnterior.x ) > diferencaMaxima
             ) {
+                listaPrimeiraLinha.add( pontoAtual.y );
+                listaUltimaLinha.add( pontoAnterior.y );
                 listaPontos.add( i, null );
                 i++;
             }
+            else
+                listaDistancia.add( pontoAnterior.y - pontoAtual.y );
         }
+        listaUltimaLinha.add( listaPontos.get( listaPontos.size() - 1 ).y );
+        
+        listaDistancia.sort( ( d1, d2 ) -> (int) ( d1 - d2 ) );
+        listaPrimeiraLinha.sort( ( d1, d2 ) -> (int) ( d1 - d2 ) );
+        listaUltimaLinha.sort( ( d1, d2 ) -> (int) ( d1 - d2 ) );
+        
+        if (
+            listaDistancia.size() == 0      || 
+            listaPrimeiraLinha.size() == 0  ||
+            listaUltimaLinha.size() == 0
+        )
+            return;
+        
+        final float
+            diferencaMaximaFinal = listaDistancia.get( ( listaDistancia.size() - 1 ) / 2 ) / 3,
+            limiteSuperiorFinal = listaPrimeiraLinha.get( ( listaPrimeiraLinha.size() - 1 ) / 2 )
+                + diferencaMaximaFinal,
+            limiteInferiorFinal = listaUltimaLinha.get( ( listaUltimaLinha.size() - 1 ) / 2 )
+                - diferencaMaximaFinal;
+        
+        listaPontos.removeIf(
+            ponto -> 
+                ponto != null &&
+                (
+                    ponto.y > limiteSuperiorFinal    ||
+                    ponto.y < limiteInferiorFinal
+                )
+        );
+        
+        removerNulos( listaPontos );
+        
+        if ( listaPontos.size() < 4 )
+            return;
         
         Ponto2D pontoLista, pontoColuna, pontoMinimo;
         
@@ -395,7 +520,7 @@ public class DetectorPontos implements AutoCloseable {
                     listaRemocao.add( pontoMinimo );
                 }
                 
-                if ( coluna.size() < 3 )
+                if ( coluna.size() < minimoPontosColuna )
                     listaRemocao.addAll( coluna );
                 
                 coluna.clear();
@@ -406,19 +531,12 @@ public class DetectorPontos implements AutoCloseable {
             coluna.add( pontoLista );
         }
         
-        if ( coluna.size() < 3 )
+        if ( coluna.size() < minimoPontosColuna )
             listaRemocao.addAll( coluna );
         
         listaPontos.removeAll( listaRemocao );
         
-        if ( listaPontos.size() > 0 && listaPontos.get( listaPontos.size() - 1 ) == null )
-            listaPontos.remove( listaPontos.size() - 1 );
-        
-        for ( int i = 1; i < listaPontos.size(); i++ )
-            if ( listaPontos.get( i ) == null && listaPontos.get( i - 1 ) == null ) {
-                listaPontos.remove( i );
-                i--;
-            }
+        removerNulos( listaPontos );
     }
     
     public int getLarguraImagem() {
