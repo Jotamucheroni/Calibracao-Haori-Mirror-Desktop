@@ -113,7 +113,14 @@ public class Ponto3D extends Ponto2D {
     
     @Override
     public String toString() {
-        return "( " + x + ", " + y + ", " + z + " )";
+        return 
+                "( "
+            +   String.format( "%.1f", x )
+            +   "; "
+            +   String.format( "%.1f", y )
+            +   "; "
+            +   String.format( "%.1f", z )
+            +   " )";
     }
     
     @Override
