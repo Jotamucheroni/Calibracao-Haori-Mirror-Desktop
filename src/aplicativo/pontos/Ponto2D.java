@@ -113,7 +113,7 @@ public class Ponto2D {
     
     @Override
     public String toString() {
-        return "( " + (int) x + ", " + (int) y + " )";
+        return "( " + (int) x + "; " + (int) y + " )";
     }
     
     @Override
