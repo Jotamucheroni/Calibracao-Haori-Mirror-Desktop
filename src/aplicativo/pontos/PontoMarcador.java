@@ -18,7 +18,7 @@ public class PontoMarcador {
         return pontoImagem;
     }
     
-    public Ponto2D getPontoMundo() {
+    public Ponto3D getPontoMundo() {
         return pontoMundo;
     }
 }
