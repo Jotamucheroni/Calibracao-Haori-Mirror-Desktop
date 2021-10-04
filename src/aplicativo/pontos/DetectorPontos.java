@@ -19,10 +19,12 @@ public class DetectorPontos implements AutoCloseable {
     private final List<Ponto2D> listaPontosAuxiliar = new ArrayList<Ponto2D>();
     private final List<GrupoPontos> listaGrupoPontosAuxiliar = new ArrayList<GrupoPontos>();
     private final List<Ponto2D> listaPontosAgrupadosAuxiliar = new ArrayList<Ponto2D>();
+    private final List<PontoMarcador> listaPontosMarcadorAuxiliar = new ArrayList<PontoMarcador>();
     
     private final Object travaSaida = new Object();
     private List<Ponto2D> listaPontos = new ArrayList<Ponto2D>();
     private List<Ponto2D> listaPontosAgrupados = new ArrayList<Ponto2D>();
+    private List<PontoMarcador> listaPontosMarcador = new ArrayList<PontoMarcador>();
     
     public DetectorPontos( int larguraImagem, int alturaImagem, int numeroComponentesCorImagem ) {
         if ( larguraImagem < 1 )
@@ -76,6 +78,7 @@ public class DetectorPontos implements AutoCloseable {
                     listaPontosAuxiliar.clear();
                     listaGrupoPontosAuxiliar.clear();
                     listaPontosAgrupadosAuxiliar.clear();
+                    listaPontosMarcadorAuxiliar.clear();
                     
                     adicionarPonto( 0, centroImagem.x, centroImagem.y );
                     if ( parLargura == 1 )
@@ -145,13 +148,15 @@ public class DetectorPontos implements AutoCloseable {
                             listaPontosAgrupadosAuxiliar.add( grupo.getPixelCentral() );
                     
                     deslocarCentro( listaPontosAgrupadosAuxiliar, centroRealImagem );
-                    limparEOrdenar( listaPontosAgrupadosAuxiliar, origem );
+                    gerarPontosMarcador(
+                        listaPontosAgrupadosAuxiliar,
+                        reconhecerPontos2D( listaPontosAgrupadosAuxiliar, origem )
+                    );
                     
                     synchronized( travaSaida ) {
-                        this.listaPontos =
-                            new ArrayList<Ponto2D>( listaPontosAuxiliar );
-                        this.listaPontosAgrupados =
-                            new ArrayList<Ponto2D>( listaPontosAgrupadosAuxiliar );
+                        listaPontos = new ArrayList<Ponto2D>( listaPontosAuxiliar );
+                        listaPontosAgrupados = new ArrayList<Ponto2D>( listaPontosAgrupadosAuxiliar );
+                        listaPontosMarcador = new ArrayList<PontoMarcador>( listaPontosMarcadorAuxiliar );
                     }
                     
                     /* System.out.println( 
@@ -296,9 +301,9 @@ public class DetectorPontos implements AutoCloseable {
             listaPontos.remove( 0 );
     }
     
-    private void limparEOrdenar( List<Ponto2D> listaPontos, Ponto2D referencia ) {
+    private float reconhecerPontos2D( List<Ponto2D> listaPontos, Ponto2D referencia ) {
         if ( listaPontos == null || listaPontos.size() < 4 )
-            return;
+            return -1;
         
         Ponto2D
             cantoSuperiorEsquerdo = null,
@@ -366,7 +371,7 @@ public class DetectorPontos implements AutoCloseable {
             cantoInferiorDireito    ==  null    ||
             cantoInferiorEsquerdo   ==  null
         )
-            return;
+            return -1;
         
         float
             ladoQuadradoAux = cantoSuperiorDireito.x - cantoSuperiorEsquerdo.x,
@@ -417,7 +422,7 @@ public class DetectorPontos implements AutoCloseable {
         );
         
         if ( listaPontos.size() < 4 )
-            return;
+            return ladoQuadrado;
         
         listaPontos.sort(
             ( p1, p2 ) -> 
@@ -462,10 +467,11 @@ public class DetectorPontos implements AutoCloseable {
             listaPrimeiraLinha.size() == 0  ||
             listaUltimaLinha.size() == 0
         )
-            return;
+            return ladoQuadrado;
         
         final float
-            diferencaMaximaFinal = listaDistancia.get( ( listaDistancia.size() - 1 ) / 2 ) / 3,
+            ladoQuadradoFinal = listaDistancia.get( ( listaDistancia.size() - 1 ) / 2 ),
+            diferencaMaximaFinal = ladoQuadradoFinal / 3,
             limiteSuperiorFinal = listaPrimeiraLinha.get( ( listaPrimeiraLinha.size() - 1 ) / 2 )
                 + diferencaMaximaFinal,
             limiteInferiorFinal = listaUltimaLinha.get( ( listaUltimaLinha.size() - 1 ) / 2 )
@@ -483,7 +489,7 @@ public class DetectorPontos implements AutoCloseable {
         removerNulos( listaPontos );
         
         if ( listaPontos.size() < 4 )
-            return;
+            return ladoQuadradoFinal;
         
         Ponto2D pontoLista, pontoColuna, pontoMinimo;
         
@@ -537,6 +543,41 @@ public class DetectorPontos implements AutoCloseable {
         listaPontos.removeAll( listaRemocao );
         
         removerNulos( listaPontos );
+        
+        return ladoQuadradoFinal;
+    }
+    
+    private float ladoQuadradoReal = 5.34f;
+    
+    public void setLadoQuadradoReal( float valor ) {
+        if ( valor < 0 )
+            valor = 0;
+        
+        ladoQuadradoReal = valor;
+    }
+    
+    public float getLadoQuadradoReal() {
+        return ladoQuadradoReal;
+    }
+    
+    private void gerarPontosMarcador( List<Ponto2D> listaPontos, float ladoQuadradoPixeis ) {
+        if ( listaPontos == null || ladoQuadradoPixeis <= 0 )
+            return;
+        
+        for ( Ponto2D ponto : listaPontos )
+            if ( ponto != null )
+                listaPontosMarcadorAuxiliar.add(
+                    new PontoMarcador(
+                        ponto.clone(),
+                        new Ponto3D(
+                            ( ponto.x / ladoQuadradoPixeis ) * ladoQuadradoReal,
+                            ( ponto.y / ladoQuadradoPixeis ) * ladoQuadradoReal,
+                            ladoQuadradoReal
+                        )
+                    )
+                );
+            else
+                listaPontosMarcadorAuxiliar.add( null );
     }
     
     public int getLarguraImagem() {
@@ -583,6 +624,12 @@ public class DetectorPontos implements AutoCloseable {
     public List<Ponto2D> getListaPontosAgrupados() {
         synchronized ( travaSaida ) {
             return Collections.unmodifiableList( listaPontosAgrupados );
+        }
+    }
+    
+    public List<PontoMarcador> getListaPontosMarcador() {
+        synchronized ( travaSaida ) {
+            return Collections.unmodifiableList( listaPontosMarcador );
         }
     }
     
