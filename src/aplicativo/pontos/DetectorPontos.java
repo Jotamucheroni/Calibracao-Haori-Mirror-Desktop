@@ -547,7 +547,9 @@ public class DetectorPontos implements AutoCloseable {
         return ladoQuadradoFinal;
     }
     
-    private float ladoQuadradoReal = 5.34f;
+    private float
+        ladoQuadradoReal = 5.34f,
+        distanciaImagem = 28.5f;
     
     public void setLadoQuadradoReal( float valor ) {
         if ( valor < 0 )
@@ -556,8 +558,19 @@ public class DetectorPontos implements AutoCloseable {
         ladoQuadradoReal = valor;
     }
     
+    public void setDistanciaImagem( float valor ) {
+        if ( valor < 0 )
+            valor = 0;
+        
+        distanciaImagem = valor;
+    }
+    
     public float getLadoQuadradoReal() {
         return ladoQuadradoReal;
+    }
+    
+    public float getDistanciaImagem() {
+        return distanciaImagem;
     }
     
     private void gerarPontosMarcador( List<Ponto2D> listaPontos, float ladoQuadradoPixeis ) {
@@ -572,7 +585,7 @@ public class DetectorPontos implements AutoCloseable {
                         new Ponto3D(
                             ( ponto.x / ladoQuadradoPixeis ) * ladoQuadradoReal,
                             ( ponto.y / ladoQuadradoPixeis ) * ladoQuadradoReal,
-                            ladoQuadradoReal
+                            distanciaImagem
                         )
                     )
                 );

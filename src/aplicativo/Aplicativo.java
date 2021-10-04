@@ -7,7 +7,7 @@ import java.util.List;
 
 import aplicativo.es.camera.CameraLocal;
 import aplicativo.es.dispositivo.Dispositivo;
-import aplicativo.pontos.Ponto2D;
+import aplicativo.pontos.PontoMarcador;
 
 public class Aplicativo {
     public final static Scanner ENTRADA = new Scanner( System.in );
@@ -15,22 +15,31 @@ public class Aplicativo {
     
     //  0.20, 0.4 - Olho virtual
     //  0.25, 0.75 - Smartphone
-    public final static Parametros[] PARAMETROS = new Parametros[2];
+    private final static String[] nomeParametro = {
+        "Intensidade gradiente", "Ângulo gradiente",
+        "Máximo de colunas à esquerda", "Máximo de colunas à direita",
+        "Máximo de linhas acima", "Máximo de linhas abaixo",
+        "Mínimo de pontos por coluna"
+    };
+    public final static Parametros[] PARAMETROS = {
+        new Parametros( "Olho virtual", nomeParametro, new float[] { 0.2f, 0.4f, 1, 5, 3, 3, 3 } ),
+        new Parametros( "Smartphone", nomeParametro, new float[] { 0.25f, 0.75f, 5, 5, 3, 3, 2 } ),
+        new Parametros(
+            "Marcador",
+            new String[]{
+                "Lado do quadrado (cm)",
+                "Distâcia marcador - smartphone (cm)",
+                "Distâcia smartphone - olho virtual (cm)"
+            },
+            new float[] {
+                5.34f,
+                28.5f,
+                9.4f
+            }
+        )
+    };
     
     public static void main( String[] args ) {
-        String[] nomeParametro = {
-            "Intensidade gradiente", "Ângulo gradiente",
-            "Máximo de colunas à esquerda", "Máximo de colunas à direita",
-            "Máximo de linhas acima", "Máximo de linhas abaixo",
-            "Mínimo de pontos por coluna"
-        };
-        PARAMETROS[0] = new Parametros(
-            "Olho virtual", nomeParametro, new float[] { 0.2f, 0.4f, 2, 5, 3, 3, 3 }
-        );
-        PARAMETROS[1] = new Parametros(
-            "Smartphone", nomeParametro, new float[] { 0.25f, 0.75f, 5, 5, 3, 3, 2 }
-        );
-        
         Thread janela = new Thread( new Janela() );
         janela.start();
         
@@ -63,6 +72,7 @@ public class Aplicativo {
     
     private static String apagarLinha = "\u001B[2K\r";
     private static int lista = 0;
+    private static boolean ponto3D = false;
     private static int numeroLinhas = 0; 
     
     public static void imprimir( Dispositivo[] dispositivo ) {
@@ -70,8 +80,8 @@ public class Aplicativo {
             if ( !imprimindo )
                 return;
             
-            List<Ponto2D> listaPontos =
-                dispositivo[lista].getDetectorPontos().getListaPontosAgrupados();
+            List<PontoMarcador> listaPontos =
+                dispositivo[lista].getDetectorPontos().getListaPontosMarcador();
             
             System.out.print( "\u001B[s" );
             System.out.println( apagarLinha + "Lista de pontos: " );
@@ -86,20 +96,23 @@ public class Aplicativo {
                 linhas = 0,
                 colunas = 0;
             String tabulacao = "";
-            for ( Ponto2D ponto : listaPontos ) {
+            for ( PontoMarcador ponto : listaPontos ) {
                 if ( ponto == null ) {
                     if ( linhas > numeroLinhas )
                         numeroLinhas = linhas;
                     
                     System.out.print( "\u001B[" + linhas + "A" );
-                    colunas += 15;
+                    colunas += 21;
                     tabulacao = "\u001B[" + colunas + "C";
                     linhas = 0;
                     
                     continue;
                 }
                 
-                System.out.println( tabulacao + ponto );
+                System.out.println(
+                    tabulacao + ( ponto3D ? ponto.getPontoMundo() : ponto.getPontoImagem() )
+                );
+                
                 linhas++;
             }
             
@@ -163,8 +176,10 @@ public class Aplicativo {
                             break;
                         
                         case 'I':
-                            System.out.print( "Lista de pontos a ser impressa: " );
-                            lista = ENTRADA.nextInt();
+                            System.out.print( "(O)lho virtual / (S)martphone : " );
+                            lista = Character.toUpperCase( ENTRADA.next().charAt( 0 ) ) == 'O' ? 0 : 1;
+                            System.out.print( "(3)D / (2)D: " );
+                            ponto3D = Character.toUpperCase( ENTRADA.next().charAt( 0 ) ) == '3';
                             
                             System.out.println();
                             System.out.println( "\u001B[1mImpressão de saída iniciada\u001B[0m" );

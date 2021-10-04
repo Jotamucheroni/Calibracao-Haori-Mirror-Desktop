@@ -32,6 +32,7 @@ public class Renderizador extends OpenGL implements GLEventListener {
         bluetooth.conectarDispositivo( "304B0745112F" );
         
         Desenho desenho;
+        DetectorPontos detector;
         
         olhoVirtual = new Dispositivo(
             "Olho virtual", new CameraLocal( Aplicativo.lerNumeroCameraLocal(), 640, 480, 1 )
@@ -40,7 +41,9 @@ public class Renderizador extends OpenGL implements GLEventListener {
         desenho = olhoVirtual.getDesenho();
         desenho.setParametroTextura( 0, 0.2f );
         desenho.setParametroTextura( 1, 0.4f );
-        olhoVirtual.getDetectorPontos().setMaximoColunasAEsquerda( 2 );
+        detector = olhoVirtual.getDetectorPontos();
+        detector.setMaximoColunasAEsquerda( 1 );
+        detector.setDistanciaImagem( detector.getDistanciaImagem() + 9.4f );
         
         smartphone = new DispositivoRemoto(
             "Smartphone", new CameraRemota( 320, 240, 1 )
@@ -78,7 +81,8 @@ public class Renderizador extends OpenGL implements GLEventListener {
     
     @Override
     public void display( GLAutoDrawable drawable ) {
-        for ( int i = 0; i < dispositivo.length; i++ ) {
+        int i;
+        for ( i = 0; i < dispositivo.length; i++ ) {
             Dispositivo disp = dispositivo[i];
             
             disp.atualizarTextura();
@@ -102,6 +106,19 @@ public class Renderizador extends OpenGL implements GLEventListener {
             disp.draw();
             disp.atualizarImagemDetector( 3 );
             disp.getFrameBufferObject().draw( linhasCentrais );
+        }
+        
+        if ( Aplicativo.PARAMETROS[i].getAtualizado() ) {
+            float ladoQuadrado = Aplicativo.PARAMETROS[i].getValor( 0 );
+            
+            for ( Dispositivo disp : dispositivo )
+                disp.getDetectorPontos().setLadoQuadradoReal( ladoQuadrado );
+            
+            float distanciaMarcador = Aplicativo.PARAMETROS[i].getValor( 1 );
+            smartphone.getDetectorPontos().setDistanciaImagem( distanciaMarcador );
+            olhoVirtual.getDetectorPontos().setDistanciaImagem( 
+                distanciaMarcador + Aplicativo.PARAMETROS[i].getValor( 2 )
+             );
         }
         
         tela.clear();
