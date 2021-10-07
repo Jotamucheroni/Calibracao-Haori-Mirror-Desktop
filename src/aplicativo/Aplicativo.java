@@ -39,7 +39,7 @@ public class Aplicativo {
         )
     };
     
-    public static void main( String[] args ) {
+    public static void main( String[] args ) {        
         Thread janela = new Thread( new Janela() );
         janela.start();
         

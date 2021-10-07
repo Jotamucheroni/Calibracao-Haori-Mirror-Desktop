@@ -66,13 +66,11 @@ public class EstrategiaEvolutiva extends Otimizador {
     
     @Override
     public float[] otimizar( float[] xMinimo, float[] xMaximo ) {
-        long t = System.currentTimeMillis();
-        
         Ponto[] individuo = new Ponto[NUMERO_INDIVIDUOS];
         float[] desvioPadrao = new float[xMinimo.length];
         Ponto otimo;
         
-        for ( int i = 0; i < xMaximo.length; i++ )
+        for ( int i = 0; i < xMinimo.length; i++ )
             desvioPadrao[i] = 0.21f * ( xMaximo[i] - xMinimo[i] ); 
         
         individuo[0] = new Ponto( xMinimo.length );
@@ -89,10 +87,8 @@ public class EstrategiaEvolutiva extends Otimizador {
                 otimo = individuo[i].clone();
         }
         
-        int i;
         float taxaMutacao = 1.0f;
-        
-        for ( /* int */ i = 0; i < 50 && otimo.aptidao >= aptidaoMinima; i++ ) {
+        for ( int i = 0; i < 50 && otimo.aptidao >= aptidaoMinima; i++ ) {
             selecionar( individuo );
             recombinar( individuo );
             
@@ -117,22 +113,6 @@ public class EstrategiaEvolutiva extends Otimizador {
             taxaMutacao *= 0.981f;
         }
         
-        this.i = i;
-        System.out.println( 
-                "Quadros/s: "
-            +   1 / ( (float) ( System.currentTimeMillis() - t ) / 1000 )
-            +   "\t"
-            +   i
-            +   "\t"
-            +   "( "
-            +   String.format( "%.5f", otimo.valor[0] ) 
-            +   ", "
-            +   String.format( "%.5f", otimo.valor[1] ) 
-            +   " )"
-        );
-        
         return otimo.valor.clone();
     }
-    
-    public int i;
 }

@@ -70,8 +70,6 @@ public class EnxameParticulas extends Otimizador {
     
     @Override
     public float[] otimizar( float[] xMinimo, float[] xMaximo )  {
-        long t = System.currentTimeMillis();
-        
         Particula[] particula = new Particula[NUMERO_PARTICULAS];
         final float[]
             phi1 = new float[xMinimo.length],
@@ -89,8 +87,7 @@ public class EnxameParticulas extends Otimizador {
         }
         
         float w = 1;
-        int i;
-        for ( /* int */ i = 0; i < 50 && otimo.aptidao >= aptidaoMinima; i++ ) {
+        for ( int i = 0; i < 50 && otimo.aptidao >= aptidaoMinima; i++ ) {
             for ( int p = 0; p < particula.length; p++ ) {
                 int
                     melhorVizinho = p,
@@ -139,22 +136,7 @@ public class EnxameParticulas extends Otimizador {
             
             w *= 0.985f;
         }
-        this.i = i;
-        System.out.println( 
-                "Quadros/s: "
-            +   1 / ( (float) ( System.currentTimeMillis() - t ) / 1000 )
-            +   "\t"
-            +   i
-            +   "\t"
-            +   "( "
-            +   String.format( "%.5f", otimo.valor[0] ) 
-            // +   ", "
-            // +   String.format( "%.5f", otimo.valor[1] ) 
-            +   " )"
-        );
         
         return otimo.valor.clone();
     }
-    
-    public int i;
 }
