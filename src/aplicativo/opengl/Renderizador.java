@@ -106,6 +106,20 @@ public class Renderizador extends OpenGL implements GLEventListener {
             disp.draw();
             disp.atualizarImagemDetector( 3 );
             disp.getFrameBufferObject().draw( linhasCentrais );
+            
+            if ( Aplicativo.getCalibrando() ) {
+                if ( !disp.getCalibrando() )
+                    disp.calibrar();
+            }
+            else if ( disp.getCalibrando() )
+                disp.encerrarCalibracao();
+            
+            if ( Aplicativo.getEstimando() ) {
+                if ( !disp.getEstimando() )
+                    disp.estimarDistanciaMarcador();
+            }
+            else if ( disp.getEstimando() )
+                disp.encerrarEstimativa();
         }
         
         if ( Aplicativo.PARAMETROS[i].getAtualizado() ) {
@@ -130,7 +144,13 @@ public class Renderizador extends OpenGL implements GLEventListener {
         );
         
         if ( Aplicativo.getImprimindo() )
-            Aplicativo.imprimir( dispositivo );
+            Aplicativo.imprimirPontos( dispositivo );
+        
+        if ( Aplicativo.getCalibrando() )
+            Aplicativo.imprimirParametrosIntrinsecos( dispositivo );
+        
+        if ( Aplicativo.getEstimando() )
+            Aplicativo.imprimirEstimativaDistancia( dispositivo );
     }
     
     private boolean executando = true;

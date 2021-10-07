@@ -73,8 +73,6 @@ public class DetectorPontos implements AutoCloseable {
                 float x, y;
                 
                 do {
-                    // long t = System.currentTimeMillis();
-                    
                     listaPontosAuxiliar.clear();
                     listaGrupoPontosAuxiliar.clear();
                     listaPontosAgrupadosAuxiliar.clear();
@@ -158,10 +156,6 @@ public class DetectorPontos implements AutoCloseable {
                         listaPontosAgrupados = new ArrayList<Ponto2D>( listaPontosAgrupadosAuxiliar );
                         listaPontosMarcador = new ArrayList<PontoMarcador>( listaPontosMarcadorAuxiliar );
                     }
-                    
-                    /* System.out.println( 
-                        "Quadros/s: " + 1 / ( (float) ( System.currentTimeMillis() - t ) / 1000 )
-                    ); */
                     
                     synchronized( travaDetector ) {
                         try {
@@ -634,9 +628,21 @@ public class DetectorPontos implements AutoCloseable {
         }
     }
     
+    public int getNumeroPontosAgrupados() {
+        synchronized ( travaSaida ) {
+            return listaPontosAgrupados.size();
+        }
+    }
+    
     public List<Ponto2D> getListaPontosAgrupados() {
         synchronized ( travaSaida ) {
             return Collections.unmodifiableList( listaPontosAgrupados );
+        }
+    }
+    
+    public int getNumeroPontosMarcador() {
+        synchronized ( travaSaida ) {
+            return listaPontosMarcador.size();
         }
     }
     

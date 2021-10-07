@@ -23,9 +23,8 @@ public abstract class Otimizador {
     }
     
     protected FuncaoDesempenho funcaoDesempenho;
-    protected Random sorteador;
-    
     protected float aptidaoMinima;
+    protected Random sorteador;
     
     public Otimizador( FuncaoDesempenho funcaoDesempenho, float aptidaoMinima ) {
         this.funcaoDesempenho = funcaoDesempenho;
@@ -35,6 +34,14 @@ public abstract class Otimizador {
     
     public Otimizador( FuncaoDesempenho funcaoDesempenho ) {
         this( funcaoDesempenho, 0 );
+    }
+    
+    public void setFuncaoDesempenho( FuncaoDesempenho funcaoDesempenho ) {
+        this.funcaoDesempenho = funcaoDesempenho;
+    }
+    
+    public FuncaoDesempenho getFuncaoDesempenho() {
+        return funcaoDesempenho;
     }
     
     protected void limitarVetor( float[] x, float[] xMinimo, float[] xMaximo ) {

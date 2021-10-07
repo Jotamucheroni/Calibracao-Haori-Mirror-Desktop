@@ -61,7 +61,7 @@ public class Aplicativo {
         return ENTRADA.nextInt();
     }
     
-    private static Object travaImpressao = new Object();
+    private static final Object travaImpressao = new Object();
     private static boolean imprimindo = false;
     
     public static boolean getImprimindo() {
@@ -70,12 +70,12 @@ public class Aplicativo {
         }
     }
     
-    private static String apagarLinha = "\u001B[2K\r";
+    private static final String apagarLinha = "\u001B[2K\r";
     private static int lista = 0;
     private static boolean ponto3D = false;
     private static int numeroLinhas = 0; 
     
-    public static void imprimir( Dispositivo[] dispositivo ) {
+    public static void imprimirPontos( Dispositivo[] dispositivo ) {
         synchronized ( travaImpressao ) {
             if ( !imprimindo )
                 return;
@@ -123,6 +123,71 @@ public class Aplicativo {
         }
     }
     
+    private static final Object travaCalibracao = new Object();
+    private static boolean calibrando = false;
+    
+    public static boolean getCalibrando() {
+        synchronized ( travaCalibracao ) {
+            return calibrando;
+        }
+    }
+    
+    public static void imprimirParametrosIntrinsecos( Dispositivo[] dispositivo ) {
+        float[][] parametros = new float[dispositivo.length][];
+        
+        for ( int i = 0; i < dispositivo.length; i++ )
+            parametros[i] = dispositivo[i].getParametrosOtimos();
+        
+        synchronized ( travaCalibracao ) {
+            if ( !calibrando )
+                return;
+            
+            System.out.print( "\u001B[s" );
+            
+            for ( int i = 0; i < dispositivo.length; i++ )
+                System.out.println(
+                        apagarLinha
+                    +   dispositivo[i].getId()
+                    +   ":\t( " + String.format( "%.4f", parametros[i][0] )
+                    +   ", " + String.format( "%.4f",parametros[i][1] )
+                    +   " ) Aptidão: "
+                    +   String.format( "%.10f", parametros[i][2] )
+                );
+            
+            System.out.print( "\u001B[u" );
+        }
+    }
+    
+    private static final Object travaEstimativa = new Object();
+    private static boolean estimando = false;
+    
+    public static boolean getEstimando() {
+        synchronized ( travaEstimativa ) {
+            return estimando;
+        }
+    }
+    
+    public static void imprimirEstimativaDistancia( Dispositivo[] dispositivo ) {
+        float[] distancia = new float[dispositivo.length];
+        
+        for ( int i = 0; i < dispositivo.length; i++ )
+            distancia[i] = dispositivo[i].getDistanciaMarcadorEstimada();
+        
+        synchronized ( travaEstimativa ) {
+            if ( !estimando )
+                return;
+            
+            System.out.print( "\u001B[s" );
+            
+            for ( int i = 0; i < dispositivo.length; i++ )
+                System.out.println(
+                    apagarLinha + dispositivo[i].getId() + ":\t" + String.format( "%.4f", distancia[i] )
+                );
+            
+            System.out.print( "\u001B[u" );
+        }
+    }
+    
     public static void lerEntradaAssincrona() {
         entradaAssincrona = new Thread(
             () ->
@@ -131,7 +196,9 @@ public class Aplicativo {
                 char opcao;
                 
                 do {
-                    System.out.print( "(L)er parâmetros / (I)mprimir saída / (E)ncerrar: " );
+                    System.out.print(
+                        "(L)er parâmetros / (I)mprimir saída / (C)alibrar / E(t)imativa / (E)ncerrar: "
+                    );
                     opcao = ENTRADA.next().charAt( 0 );
                     
                     switch ( Character.toUpperCase( opcao ) ) {
@@ -203,6 +270,52 @@ public class Aplicativo {
                             }
                             
                             break;
+                        
+                        case 'C':
+                            System.out.println();
+                            System.out.println( "\u001B[1mCalibração iniciada\u001B[0m" );
+                            System.out.println( "Pressione <Enter> para parar" );
+                            System.out.println();
+                            
+                            synchronized ( travaCalibracao ) {
+                                System.out.print( "\u001B[?25l" );
+                                calibrando = true;
+                            }
+                            
+                            try {
+                                System.in.read();
+                            } catch ( IOException ignorada ) {}
+                            
+                            synchronized ( travaCalibracao ) {
+                                calibrando = false;
+                                System.out.print( "\u001B[3B\n" );
+                                System.out.print( "\u001B[?25h" );
+                            }
+                            
+                            break;
+                        
+                        case 'T':
+                            System.out.println();
+                            System.out.println( "\u001B[1mEstimativa de distância iniciada\u001B[0m" );
+                            System.out.println( "Pressione <Enter> para parar" );
+                            System.out.println();
+                            
+                            synchronized ( travaEstimativa ) {
+                                System.out.print( "\u001B[?25l" );
+                                estimando = true;
+                            }
+                            
+                            try {
+                                System.in.read();
+                            } catch ( IOException ignorada ) {}
+                            
+                            synchronized ( travaEstimativa ) {
+                                estimando = false;
+                                System.out.print( "\u001B[3B\n" );
+                                System.out.print( "\u001B[?25h" );
+                            }
+                        
+                        break;
                         
                         case 'E':
                             return;

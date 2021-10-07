@@ -11,6 +11,16 @@ public class FuncaoParametrosIntrinsecos implements FuncaoDesempenho {
         this.pontoMarcador = pontoMarcador;
     }
     
+    public FuncaoParametrosIntrinsecos() {}
+    
+    public void setPontoMarcador( PontoMarcador[] pontoMarcador ) {
+        this.pontoMarcador = pontoMarcador;
+    }
+    
+    public PontoMarcador[] getPontoMarcador() {
+        return pontoMarcador;
+    }
+    
     @Override
     public float f( float[] x ) {
         if ( pontoMarcador == null || x == null || x.length < 2 )
