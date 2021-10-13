@@ -146,10 +146,14 @@ public class DetectorPontos implements AutoCloseable {
                             listaPontosAgrupadosAuxiliar.add( grupo.getPixelCentral() );
                     
                     deslocarCentro( listaPontosAgrupadosAuxiliar, centroRealImagem );
-                    gerarPontosMarcador(
-                        listaPontosAgrupadosAuxiliar,
-                        reconhecerPontos2D( listaPontosAgrupadosAuxiliar, origem )
-                    );
+                    
+                    try {
+                        gerarPontosMarcador(
+                            listaPontosAgrupadosAuxiliar,
+                            reconhecerPontos2D( listaPontosAgrupadosAuxiliar, origem )
+                        );
+                    }
+                    catch ( Exception e ) {}
                     
                     synchronized( travaSaida ) {
                         listaPontos = new ArrayList<Ponto2D>( listaPontosAuxiliar );
@@ -416,7 +420,7 @@ public class DetectorPontos implements AutoCloseable {
         );
         
         if ( listaPontos.size() < 4 )
-            return ladoQuadrado;
+            return -1;
         
         listaPontos.sort(
             ( p1, p2 ) -> 
@@ -461,7 +465,7 @@ public class DetectorPontos implements AutoCloseable {
             listaPrimeiraLinha.size() == 0  ||
             listaUltimaLinha.size() == 0
         )
-            return ladoQuadrado;
+            return -1;
         
         final float
             ladoQuadradoFinal = listaDistancia.get( ( listaDistancia.size() - 1 ) / 2 ),
@@ -483,7 +487,7 @@ public class DetectorPontos implements AutoCloseable {
         removerNulos( listaPontos );
         
         if ( listaPontos.size() < 4 )
-            return ladoQuadradoFinal;
+            return -1;
         
         Ponto2D pontoLista, pontoColuna, pontoMinimo;
         
@@ -543,7 +547,7 @@ public class DetectorPontos implements AutoCloseable {
     
     private float
         ladoQuadradoReal = 5.34f,
-        distanciaImagem = 28.5f;
+        distanciaImagem = 27.6f;
     
     public void setLadoQuadradoReal( float valor ) {
         if ( valor < 0 )
