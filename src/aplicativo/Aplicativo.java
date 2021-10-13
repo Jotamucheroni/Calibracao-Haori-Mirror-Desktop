@@ -14,7 +14,7 @@ public class Aplicativo {
     private static Thread entradaAssincrona;
     
     //  0.20, 0.4 - Olho virtual
-    //  0.25, 0.75 - Smartphone
+    //  0.15, 0.75 - Smartphone
     private final static String[] nomeParametro = {
         "Intensidade gradiente", "Ângulo gradiente",
         "Máximo de colunas à esquerda", "Máximo de colunas à direita",
@@ -23,7 +23,7 @@ public class Aplicativo {
     };
     public final static Parametros[] PARAMETROS = {
         new Parametros( "Olho virtual", nomeParametro, new float[] { 0.2f, 0.4f, 1, 5, 3, 3, 3 } ),
-        new Parametros( "Smartphone", nomeParametro, new float[] { 0.25f, 0.75f, 5, 5, 3, 3, 2 } ),
+        new Parametros( "Smartphone", nomeParametro, new float[] { 0.15f, 0.75f, 5, 5, 3, 3, 2 } ),
         new Parametros(
             "Marcador",
             new String[]{
@@ -33,13 +33,26 @@ public class Aplicativo {
             },
             new float[] {
                 5.34f,
-                28.5f,
-                9.4f
+                27.6f,
+                9.5f
+            }
+        ),
+        new Parametros(
+            "Projeção",
+            new String[]{
+                "Canto superior esquerdo - posição x",
+                "Canto superior esquerdo - posição y",
+                "Lado do quadrado"
+            },
+            new float[] {
+                0.75f,
+                1.25f,
+                0.25f
             }
         )
     };
     
-    public static void main( String[] args ) {        
+    public static void main( String[] args ) {
         Thread janela = new Thread( new Janela() );
         janela.start();
         
@@ -123,12 +136,12 @@ public class Aplicativo {
         }
     }
     
-    private static final Object travaCalibracao = new Object();
-    private static boolean calibrando = false;
+    private static final Object travaCalibracaoIntrinsecos = new Object();
+    private static boolean calibrandoIntrinsecos = false;
     
-    public static boolean getCalibrando() {
-        synchronized ( travaCalibracao ) {
-            return calibrando;
+    public static boolean getCalibrandoIntrinsecos() {
+        synchronized ( travaCalibracaoIntrinsecos ) {
+            return calibrandoIntrinsecos;
         }
     }
     
@@ -136,10 +149,10 @@ public class Aplicativo {
         float[][] parametros = new float[dispositivo.length][];
         
         for ( int i = 0; i < dispositivo.length; i++ )
-            parametros[i] = dispositivo[i].getParametrosOtimos();
+            parametros[i] = dispositivo[i].getParametrosIntrinsecosOtimos();
         
-        synchronized ( travaCalibracao ) {
-            if ( !calibrando )
+        synchronized ( travaCalibracaoIntrinsecos ) {
+            if ( !calibrandoIntrinsecos )
                 return;
             
             System.out.print( "\u001B[s" );
@@ -150,9 +163,50 @@ public class Aplicativo {
                     +   dispositivo[i].getId()
                     +   ":\t( " + String.format( "%.4f", parametros[i][0] )
                     +   ", " + String.format( "%.4f",parametros[i][1] )
-                    +   " ) Aptidão: "
-                    +   String.format( "%.10f", parametros[i][2] )
+                    +   " ) Erro: "
+                    +   String.format( "%.15f", parametros[i][2] )
                 );
+            
+            System.out.print( "\u001B[u" );
+        }
+    }
+    
+    private static final Object travaCalibracaoExtrinsecos = new Object();
+    private static boolean calibrandoExtrinsecos = false;
+    
+    public static boolean getCalibrandoExtrinsecos() {
+        synchronized ( travaCalibracaoExtrinsecos ) {
+            return calibrandoExtrinsecos;
+        }
+    }
+    
+    public static void imprimirParametrosExtrinsecos( Dispositivo dispositivo ) {
+        float[] parametros = dispositivo.getParametrosExtrinsecosOtimos();
+        
+        synchronized ( travaCalibracaoExtrinsecos ) {
+            if ( !calibrandoExtrinsecos )
+                return;
+            
+            System.out.print( "\u001B[s" );
+            
+            System.out.println(
+                    apagarLinha
+                +   dispositivo.getId()
+                +   ":\t( "
+                +   String.format( "%.4f", parametros[0] )
+                +   ", "
+                +   String.format( "%.4f",parametros[1] )
+                +   ", "
+                +   String.format( "%.4f",parametros[2] )
+                +   ", "
+                +   String.format( "%.4f",parametros[3] )
+                +   ", "
+                +   String.format( "%.4f",parametros[4] )
+                +   ", "
+                +   String.format( "%.4f",parametros[5] )
+                +   " ) Erro: "
+                +   String.format( "%.15f", parametros[6] )
+            );
             
             System.out.print( "\u001B[u" );
         }
@@ -243,7 +297,7 @@ public class Aplicativo {
                             break;
                         
                         case 'I':
-                            System.out.print( "(O)lho virtual / (S)martphone : " );
+                            System.out.print( "(O)lho virtual / (S)martphone: " );
                             lista = Character.toUpperCase( ENTRADA.next().charAt( 0 ) ) == 'O' ? 0 : 1;
                             System.out.print( "(3)D / (2)D: " );
                             ponto3D = Character.toUpperCase( ENTRADA.next().charAt( 0 ) ) == '3';
@@ -272,24 +326,54 @@ public class Aplicativo {
                             break;
                         
                         case 'C':
+                            char opcaoCalibracao;
+                            
+                            System.out.print( "(I)ntrínsecos / (E)xtrínsecos: " );
+                            opcaoCalibracao = ENTRADA.next().charAt( 0 );
+                            
                             System.out.println();
                             System.out.println( "\u001B[1mCalibração iniciada\u001B[0m" );
                             System.out.println( "Pressione <Enter> para parar" );
                             System.out.println();
                             
-                            synchronized ( travaCalibracao ) {
-                                System.out.print( "\u001B[?25l" );
-                                calibrando = true;
-                            }
-                            
-                            try {
-                                System.in.read();
-                            } catch ( IOException ignorada ) {}
-                            
-                            synchronized ( travaCalibracao ) {
-                                calibrando = false;
-                                System.out.print( "\u001B[3B\n" );
-                                System.out.print( "\u001B[?25h" );
+                            switch ( Character.toUpperCase( opcaoCalibracao ) ) {
+                                case 'I':
+                                    synchronized ( travaCalibracaoIntrinsecos ) {
+                                        System.out.print( "\u001B[?25l" );
+                                        calibrandoIntrinsecos = true;
+                                    }
+                                    
+                                    try {
+                                        System.in.read();
+                                    } catch ( IOException ignorada ) {}
+                                    
+                                    synchronized ( travaCalibracaoIntrinsecos ) {
+                                        calibrandoIntrinsecos = false;
+                                        System.out.print( "\u001B[3B\n" );
+                                        System.out.print( "\u001B[?25h" );
+                                    }
+                                    
+                                    break;
+                                case 'E':
+                                    synchronized ( travaCalibracaoExtrinsecos ) {
+                                        System.out.print( "\u001B[?25l" );
+                                        calibrandoExtrinsecos = true;
+                                    }
+                                    
+                                    try {
+                                        System.in.read();
+                                    } catch ( IOException ignorada ) {}
+                                    
+                                    synchronized ( travaCalibracaoExtrinsecos ) {
+                                        calibrandoExtrinsecos = false;
+                                        System.out.print( "\u001B[3B\n" );
+                                        System.out.print( "\u001B[?25h" );
+                                    }
+                                    
+                                    break;
+                                default:
+                                    System.out.println( "Entrada inválida" );
+                                    break;
                             }
                             
                             break;

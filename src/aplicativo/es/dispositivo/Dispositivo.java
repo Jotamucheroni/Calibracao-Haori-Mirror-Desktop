@@ -9,9 +9,11 @@ import aplicativo.opengl.Textura;
 import aplicativo.opengl.framebuffer.FrameBufferObject;
 import aplicativo.otimizacao.EnxameParticulas;
 import aplicativo.otimizacao.EstrategiaEvolutiva;
+import aplicativo.otimizacao.FuncaoParametrosExtrinsecos;
 import aplicativo.otimizacao.FuncaoParametrosIntrinsecos;
 import aplicativo.otimizacao.RecozimentoSimulado;
 import aplicativo.pontos.DetectorPontos;
+import aplicativo.pontos.Marcador;
 import aplicativo.pontos.Ponto2D;
 import aplicativo.pontos.Ponto3D;
 import aplicativo.pontos.PontoMarcador;
@@ -151,17 +153,17 @@ public class Dispositivo implements AutoCloseable {
         atualizarImagemDetector( 1 );
     }
     
-    private Thread calibracao;
-    private final Object travaParametros = new Object();
+    private Thread calibracaoParametrosIntrinsecos;
+    private final Object travaParametrosIntrinsecos = new Object();
     private float
         fatorEscalaXOtimo, fatorEscalaYOtimo,
-        aptidaoOtima = Float.MAX_VALUE;
+        aptidaoIntrinsecosOtima = Float.MAX_VALUE;
     
-    public void calibrar() {
-        if ( calibracao != null && calibracao.isAlive() )
+    public void calibrarParametrosIntrinsecos() {
+        if ( calibracaoParametrosIntrinsecos != null && calibracaoParametrosIntrinsecos.isAlive() )
             return;
         
-        calibracao = new Thread(
+        calibracaoParametrosIntrinsecos = new Thread(
             () ->
             {
                 final FuncaoParametrosIntrinsecos funcao = new FuncaoParametrosIntrinsecos();
@@ -185,6 +187,9 @@ public class Dispositivo implements AutoCloseable {
                     minimo = new float[2],
                     maximo = new float[2];
                 
+                synchronized ( travaParametrosIntrinsecos ) {
+                    aptidaoIntrinsecosOtima = Float.MAX_VALUE;
+                }
                 while( !Thread.currentThread().isInterrupted() ) {
                     listaPontos = detectorPontos.getListaPontosMarcador();
                     
@@ -252,21 +257,21 @@ public class Dispositivo implements AutoCloseable {
                     aptidaoEstrategia = funcao.f( resultadoEstrategia );
                     aptidaoEnxame = funcao.f( resultadoEnxame );
                     
-                    synchronized ( travaParametros ) {
-                        if ( aptidaoRecozimento < aptidaoOtima ) {
-                            aptidaoOtima = aptidaoRecozimento;
+                    synchronized ( travaParametrosIntrinsecos ) {
+                        if ( aptidaoRecozimento < aptidaoIntrinsecosOtima ) {
+                            aptidaoIntrinsecosOtima = aptidaoRecozimento;
                             fatorEscalaXOtimo = resultadoRecozimento[0];
                             fatorEscalaYOtimo = resultadoRecozimento[1];
                         }
                         
-                        if ( aptidaoEstrategia < aptidaoOtima ) {
-                            aptidaoOtima = aptidaoEstrategia;
+                        if ( aptidaoEstrategia < aptidaoIntrinsecosOtima ) {
+                            aptidaoIntrinsecosOtima = aptidaoEstrategia;
                             fatorEscalaXOtimo = resultadoEstrategia[0];
                             fatorEscalaYOtimo = resultadoEstrategia[1];
                         }
                         
-                        if ( aptidaoEnxame < aptidaoOtima ) {
-                            aptidaoOtima = aptidaoEnxame;
+                        if ( aptidaoEnxame < aptidaoIntrinsecosOtima ) {
+                            aptidaoIntrinsecosOtima = aptidaoEnxame;
                             fatorEscalaXOtimo = resultadoEnxame[0];
                             fatorEscalaYOtimo = resultadoEnxame[1];
                         }
@@ -274,54 +279,54 @@ public class Dispositivo implements AutoCloseable {
                 }
             }
         );
-        calibracao.start();
+        calibracaoParametrosIntrinsecos.start();
     }
     
-    public boolean getCalibrando() {
-        if ( calibracao != null && calibracao.isAlive() )
+    public boolean getCalibrandoParametrosIntrinsecos() {
+        if ( calibracaoParametrosIntrinsecos != null && calibracaoParametrosIntrinsecos.isAlive() )
             return true;
         else
             return false;
     }
     
-    public float[] getParametrosOtimos() {
-        synchronized ( travaParametros ) {
-            return new float[]{ fatorEscalaXOtimo, fatorEscalaYOtimo, aptidaoOtima };
+    public float[] getParametrosIntrinsecosOtimos() {
+        synchronized ( travaParametrosIntrinsecos ) {
+            return new float[]{ fatorEscalaXOtimo, fatorEscalaYOtimo, aptidaoIntrinsecosOtima };
         }
     }
     
     public float getFatorEscalaXOtimo() {
-        synchronized ( travaParametros ) {
+        synchronized ( travaParametrosIntrinsecos ) {
             return fatorEscalaXOtimo;
         }
     }
     
     public float getFatorEscalaYOtimo() {
-        synchronized ( travaParametros ) {
+        synchronized ( travaParametrosIntrinsecos ) {
             return fatorEscalaYOtimo;
         }
     }
     
-    public float getAptidaoOtima() {
-        synchronized ( travaParametros ) {
-            return aptidaoOtima;
+    public float getAptidaoIntrinsecosOtima() {
+        synchronized ( travaParametrosIntrinsecos ) {
+            return aptidaoIntrinsecosOtima;
         }
     }
     
-    public void encerrarCalibracao() {
-        if ( calibracao != null )
-            calibracao.interrupt();
+    public void encerrarCalibracaoIntrinsecos() {
+        if ( calibracaoParametrosIntrinsecos != null )
+            calibracaoParametrosIntrinsecos.interrupt();
     }
     
-    private Thread estimativa;
-    private final Object travaEstimativa = new Object();
+    private Thread estimativaDistancia;
+    private final Object travaEstimativaDistancia = new Object();
     private float distanciaMarcadorEstimada;
     
     public void estimarDistanciaMarcador() {
-        if ( estimativa != null && estimativa.isAlive() )
+        if ( estimativaDistancia != null && estimativaDistancia.isAlive() )
             return;
         
-        estimativa = new Thread(
+        estimativaDistancia = new Thread(
             () ->
             {   
                 List<PontoMarcador> listaPontos;
@@ -369,37 +374,301 @@ public class Dispositivo implements AutoCloseable {
                     
                     zMedio /= zValido;
                     
-                    synchronized ( travaEstimativa ) {
+                    synchronized ( travaEstimativaDistancia ) {
                         distanciaMarcadorEstimada = zMedio;
                     }
                 }
             }
         );
-        estimativa.start();
+        estimativaDistancia.start();
     }
     
     public boolean getEstimando() {
-        if ( estimativa != null && estimativa.isAlive() )
+        if ( estimativaDistancia != null && estimativaDistancia.isAlive() )
             return true;
         else
             return false;
     }
     
     public float getDistanciaMarcadorEstimada() {
-        synchronized ( travaEstimativa ) {
+        synchronized ( travaEstimativaDistancia ) {
             return distanciaMarcadorEstimada;
         }
     }
     
     public void encerrarEstimativa() {
-        if ( estimativa != null )
-            estimativa.interrupt();
+        if ( estimativaDistancia != null )
+            estimativaDistancia.interrupt();
+    }
+    
+    private Thread calibracaoParametrosExtrinsecos;
+    private final Object travaParametrosExtrinsecos = new Object();
+    private float
+        translacaoXOtimo, translacaoYOtimo, translacaoZOtimo,
+        rotacaoXOtimo, rotacaoYOtimo, rotacaoZOtimo,
+        aptidaoExtrinsecosOtima = Float.MAX_VALUE;
+    private final float anguloRadiano = (float) Math.toRadians( 5 );
+    
+    public void calibrarParametrosExtrinsecos( Dispositivo dispositivoReferencia ) {
+        if (
+            dispositivoReferencia == null ||
+            ( calibracaoParametrosExtrinsecos != null && calibracaoParametrosExtrinsecos.isAlive() )
+        )
+            return;
+        
+        calibracaoParametrosExtrinsecos = new Thread(
+            () ->
+            {
+                final FuncaoParametrosExtrinsecos funcao = new FuncaoParametrosExtrinsecos();
+                final int
+                    linhas = 4,
+                    colunas = 6; 
+                
+                RecozimentoSimulado recozimentoSimulado = new RecozimentoSimulado( funcao );
+                EstrategiaEvolutiva estrategiaEvolutiva = new EstrategiaEvolutiva( funcao );
+                EnxameParticulas enxameParticulas = new EnxameParticulas( funcao );
+                float[] resultadoRecozimento, resultadoEstrategia, resultadoEnxame;
+                float aptidaoRecozimento, aptidaoEstrategia, aptidaoEnxame;
+                
+                List<PontoMarcador> listaPontos, listaPontosReferencia;
+                Marcador marcador, marcadorReferencia;
+                int pontosValidos;
+                
+                PontoMarcador pontoMarcador, pontoMarcadorReferencia;
+                Ponto3D pontoMundo, pontoMundoReferencia;
+                float xMedio, yMedio, zMedio;
+                float[]
+                    minimo = new float[6],
+                    maximo = new float[6];
+                
+                synchronized ( travaParametrosExtrinsecos ) {
+                    aptidaoExtrinsecosOtima = Float.MAX_VALUE;
+                }
+                while( !Thread.currentThread().isInterrupted() ) {
+                    listaPontos =
+                        detectorPontos.getListaPontosMarcador();
+                    listaPontosReferencia =
+                        dispositivoReferencia.getDetectorPontos().getListaPontosMarcador();
+                    
+                    if ( listaPontos.size() < 4  || listaPontosReferencia.size() < 4 )
+                        synchronized ( travaDetector ) {
+                            try {
+                                travaDetector.wait();
+                                continue;
+                            } catch ( InterruptedException e ) {
+                                return;
+                            }
+                        }
+                    
+                    marcador = new Marcador( linhas, colunas, listaPontos );
+                    marcadorReferencia = new Marcador( linhas, colunas, listaPontosReferencia );
+                    
+                    pontosValidos = 0;
+                    xMedio = 0;
+                    yMedio = 0;
+                    zMedio = 0;
+                    
+                    for ( int i = 0; i < linhas; i++ )
+                        for ( int j = 0; j < colunas; j++ )
+                            if (
+                                ( pontoMarcador = marcador.getPontoGrade( i, j ) ) != null &&
+                                ( pontoMarcadorReferencia = marcadorReferencia.getPontoGrade( i, j ) ) != null
+                            ) {
+                                pontoMundo = pontoMarcador.getPontoMundo();
+                                pontoMundoReferencia = pontoMarcadorReferencia.getPontoMundo();
+                                
+                                xMedio += pontoMundo.getX() - pontoMundoReferencia.getX();
+                                yMedio += pontoMundo.getY() - pontoMundoReferencia.getY();
+                                zMedio += pontoMundo.getZ() - pontoMundoReferencia.getZ();
+                                
+                                pontosValidos++;
+                            }
+                    
+                    if ( pontosValidos == 0 )
+                        continue;        
+                    
+                    xMedio /= pontosValidos;
+                    yMedio /= pontosValidos;
+                    zMedio /= pontosValidos;
+                    
+                    minimo[0] = xMedio - xMedio * 0.5f;
+                    minimo[1] = yMedio - yMedio * 0.5f;
+                    minimo[2] = zMedio - zMedio * 0.5f;
+                    minimo[3] = -anguloRadiano;
+                    minimo[4] = -anguloRadiano;
+                    minimo[5] = -anguloRadiano;
+                    maximo[0] = xMedio + xMedio * 0.5f;
+                    maximo[1] = yMedio + yMedio * 0.5f;
+                    maximo[2] = zMedio + zMedio * 0.5f;
+                    maximo[3] = +anguloRadiano;
+                    maximo[4] = +anguloRadiano;
+                    maximo[5] = +anguloRadiano;
+                    
+                    funcao.setMarcador( marcador );
+                    funcao.setMarcadorReferencia( marcadorReferencia );
+                    
+                    resultadoRecozimento = recozimentoSimulado.otimizar( minimo, maximo );
+                    resultadoEstrategia = estrategiaEvolutiva.otimizar( minimo, maximo );
+                    resultadoEnxame = enxameParticulas.otimizar( minimo, maximo );
+                    
+                    aptidaoRecozimento = funcao.f( resultadoRecozimento );
+                    aptidaoEstrategia = funcao.f( resultadoEstrategia );
+                    aptidaoEnxame = funcao.f( resultadoEnxame );
+                    
+                    synchronized ( travaParametrosExtrinsecos ) {
+                        if ( aptidaoRecozimento < aptidaoExtrinsecosOtima ) {
+                            aptidaoExtrinsecosOtima = aptidaoRecozimento;
+                            translacaoXOtimo = resultadoRecozimento[0];
+                            translacaoYOtimo = resultadoRecozimento[1];
+                            translacaoZOtimo = resultadoRecozimento[2];
+                            rotacaoXOtimo = resultadoRecozimento[3];
+                            rotacaoYOtimo = resultadoRecozimento[4];
+                            rotacaoZOtimo = resultadoRecozimento[5];
+                        }
+                        
+                        if ( aptidaoEstrategia < aptidaoExtrinsecosOtima ) {
+                            aptidaoExtrinsecosOtima = aptidaoEstrategia;
+                            translacaoXOtimo = resultadoEstrategia[0];
+                            translacaoYOtimo = resultadoEstrategia[1];
+                            translacaoZOtimo = resultadoEstrategia[2];
+                            rotacaoXOtimo = resultadoEstrategia[3];
+                            rotacaoYOtimo = resultadoEstrategia[4];
+                            rotacaoZOtimo = resultadoEstrategia[5];
+                        }
+                        
+                        if ( aptidaoEnxame < aptidaoExtrinsecosOtima ) {
+                            aptidaoExtrinsecosOtima = aptidaoEnxame;
+                            translacaoXOtimo = resultadoEnxame[0];
+                            translacaoYOtimo = resultadoEnxame[1];
+                            translacaoZOtimo = resultadoEnxame[2];
+                            rotacaoXOtimo = resultadoEnxame[3];
+                            rotacaoYOtimo = resultadoEnxame[4];
+                            rotacaoZOtimo = resultadoEnxame[5];
+                        }
+                    }
+                }
+            }
+        );
+        calibracaoParametrosExtrinsecos.start();
+    }
+    
+    public boolean getCalibrandoParametrosExtrinsecos() {
+        if ( calibracaoParametrosExtrinsecos != null && calibracaoParametrosExtrinsecos.isAlive() )
+            return true;
+        else
+            return false;
+    }
+    
+    public float[] getParametrosExtrinsecosOtimos() {
+        synchronized ( travaParametrosExtrinsecos ) {
+            return new float[]{
+                translacaoXOtimo, translacaoYOtimo, translacaoZOtimo,
+                rotacaoXOtimo, rotacaoYOtimo, rotacaoZOtimo,
+                aptidaoExtrinsecosOtima
+            };
+        }
+    }
+    
+    public float getTranslacaoXOtimo() {
+        synchronized ( travaParametrosExtrinsecos ) {
+            return translacaoXOtimo;
+        }
+    }
+    
+    public float getTranslacaoYOtimo() {
+        synchronized ( travaParametrosExtrinsecos ) {
+            return translacaoYOtimo;
+        }
+    }
+    
+    public float getTranslacaoZOtimo() {
+        synchronized ( travaParametrosExtrinsecos ) {
+            return translacaoZOtimo;
+        }
+    }
+    
+    public float getRotacaoXOtimo() {
+        synchronized ( travaParametrosExtrinsecos ) {
+            return rotacaoXOtimo;
+        }
+    }
+    
+    public float getRotacaoYOtimo() {
+        synchronized ( travaParametrosExtrinsecos ) {
+            return rotacaoYOtimo;
+        }
+    }
+    
+    public float getRotacaoZOtimo() {
+        synchronized ( travaParametrosExtrinsecos ) {
+            return rotacaoZOtimo;
+        }
+    }
+    
+    public float getAptidaoExtrinsecosOtima() {
+        synchronized ( travaParametrosExtrinsecos ) {
+            return aptidaoExtrinsecosOtima;
+        }
+    }
+    
+    public void encerrarCalibracaoExtrinsecos() {
+        if ( calibracaoParametrosExtrinsecos != null )
+            calibracaoParametrosExtrinsecos.interrupt();
+    }
+    
+    public Marcador getMarcador( Marcador marcadorReferencia ) {
+        Marcador marcador = marcadorReferencia.clone();
+        
+        PontoMarcador pontoMarcadorReferencia;
+        Ponto3D pontoMundoReferencia;
+        float
+            xReferencia, yReferencia, zReferencia,
+            xEstimado, yEstimado, zEstimado,
+            yEstimadoAuxiliar,
+            sinX, cosX,
+            sinY, cosY,
+            sinZ, cosZ;
+        
+        for ( int i = 0; i < marcador.getLinhasGrade(); i++ )
+            for ( int j = 0; j < marcador.getColunasGrade(); j++ )
+                if ( ( pontoMarcadorReferencia = marcadorReferencia.getPontoGrade( i, j ) ) != null ) {
+                    pontoMundoReferencia = pontoMarcadorReferencia.getPontoMundo();
+                    
+                    xReferencia = pontoMundoReferencia.getX();
+                    yReferencia = pontoMundoReferencia.getY();
+                    zReferencia = pontoMundoReferencia.getZ();
+                    
+                    sinX = (float) Math.sin( rotacaoXOtimo ); cosX = (float) Math.cos( rotacaoXOtimo );
+                    sinY = (float) Math.sin( rotacaoYOtimo ); cosY = (float) Math.cos( rotacaoYOtimo );
+                    sinZ = (float) Math.sin( rotacaoZOtimo ); cosZ = (float) Math.cos( rotacaoZOtimo );
+                    
+                    xEstimado =  xReferencia * cosZ - yReferencia * sinZ;
+                    yEstimado =  xReferencia * sinZ + yReferencia * cosZ;
+                    
+                    zEstimado = -xEstimado * sinY + zReferencia * cosY;
+                    xEstimado =  xEstimado * cosY + zReferencia * sinY;
+                    
+                    yEstimadoAuxiliar = yEstimado;
+                    yEstimado =  yEstimadoAuxiliar * cosX - zEstimado * sinX;
+                    zEstimado =  yEstimadoAuxiliar * sinX + zEstimado * cosX;
+                    
+                    xEstimado += translacaoXOtimo;
+                    yEstimado += translacaoYOtimo;
+                    zEstimado += translacaoZOtimo;
+                    
+                    marcador.getPontoGrade( i, j ).getPontoMundo().setCoordenadas(
+                        xEstimado, yEstimado, zEstimado
+                    );
+                }
+        
+        return marcador;
     }
     
     @Override
     public void close() {
-        encerrarCalibracao();
+        encerrarCalibracaoIntrinsecos();
         encerrarEstimativa();
+        encerrarCalibracaoExtrinsecos();
         
         if ( detectorPontos != null )
             detectorPontos.close();

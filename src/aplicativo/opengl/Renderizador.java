@@ -43,14 +43,14 @@ public class Renderizador extends OpenGL implements GLEventListener {
         desenho.setParametroTextura( 1, 0.4f );
         detector = olhoVirtual.getDetectorPontos();
         detector.setMaximoColunasAEsquerda( 1 );
-        detector.setDistanciaImagem( detector.getDistanciaImagem() + 9.4f );
+        detector.setDistanciaImagem( detector.getDistanciaImagem() + 9.5f );
         
         smartphone = new DispositivoRemoto(
             "Smartphone", new CameraRemota( 320, 240, 1 )
         );
         smartphone.esperarEntradaRemota( bluetooth );
         desenho = smartphone.getDesenho();
-        desenho.setParametroTextura( 0, 0.25f );
+        desenho.setParametroTextura( 0, 0.15f );
         desenho.setParametroTextura( 1, 0.75f );
         smartphone.getDetectorPontos().setMinimoPontosColuna( 2 );
         
@@ -107,12 +107,12 @@ public class Renderizador extends OpenGL implements GLEventListener {
             disp.atualizarImagemDetector( 3 );
             disp.getFrameBufferObject().draw( linhasCentrais );
             
-            if ( Aplicativo.getCalibrando() ) {
-                if ( !disp.getCalibrando() )
-                    disp.calibrar();
+            if ( Aplicativo.getCalibrandoIntrinsecos() ) {
+                if ( !disp.getCalibrandoParametrosIntrinsecos() )
+                    disp.calibrarParametrosIntrinsecos();
             }
-            else if ( disp.getCalibrando() )
-                disp.encerrarCalibracao();
+            else if ( disp.getCalibrandoParametrosIntrinsecos() )
+                disp.encerrarCalibracaoIntrinsecos();
             
             if ( Aplicativo.getEstimando() ) {
                 if ( !disp.getEstimando() )
@@ -121,6 +121,9 @@ public class Renderizador extends OpenGL implements GLEventListener {
             else if ( disp.getEstimando() )
                 disp.encerrarEstimativa();
         }
+        
+        if ( Aplicativo.getCalibrandoExtrinsecos() && !olhoVirtual.getCalibrandoParametrosExtrinsecos() )
+            olhoVirtual.calibrarParametrosExtrinsecos( smartphone );
         
         if ( Aplicativo.PARAMETROS[i].getAtualizado() ) {
             float ladoQuadrado = Aplicativo.PARAMETROS[i].getValor( 0 );
@@ -146,8 +149,11 @@ public class Renderizador extends OpenGL implements GLEventListener {
         if ( Aplicativo.getImprimindo() )
             Aplicativo.imprimirPontos( dispositivo );
         
-        if ( Aplicativo.getCalibrando() )
+        if ( Aplicativo.getCalibrandoIntrinsecos() )
             Aplicativo.imprimirParametrosIntrinsecos( dispositivo );
+        
+        if ( Aplicativo.getCalibrandoExtrinsecos() )
+            Aplicativo.imprimirParametrosExtrinsecos( olhoVirtual );
         
         if ( Aplicativo.getEstimando() )
             Aplicativo.imprimirEstimativaDistancia( dispositivo );
