@@ -21,4 +21,9 @@ public class PontoMarcador {
     public Ponto3D getPontoMundo() {
         return pontoMundo;
     }
+    
+    @Override
+    public PontoMarcador clone() {
+        return new PontoMarcador( pontoImagem, pontoMundo );
+    }
 }
