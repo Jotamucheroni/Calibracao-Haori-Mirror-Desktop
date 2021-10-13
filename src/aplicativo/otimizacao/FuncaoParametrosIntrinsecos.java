@@ -24,7 +24,7 @@ public class FuncaoParametrosIntrinsecos implements FuncaoDesempenho {
     @Override
     public float f( float[] x ) {
         if ( pontoMarcador == null || x == null || x.length < 2 )
-            return -1;
+            return Float.MAX_VALUE;
         
         Ponto3D pontoMundo;
         Ponto2D pontoEstimado = new Ponto2D();
@@ -43,6 +43,6 @@ public class FuncaoParametrosIntrinsecos implements FuncaoDesempenho {
             somaQuadrados += distancia * distancia;
         }
         
-        return somaQuadrados;
+        return pontoMarcador.length > 0 ? somaQuadrados / pontoMarcador.length : Float.MAX_VALUE;
     }
 }
