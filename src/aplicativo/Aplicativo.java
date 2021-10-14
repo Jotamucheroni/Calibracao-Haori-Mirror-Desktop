@@ -42,12 +42,20 @@ public class Aplicativo {
             new String[]{
                 "Canto superior esquerdo - posição x",
                 "Canto superior esquerdo - posição y",
-                "Lado do quadrado"
+                "Lado do quadrado",
+                "Ângulo X",
+                "Ângulo Y",
+                "Ângulo Z",
+                "Quadrado"
             },
             new float[] {
-                0.75f,
-                1.25f,
-                0.25f
+                0.42f,
+                0.86f,
+                0.26f,
+                90.00f,
+                90.00f,
+                90.00f,
+                0.00f
             }
         )
     };
@@ -195,17 +203,17 @@ public class Aplicativo {
                 +   ":\t( "
                 +   String.format( "%.4f", parametros[0] )
                 +   ", "
-                +   String.format( "%.4f",parametros[1] )
+                +   String.format( "%.4f", parametros[1] )
                 +   ", "
-                +   String.format( "%.4f",parametros[2] )
+                +   String.format( "%.4f", parametros[2] )
                 +   ", "
-                +   String.format( "%.4f",parametros[3] )
+                +   String.format( "%.4f", Math.toDegrees( parametros[3] ) )
                 +   ", "
-                +   String.format( "%.4f",parametros[4] )
+                +   String.format( "%.4f", Math.toDegrees( parametros[4] ) )
                 +   ", "
-                +   String.format( "%.4f",parametros[5] )
+                +   String.format( "%.4f", Math.toDegrees( parametros[5] ) )
                 +   " ) Erro: "
-                +   String.format( "%.15f", parametros[6] )
+                +   String.format( parametros[6] < 1 ? "%.15f" : "%.0f", parametros[6] )
             );
             
             System.out.print( "\u001B[u" );
@@ -237,6 +245,61 @@ public class Aplicativo {
                 System.out.println(
                     apagarLinha + dispositivo[i].getId() + ":\t" + String.format( "%.4f", distancia[i] )
                 );
+            
+            System.out.print( "\u001B[u" );
+        }
+    }
+    
+    private static final Object travaProjecao = new Object();
+    private static int sinal = 0;
+    
+    public static int getSinal() {
+        synchronized ( travaProjecao ) {
+            int sinalOriginal = sinal;
+            sinal = 0;
+            
+            return sinalOriginal;
+        }
+    }
+    
+    private static final Object travaCalibracaoProjecao = new Object();
+    private static boolean calibrandoProjecao = false;
+    
+    public static boolean getCalibrandoProjecao() {
+        synchronized ( travaCalibracaoProjecao ) {
+            return calibrandoProjecao;
+        }
+    }
+    
+    public static void imprimirParametrosProjecao( Dispositivo dispositivo ) {
+        float[] parametros = dispositivo.getParametrosProjecaoOtimos();
+        
+        synchronized ( travaCalibracaoProjecao ) {
+            if ( !calibrandoProjecao )
+                return;
+            
+            System.out.print( "\u001B[s" );
+            
+            System.out.println(
+                    apagarLinha
+                +   dispositivo.getId()
+                +   ":\t( "
+                +   String.format( "%.4f", parametros[0] )
+                +   ", "
+                +   String.format( "%.4f", parametros[1] )
+                +   ", "
+                +   String.format( "%.4f", Math.toDegrees( parametros[2] ) )
+                +   ", "
+                +   String.format( "%.4f", Math.toDegrees( parametros[3] ) )
+                +   ", "
+                +   String.format( "%.4f", Math.toDegrees( parametros[4] ) )
+                +   ", "
+                +   String.format( "%.4f", parametros[5] )
+                +   ", "
+                +   String.format( "%.4f", parametros[6] )
+                +   " ) Erro: "
+                +   String.format( parametros[7] < 1 ? "%.15f" : "%.0f", parametros[7] )
+            );
             
             System.out.print( "\u001B[u" );
         }
@@ -291,7 +354,15 @@ public class Aplicativo {
                                 if ( indice >= PARAMETROS.length )
                                     indice = PARAMETROS.length - 1;
                                 
+                                if ( indice == 3 )
+                                    synchronized ( travaProjecao ) {
+                                        sinal = -1;
+                                    }
                                 PARAMETROS[indice].ler( ENTRADA );
+                                if ( indice == 3 )
+                                    synchronized ( travaProjecao ) {
+                                        sinal = -2;
+                                    }
                             } while( !linhaAtual.isInterrupted() );
                             
                             break;
@@ -328,7 +399,7 @@ public class Aplicativo {
                         case 'C':
                             char opcaoCalibracao;
                             
-                            System.out.print( "(I)ntrínsecos / (E)xtrínsecos: " );
+                            System.out.print( "(I)ntrínsecos / (E)xtrínsecos / (P)rojecao: " );
                             opcaoCalibracao = ENTRADA.next().charAt( 0 );
                             
                             System.out.println();
@@ -354,6 +425,7 @@ public class Aplicativo {
                                     }
                                     
                                     break;
+                                
                                 case 'E':
                                     synchronized ( travaCalibracaoExtrinsecos ) {
                                         System.out.print( "\u001B[?25l" );
@@ -371,6 +443,25 @@ public class Aplicativo {
                                     }
                                     
                                     break;
+                                
+                                case 'P':
+                                    synchronized ( travaCalibracaoProjecao ) {
+                                        System.out.print( "\u001B[?25l" );
+                                        calibrandoProjecao = true;
+                                    }
+                                    
+                                    try {
+                                        System.in.read();
+                                    } catch ( IOException ignorada ) {}
+                                    
+                                    synchronized ( travaCalibracaoProjecao ) {
+                                        calibrandoProjecao = false;
+                                        System.out.print( "\u001B[3B\n" );
+                                        System.out.print( "\u001B[?25h" );
+                                    }
+                                    
+                                    break;
+                                
                                 default:
                                     System.out.println( "Entrada inválida" );
                                     break;
