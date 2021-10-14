@@ -79,9 +79,13 @@ public class Renderizador extends OpenGL implements GLEventListener {
         tela.setAltura( height );
 	}
     
+    private int
+        i,
+        sinal = 0,
+        sinalAnterior = 0;
+    
     @Override
     public void display( GLAutoDrawable drawable ) {
-        int i;
         for ( i = 0; i < dispositivo.length; i++ ) {
             Dispositivo disp = dispositivo[i];
             
@@ -122,8 +126,19 @@ public class Renderizador extends OpenGL implements GLEventListener {
                 disp.encerrarEstimativa();
         }
         
-        if ( Aplicativo.getCalibrandoExtrinsecos() && !olhoVirtual.getCalibrandoParametrosExtrinsecos() )
-            olhoVirtual.calibrarParametrosExtrinsecos( smartphone );
+        if ( Aplicativo.getCalibrandoExtrinsecos() ) {
+            if ( !olhoVirtual.getCalibrandoParametrosExtrinsecos() )
+                olhoVirtual.calibrarParametrosExtrinsecos( smartphone );
+        }
+        else if ( olhoVirtual.getCalibrandoParametrosExtrinsecos() )
+            olhoVirtual.encerrarCalibracaoExtrinsecos();
+        
+        if ( Aplicativo.getCalibrandoProjecao() ) {
+            if ( !olhoVirtual.getCalibrandoParametrosProjecao() )
+                olhoVirtual.calibrarParametrosProjecao();
+        }
+        else if ( olhoVirtual.getCalibrandoParametrosProjecao() )
+            olhoVirtual.encerrarCalibracaoProjecao();
         
         if ( Aplicativo.PARAMETROS[i].getAtualizado() ) {
             float ladoQuadrado = Aplicativo.PARAMETROS[i].getValor( 0 );
@@ -136,6 +151,27 @@ public class Renderizador extends OpenGL implements GLEventListener {
             olhoVirtual.getDetectorPontos().setDistanciaImagem( 
                 distanciaMarcador + Aplicativo.PARAMETROS[i].getValor( 2 )
              );
+        }
+        
+        if ( smartphone.getLigado() ) {
+            i++;
+            sinal = Aplicativo.getSinal();
+            
+            if ( sinal < 0 ) {
+                smartphone.getCameraRemota().enviarDados( new float[]{ sinal } );
+                sinalAnterior = sinal;
+            }
+            else if ( sinalAnterior == -1 && Aplicativo.PARAMETROS[i].getAtualizado() )
+                smartphone.getCameraRemota().enviarDados(
+                    new float[]{
+                        Aplicativo.PARAMETROS[i].getValor( 0 ),
+                        Aplicativo.PARAMETROS[i].getValor( 1 ),
+                        Aplicativo.PARAMETROS[i].getValor( 2 ),
+                        Aplicativo.PARAMETROS[i].getValor( 3 ),
+                        Aplicativo.PARAMETROS[i].getValor( 4 ),
+                        Aplicativo.PARAMETROS[i].getValor( 5 )
+                    }
+                );
         }
         
         tela.clear();
@@ -157,6 +193,9 @@ public class Renderizador extends OpenGL implements GLEventListener {
         
         if ( Aplicativo.getEstimando() )
             Aplicativo.imprimirEstimativaDistancia( dispositivo );
+        
+        if ( Aplicativo.getCalibrandoProjecao() )
+            Aplicativo.imprimirParametrosProjecao( olhoVirtual );
     }
     
     private boolean executando = true;
