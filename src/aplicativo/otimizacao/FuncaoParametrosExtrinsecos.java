@@ -37,7 +37,9 @@ public class FuncaoParametrosExtrinsecos implements FuncaoDesempenho {
         if ( marcador == null || marcadorReferencia == null || x == null || x.length < 6 )
             return Float.MAX_VALUE;
         
-        float somaQuadrados = 0;
+        float
+            distancia,
+            somaQuadrados = 0;
         int numeroLinhas, numeroColunas;
         {
         int
@@ -98,7 +100,8 @@ public class FuncaoParametrosExtrinsecos implements FuncaoDesempenho {
                     zEstimado += x[2];
                     
                     pontoEstimado.setCoordenadas( xEstimado, yEstimado, zEstimado );
-                    somaQuadrados += pontoEstimado.getDistancia( pontoMundo );
+                    distancia = pontoEstimado.getDistancia( pontoMundo );
+                    somaQuadrados += distancia * distancia;
                     
                     numeroCorrespodencias++;
                 }
