@@ -147,7 +147,8 @@ public class Parametros {
         
         Thread linhaAtual = Thread.currentThread();  
         float valor;
-        String prefixo = prefixoId + "\u001B[95m[" + getNome( indice ) + "]\u001B[0m";
+        String prefixo =
+            prefixoId + "\u001B[95m[" + getNome( indice ) + " - " + getValor( indice ) + "]\u001B[0m";
         
         do {
             saida.print( prefixo + " Valor: " );
@@ -176,6 +177,8 @@ public class Parametros {
     public void ler( Scanner entrada, PrintStream saida ) {        
         Thread linhaAtual = Thread.currentThread();
         
+        imprimirValores( saida, "Valores iniciais" );
+        
         if ( valor.length == 1 ) {
             lerValor( entrada, saida, 0 );
             
@@ -199,6 +202,8 @@ public class Parametros {
             
             lerValor( entrada, saida, indice );
         } while ( !linhaAtual.isInterrupted() );
+        
+        imprimirValores( saida, "Valores finais" );
     }
     
     public void ler( Scanner entrada ) {
@@ -211,6 +216,19 @@ public class Parametros {
     
     public void ler() {
         ler( new Scanner( System.in ), System.out );
+    }
+    
+    public void imprimirValores( PrintStream saida, String mensagem ) {
+        saida.print( "\u001B[1m" + mensagem + ": ( " + String.format( "%.2f", valor[0] ) );
+        
+        for ( int i = 1; i < valor.length; i++ )
+            saida.print( "; " + String.format( "%.2f", valor[i] ) );
+        
+        saida.println( " )" + "\u001B[0m" );
+    }
+    
+    public void imprimirValores( String mensagem ) {
+        imprimirValores( System.out, mensagem );
     }
     
     public Parametros clone() {
