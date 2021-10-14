@@ -47,7 +47,7 @@ public class Marcador {
         List<PontoMarcadorColuna> listaLinha = new ArrayList<PontoMarcadorColuna>();
         float yLimite, y;
         
-        for ( int linha = 0, coluna; listaPosicionado.size() > 0; linha++ ) {
+        for ( int linha = 0, coluna; listaPosicionado.size() > 0 && linha < linhasGrade; linha++ ) {
             listaLinha.clear();
             pontoMarcadorPosicionado = listaPosicionado.get( listaPosicionado.size() - 1 );
             coluna = pontoMarcadorPosicionado.coluna;
