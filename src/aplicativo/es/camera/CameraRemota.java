@@ -1,6 +1,7 @@
 package aplicativo.es.camera;
 
 import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
@@ -10,10 +11,12 @@ import aplicativo.es.Bluetooth;
 
 public class CameraRemota extends Camera implements Runnable {
     private DataInputStream entradaRemota;
+    private DataOutputStream saidaRemota;
     
     private final Object
         travaLigada = new Object(),
-        travaEntradaRemota = new Object();
+        travaEntradaRemota = new Object(),
+        travaSaidaRemota = new Object();
     
     public CameraRemota( DataInputStream entradaRemota, int largImg, int altImg, int numCompCor ) {
         setEntradaRemota( entradaRemota );
@@ -67,34 +70,56 @@ public class CameraRemota extends Camera implements Runnable {
         }
     }
     
-    public void setEntradaRemota( StreamConnection entradaRemota ) {
-        if ( entradaRemota == null ) {
+    public void setEntradaRemota( StreamConnection conexaoRemota ) {
+        if ( conexaoRemota == null ) {
             setEntradaRemota( (DataInputStream) null );
             
             return;
         }
         
         try {
-            setEntradaRemota( entradaRemota.openDataInputStream() );
+            setEntradaRemota( conexaoRemota.openDataInputStream() );
         } catch ( IOException e ) {
             e.printStackTrace();
         }
     }
     
-    Thread esperaEntradaRemota;
+    public void setSaidaRemota( DataOutputStream saidaRemota ) {
+        synchronized( travaSaidaRemota ) {
+            this.saidaRemota = saidaRemota;
+        }
+    }
     
-    public void esperarEntradaRemota( Bluetooth bluetooth ) {
+    public void setSaidaRemota( StreamConnection conexaoRemota ) {
+        if ( conexaoRemota == null ) {
+            setSaidaRemota( (DataOutputStream) null );
+            
+            return;
+        }
+        
+        try {
+            setSaidaRemota( conexaoRemota.openDataOutputStream() );
+        } catch ( IOException e ) {
+            e.printStackTrace();
+        }
+    }
+    
+    Thread esperaConexaoRemota;
+    
+    public void esperarConexaoRemota( Bluetooth bluetooth ) {
         if ( bluetooth == null )
             return;
         
-        esperaEntradaRemota = new Thread(
+        esperaConexaoRemota = new Thread(
             () ->
             {
-                setEntradaRemota( bluetooth.esperarConexao() );
+                StreamConnection conexao = bluetooth.esperarConexao();
+                setEntradaRemota( conexao );
+                setSaidaRemota( conexao );
                 ligar();
             }
         );
-        esperaEntradaRemota.start();
+        esperaConexaoRemota.start();
     }
     
     @Override
@@ -117,12 +142,23 @@ public class CameraRemota extends Camera implements Runnable {
         }
     }
     
+    public DataOutputStream getSaidaRemota() {
+        synchronized( travaSaidaRemota ) {
+            return saidaRemota;
+        }
+    }
+    
     private Thread atualizaBuffer;
     
     @Override
     public void ligar() {
         synchronized( travaEntradaRemota ) {
             if ( entradaRemota == null )
+                return;
+        }
+        
+        synchronized( travaSaidaRemota ) {
+            if ( saidaRemota == null )
                 return;
         }
         
@@ -165,6 +201,18 @@ public class CameraRemota extends Camera implements Runnable {
         catch ( IOException ignored ) {}
     }
     
+    public void enviarDados( float[] vetorDados ) {
+        synchronized ( travaSaidaRemota ) {
+            if ( saidaRemota == null )
+                return;
+            
+            try {
+                for ( float dado : vetorDados )
+                    saidaRemota.writeFloat( dado );
+            } catch ( IOException ignored ) {}
+        }
+    }
+    
     @Override
     public void desligar() {
         synchronized ( travaLigada ) {
@@ -179,8 +227,8 @@ public class CameraRemota extends Camera implements Runnable {
     
     @Override
     public void close() {
-        if( esperaEntradaRemota != null )
-                esperaEntradaRemota.interrupt();
+        if( esperaConexaoRemota != null )
+                esperaConexaoRemota.interrupt();
         desligar();
     }
 }
