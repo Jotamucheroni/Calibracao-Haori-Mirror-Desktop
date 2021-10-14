@@ -31,6 +31,6 @@ public class DispositivoRemoto extends Dispositivo {
     }
     
     public void esperarEntradaRemota( Bluetooth bluetooth ) {
-        getCameraRemota().esperarEntradaRemota( bluetooth );
+        getCameraRemota().esperarConexaoRemota( bluetooth );
     }
 }
