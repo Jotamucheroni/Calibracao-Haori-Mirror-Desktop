@@ -673,7 +673,7 @@ public class Dispositivo implements AutoCloseable {
         rotacaoTelaX, rotacaoTelaY, rotacaoTelaZ,
         translacaoTelaX, translacaoTelaY,
         aptidaoProjecaoOtima = Float.MAX_VALUE;
-    private final float anguloRadianoProjecao = (float) Math.toRadians( 10 );
+    private final float anguloRadianoProjecao = (float) Math.toRadians( 5 );
     
     public void calibrarParametrosProjecao() {
         if ( calibracaoParametrosProjecao != null && calibracaoParametrosProjecao.isAlive() )
@@ -695,6 +695,7 @@ public class Dispositivo implements AutoCloseable {
                 
                 List<PontoMarcador> listaPontos;
                 Marcador marcador;
+                int linha, coluna;
                 
                 Ponto3D
                     superiorEsquerdo3D, superiorDireito3D, inferiorDireito3D, inferiorEsquerdo3D,
@@ -705,9 +706,11 @@ public class Dispositivo implements AutoCloseable {
                     inferiorDireito2D = new Ponto2D(),
                     inferiorEsquerdo2D = new Ponto2D(),
                     pontoTela;
+                Ponto2D[] ponto2D;
                 float
-                    ladoQuadrado,
+                    escalaXQuadrado, escalaYQuadrado,
                     superiorEsquerdoX, superiorEsquerdoY,
+                    rotacaoX, rotacaoY, rotacaoZ,
                     z,
                     escalaXMedia, escalaYMedia,
                     translacaoXMedia, translacaoYMedia;
@@ -734,73 +737,77 @@ public class Dispositivo implements AutoCloseable {
                     
                     marcador = new Marcador( linhas, colunas, listaPontos );
                     
-                    int[][] quadrado = new int[][] {
-                        { 0, 3 },
-                        { 0, 2 },
-                        { 1, 3 },
-                        { 1, 2 },
-                        { 2, 3 },
-                        { 2, 2 }
-                    };
-                    int[] cantoQuadrado = quadrado[(int) Aplicativo.PARAMETROS[3].getValor( 6 )];
+                    linha   =   (int) Aplicativo.PARAMETROS[3].getValor( 7 );
+                    coluna  =   (int) Aplicativo.PARAMETROS[3].getValor( 8 );
                     
-                    superiorEsquerdo3D =
-                        marcador.getPontoGrade( cantoQuadrado[0], cantoQuadrado[1] ).getPontoMundo();
-                    superiorDireito3D =
-                        marcador.getPontoGrade( cantoQuadrado[0], cantoQuadrado[1] - 1 ).getPontoMundo();
-                    inferiorDireito3D =
-                        marcador.getPontoGrade( cantoQuadrado[0] + 1, cantoQuadrado[1] - 1 ).getPontoMundo();
-                    inferiorEsquerdo3D =
-                        marcador.getPontoGrade( cantoQuadrado[0] + 1, cantoQuadrado[1] ).getPontoMundo();
-                    
-                    /* superiorEsquerdo3D = marcador.getPontoGrade( 1, 3 ).getPontoMundo();
-                    superiorDireito3D = marcador.getPontoGrade( 1, 2 ).getPontoMundo();
-                    inferiorDireito3D = marcador.getPontoGrade( 2, 2 ).getPontoMundo();
-                    inferiorEsquerdo3D = marcador.getPontoGrade( 2, 3 ).getPontoMundo(); */
+                    try {
+                        superiorEsquerdo3D =
+                            marcador.getPontoGrade( linha, coluna + 1 ).getPontoMundo();
+                        superiorDireito3D =
+                            marcador.getPontoGrade( linha, coluna ).getPontoMundo();
+                        inferiorDireito3D =
+                            marcador.getPontoGrade( linha + 1, coluna ).getPontoMundo();
+                        inferiorEsquerdo3D =
+                            marcador.getPontoGrade( linha + 1, coluna + 1 ).getPontoMundo();
+                    }
+                    catch ( NullPointerException e ) {
+                        continue;
+                    }
                     
                     superiorEsquerdoX = Aplicativo.PARAMETROS[3].getValor( 0 ) - 1;
                     superiorEsquerdoY = Aplicativo.PARAMETROS[3].getValor( 1 ) - 1;
-                    ladoQuadrado = Aplicativo.PARAMETROS[3].getValor( 2 ) * 2;
+                    escalaXQuadrado = Aplicativo.PARAMETROS[3].getValor( 2 );
+                    escalaYQuadrado = Aplicativo.PARAMETROS[3].getValor( 3 );
+                    rotacaoX = (float) Math.toRadians( Aplicativo.PARAMETROS[3].getValor( 4 ) - 90 );
+                    rotacaoY = (float) Math.toRadians( Aplicativo.PARAMETROS[3].getValor( 5 ) - 90 );
+                    rotacaoZ = (float) Math.toRadians( Aplicativo.PARAMETROS[3].getValor( 6 ) - 90 );
                     
-                    superiorEsquerdo2D.setCoordenadas(
-                        superiorEsquerdoX, superiorEsquerdoY
-                    );
-                    superiorDireito2D.setCoordenadas(
-                        superiorEsquerdoX + ladoQuadrado, superiorEsquerdoY
-                    );
-                    inferiorDireito2D.setCoordenadas(
-                        superiorEsquerdoX + ladoQuadrado, superiorEsquerdoY - ladoQuadrado
-                    );
-                    inferiorEsquerdo2D.setCoordenadas(
-                        superiorEsquerdoX, superiorEsquerdoY - ladoQuadrado
-                    );
+                    superiorEsquerdo2D.setCoordenadas( -1, 1 );
+                    superiorDireito2D.setCoordenadas( 1, 1 );
+                    inferiorDireito2D.setCoordenadas( 1, -1 );
+                    inferiorEsquerdo2D.setCoordenadas( -1, -1 );
+                    
+                    ponto2D = new Ponto2D[] {
+                        superiorEsquerdo2D, superiorDireito2D, inferiorDireito2D, inferiorEsquerdo2D
+                    };
+                    
+                    for ( Ponto2D ponto : ponto2D ) {
+                        ponto.escalar( escalaXQuadrado, escalaYQuadrado );
+                        ponto.rotacionar( rotacaoX, rotacaoY, rotacaoZ );
+                        ponto.transladar(
+                            escalaXQuadrado + superiorEsquerdoX,
+                            -escalaYQuadrado + superiorEsquerdoY
+                        );
+                    }
                     
                     escalaXMedia = 0;
                     escalaYMedia = 0;
                     
                     z = superiorEsquerdo3D.getZ();
                     
-                    escalaXMedia +=
-                        ( superiorDireito2D.getX() - superiorEsquerdo2D.getX() ) * z /
-                        ( superiorDireito3D.getX() - superiorEsquerdo3D.getX() );
-                    escalaXMedia +=
-                        ( inferiorDireito2D.getX() - inferiorEsquerdo2D.getX() ) * z /
-                        ( inferiorDireito3D.getX() - inferiorEsquerdo3D.getX() );
+                    escalaXMedia += Math.sqrt(
+                        ( z * z ) * (float) (
+                                Math.pow( superiorEsquerdo2D.getX() - inferiorDireito2D.getX(), 2 )
+                            +   Math.pow( superiorEsquerdo2D.getY() - inferiorDireito2D.getY(), 2 )
+                        ) / (float) (
+                                Math.pow( superiorEsquerdo3D.getX() - inferiorDireito3D.getX(), 2 )
+                            +   Math.pow( superiorEsquerdo3D.getY() - inferiorDireito3D.getY(), 2 )
+                        )
+                    );
+                    escalaXMedia += Math.sqrt(
+                        ( z * z ) * (float) (
+                                Math.pow( inferiorEsquerdo2D.getX() - superiorDireito2D.getX(), 2 )
+                            +   Math.pow( inferiorEsquerdo2D.getY() - superiorDireito2D.getY(), 2 )
+                        ) / (float) (
+                                Math.pow( inferiorEsquerdo3D.getX() - superiorDireito3D.getX(), 2 )
+                            +   Math.pow( inferiorEsquerdo3D.getY() - superiorDireito3D.getY(), 2 )
+                        )
+                    );
                     escalaXMedia /= 2;
-                    
-                    escalaYMedia +=
-                        ( superiorEsquerdo2D.getY() - inferiorEsquerdo2D.getY() ) * z /
-                        ( superiorEsquerdo3D.getY() - inferiorEsquerdo3D.getY() );
-                    escalaYMedia +=
-                        ( superiorDireito2D.getY() - inferiorDireito2D.getY() ) * z /
-                        ( superiorDireito3D.getY() - inferiorDireito3D.getY() );
-                    escalaYMedia /= 2;
+                    escalaYMedia = escalaXMedia;
                     
                     Ponto3D[] ponto3D = {
                         superiorEsquerdo3D, superiorDireito3D, inferiorDireito3D, inferiorEsquerdo3D
-                    };
-                    Ponto2D[] ponto2D = {
-                        superiorEsquerdo2D, superiorDireito2D, inferiorDireito2D, inferiorEsquerdo2D
                     };
                     
                     translacaoXMedia = 0;
@@ -814,8 +821,8 @@ public class Dispositivo implements AutoCloseable {
                         translacaoYMedia += pontoTela.getY() - pontoMundo.getY() * escalaYMedia / z;
                     }
                     
-                    translacaoXMedia /= 4;
-                    translacaoYMedia /= 4;
+                    translacaoXMedia /= ponto3D.length;
+                    translacaoYMedia /= ponto3D.length;
                     
                     minimo[0] = escalaXMedia - escalaXMedia * 0.5f;
                     minimo[1] = escalaYMedia - escalaYMedia * 0.5f;
@@ -958,6 +965,289 @@ public class Dispositivo implements AutoCloseable {
         if ( calibracaoParametrosProjecao != null )
             calibracaoParametrosProjecao.interrupt();
     }
+    
+    /* private Thread testeCalibracao;
+    private final Object travaTesteCalibracao = new Object();
+    private float
+        escalaProjecaoX, escalaProjecaoY,
+        rotacaoTelaX, rotacaoTelaY, rotacaoTelaZ,
+        translacaoTelaX, translacaoTelaY,
+        aptidaoProjecaoOtima = Float.MAX_VALUE;
+    private final float anguloRadianoProjecao = (float) Math.toRadians( 10 );
+    
+    public void calibrarParametrosProjecao() {
+        if ( testeCalibracao != null && testeCalibracao.isAlive() )
+            return;
+        
+        testeCalibracao = new Thread(
+            () ->
+            {
+                final FuncaoParametrosProjecao funcao = new FuncaoParametrosProjecao();
+                final int
+                    linhas = 4,
+                    colunas = 6; 
+                
+                RecozimentoSimulado recozimentoSimulado = new RecozimentoSimulado( funcao );
+                EstrategiaEvolutiva estrategiaEvolutiva = new EstrategiaEvolutiva( funcao );
+                EnxameParticulas enxameParticulas = new EnxameParticulas( funcao );
+                float[] resultadoRecozimento, resultadoEstrategia, resultadoEnxame;
+                float aptidaoRecozimento, aptidaoEstrategia, aptidaoEnxame;
+                
+                List<PontoMarcador> listaPontos;
+                Marcador marcador;
+                
+                Ponto3D
+                    superiorEsquerdo3D, superiorDireito3D, inferiorDireito3D, inferiorEsquerdo3D,
+                    pontoMundo;
+                Ponto2D
+                    superiorEsquerdo2D = new Ponto2D(),
+                    superiorDireito2D = new Ponto2D(),
+                    inferiorDireito2D = new Ponto2D(),
+                    inferiorEsquerdo2D = new Ponto2D(),
+                    pontoTela;
+                float
+                    escalaXQuadrado, escalaYQuadrado,
+                    superiorEsquerdoX, superiorEsquerdoY,
+                    z,
+                    escalaXMedia, escalaYMedia,
+                    translacaoXMedia, translacaoYMedia;
+                float[]
+                    minimo = new float[7],
+                    maximo = new float[7];
+                
+                synchronized ( travaTesteCalibracao ) {
+                    aptidaoProjecaoOtima = Float.MAX_VALUE;
+                }
+                while( !Thread.currentThread().isInterrupted() ) {
+                    listaPontos =
+                        detectorPontos.getListaPontosMarcador();
+                    
+                    if ( listaPontos.size() < 4 )
+                        synchronized ( travaDetector ) {
+                            try {
+                                travaDetector.wait();
+                                continue;
+                            } catch ( InterruptedException e ) {
+                                return;
+                            }
+                        }
+                    
+                    marcador = new Marcador( linhas, colunas, listaPontos );
+                    
+                    int
+                        linha   =   (int) Aplicativo.PARAMETROS[3].getValor( 7 ),
+                        coluna  =   (int) Aplicativo.PARAMETROS[3].getValor( 8 );
+                    
+                    superiorEsquerdo3D =
+                        marcador.getPontoGrade( linha, coluna + 1 ).getPontoMundo();
+                    superiorDireito3D =
+                        marcador.getPontoGrade( linha, coluna ).getPontoMundo();
+                    inferiorDireito3D =
+                        marcador.getPontoGrade( linha + 1, coluna ).getPontoMundo();
+                    inferiorEsquerdo3D =
+                        marcador.getPontoGrade( linha + 1, coluna + 1 ).getPontoMundo();
+                    
+                    superiorEsquerdoX = Aplicativo.PARAMETROS[3].getValor( 0 ) - 1;
+                    superiorEsquerdoY = Aplicativo.PARAMETROS[3].getValor( 1 ) - 1;
+                    escalaXQuadrado = Aplicativo.PARAMETROS[3].getValor( 2 ) * 2;
+                    escalaYQuadrado = Aplicativo.PARAMETROS[3].getValor( 3 ) * 2;
+                    
+                    superiorEsquerdo2D.setCoordenadas(
+                        superiorEsquerdoX, superiorEsquerdoY
+                    );
+                    superiorDireito2D.setCoordenadas(
+                        superiorEsquerdoX + escalaXQuadrado, superiorEsquerdoY
+                    );
+                    inferiorDireito2D.setCoordenadas(
+                        superiorEsquerdoX + escalaXQuadrado, superiorEsquerdoY - escalaYQuadrado
+                    );
+                    inferiorEsquerdo2D.setCoordenadas(
+                        superiorEsquerdoX, superiorEsquerdoY - escalaYQuadrado
+                    );
+                    
+                    escalaXMedia = 0;
+                    escalaYMedia = 0;
+                    
+                    z = superiorEsquerdo3D.getZ();
+                    
+                    escalaXMedia +=
+                        ( superiorDireito2D.getX() - superiorEsquerdo2D.getX() ) * z /
+                        ( superiorDireito3D.getX() - superiorEsquerdo3D.getX() );
+                    escalaXMedia +=
+                        ( inferiorDireito2D.getX() - inferiorEsquerdo2D.getX() ) * z /
+                        ( inferiorDireito3D.getX() - inferiorEsquerdo3D.getX() );
+                    escalaXMedia /= 2;
+                    
+                    escalaYMedia +=
+                        ( superiorEsquerdo2D.getY() - inferiorEsquerdo2D.getY() ) * z /
+                        ( superiorEsquerdo3D.getY() - inferiorEsquerdo3D.getY() );
+                    escalaYMedia +=
+                        ( superiorDireito2D.getY() - inferiorDireito2D.getY() ) * z /
+                        ( superiorDireito3D.getY() - inferiorDireito3D.getY() );
+                    escalaYMedia /= 2;
+                    
+                    Ponto3D[] ponto3D = {
+                        superiorEsquerdo3D, superiorDireito3D, inferiorDireito3D, inferiorEsquerdo3D
+                    };
+                    Ponto2D[] ponto2D = {
+                        superiorEsquerdo2D, superiorDireito2D, inferiorDireito2D, inferiorEsquerdo2D
+                    };
+                    
+                    translacaoXMedia = 0;
+                    translacaoYMedia = 0;
+                    
+                    for ( int i = 0; i < ponto3D.length; i++ ) {
+                        pontoMundo = ponto3D[i];
+                        pontoTela = ponto2D[i];
+                        
+                        translacaoXMedia += pontoTela.getX() - pontoMundo.getX() * escalaXMedia / z;
+                        translacaoYMedia += pontoTela.getY() - pontoMundo.getY() * escalaYMedia / z;
+                    }
+                    
+                    translacaoXMedia /= 4;
+                    translacaoYMedia /= 4;
+                    
+                    minimo[0] = escalaXMedia - escalaXMedia * 0.5f;
+                    minimo[1] = escalaYMedia - escalaYMedia * 0.5f;
+                    minimo[2] = -anguloRadianoProjecao;
+                    minimo[3] = -anguloRadianoProjecao;
+                    minimo[4] = -anguloRadianoProjecao;
+                    minimo[5] = translacaoXMedia - translacaoXMedia * 0.5f;
+                    minimo[6] = translacaoYMedia - translacaoYMedia * 0.5f;
+                    
+                    maximo[0] = escalaXMedia + escalaXMedia * 0.5f;
+                    maximo[1] = escalaYMedia + escalaYMedia * 0.5f;
+                    maximo[2] = +anguloRadianoProjecao;
+                    maximo[3] = +anguloRadianoProjecao;
+                    maximo[4] = +anguloRadianoProjecao;
+                    maximo[5] = translacaoXMedia + translacaoXMedia * 0.5f;
+                    maximo[6] = translacaoYMedia + translacaoYMedia * 0.5f;
+                    
+                    funcao.setPontos3D(
+                        superiorEsquerdo3D, superiorDireito3D, inferiorDireito3D, inferiorEsquerdo3D
+                    );
+                    funcao.setPontos2D(
+                        superiorEsquerdo2D, superiorDireito2D, inferiorDireito2D, inferiorEsquerdo2D
+                    );
+                    
+                    resultadoRecozimento = recozimentoSimulado.otimizar( minimo, maximo );
+                    resultadoEstrategia = estrategiaEvolutiva.otimizar( minimo, maximo );
+                    resultadoEnxame = enxameParticulas.otimizar( minimo, maximo );
+                    
+                    aptidaoRecozimento = funcao.f( resultadoRecozimento );
+                    aptidaoEstrategia = funcao.f( resultadoEstrategia );
+                    aptidaoEnxame = funcao.f( resultadoEnxame );
+                    
+                    synchronized ( travaTesteCalibracao ) {
+                        if ( aptidaoRecozimento < aptidaoProjecaoOtima ) {
+                            aptidaoProjecaoOtima = aptidaoRecozimento;
+                            escalaProjecaoX = resultadoRecozimento[0];
+                            escalaProjecaoY = resultadoRecozimento[1];
+                            rotacaoTelaX = resultadoRecozimento[2];
+                            rotacaoTelaY = resultadoRecozimento[3];
+                            rotacaoTelaZ = resultadoRecozimento[4];
+                            translacaoTelaX = resultadoRecozimento[5];
+                            translacaoTelaY = resultadoRecozimento[6];
+                        }
+                        
+                        if ( aptidaoEstrategia < aptidaoProjecaoOtima ) {
+                            aptidaoProjecaoOtima = aptidaoEstrategia;
+                            escalaProjecaoX = resultadoEstrategia[0];
+                            escalaProjecaoY = resultadoEstrategia[1];
+                            rotacaoTelaX = resultadoEstrategia[2];
+                            rotacaoTelaY = resultadoEstrategia[3];
+                            rotacaoTelaZ = resultadoEstrategia[4];
+                            translacaoTelaX = resultadoEstrategia[5];
+                            translacaoTelaY = resultadoEstrategia[6];
+                        }
+                        
+                        if ( aptidaoEnxame < aptidaoProjecaoOtima ) {
+                            aptidaoProjecaoOtima = aptidaoEnxame;
+                            escalaProjecaoX = resultadoEnxame[0];
+                            escalaProjecaoY = resultadoEnxame[1];
+                            rotacaoTelaX = resultadoEnxame[2];
+                            rotacaoTelaY = resultadoEnxame[3];
+                            rotacaoTelaZ = resultadoEnxame[4];
+                            translacaoTelaX = resultadoEnxame[5];
+                            translacaoTelaY = resultadoEnxame[6];
+                        }
+                    }
+                }
+            }
+        );
+        testeCalibracao.start();
+    }
+    
+    public boolean getCalibrandoParametrosProjecao() {
+        if ( testeCalibracao != null && testeCalibracao.isAlive() )
+            return true;
+        else
+            return false;
+    }
+    
+    public float[] getParametrosProjecaoOtimos() {
+        synchronized ( travaTesteCalibracao ) {
+            return new float[]{
+                escalaProjecaoX, escalaProjecaoY,
+                rotacaoTelaX, rotacaoTelaY, rotacaoTelaZ,
+                translacaoTelaX, translacaoTelaY,
+                aptidaoProjecaoOtima
+            };
+        }
+    }
+    
+    public float getEscalaProjecaoX() {
+        synchronized ( travaTesteCalibracao ) {
+            return escalaProjecaoX;
+        }
+    }
+    
+    public float getEscalaProjecaoY() {
+        synchronized ( travaTesteCalibracao ) {
+            return escalaProjecaoY;
+        }
+    }
+    
+    public float getRotacaoTelaX() {
+        synchronized ( travaTesteCalibracao ) {
+            return rotacaoTelaX;
+        }
+    }
+    
+    public float getRotacaoTelaY() {
+        synchronized ( travaTesteCalibracao ) {
+            return rotacaoTelaY;
+        }
+    }
+    
+    public float getRotacaoTelaZ() {
+        synchronized ( travaTesteCalibracao ) {
+            return rotacaoTelaZ;
+        }
+    }
+    
+    public float getTranslacaoTelaX() {
+        synchronized ( travaTesteCalibracao ) {
+            return translacaoTelaX;
+        }
+    }
+    
+    public float getTranslacaoTelaY() {
+        synchronized ( travaTesteCalibracao ) {
+            return translacaoTelaY;
+        }
+    }
+    
+    public float getAptidaoProjecaoOtima() {
+        synchronized ( travaTesteCalibracao ) {
+            return aptidaoProjecaoOtima;
+        }
+    }
+    
+    public void encerrarCalibracaoProjecao() {
+        if ( testeCalibracao != null )
+            testeCalibracao.interrupt();
+    } */
     
     @Override
     public void close() {
