@@ -13,7 +13,7 @@ public class Aplicativo {
     public final static Scanner ENTRADA = new Scanner( System.in );
     private static Thread entradaAssincrona;
     
-    //  0.20, 0.4 - Olho virtual
+    //  0.2, 0.4 - Olho virtual
     //  0.15, 0.75 - Smartphone
     private final static String[] nomeParametro = {
         "Intensidade gradiente", "Ângulo gradiente",
@@ -40,22 +40,26 @@ public class Aplicativo {
         new Parametros(
             "Projeção",
             new String[]{
-                "Canto superior esquerdo - posição x",
-                "Canto superior esquerdo - posição y",
-                "Lado do quadrado",
+                "Posição x",
+                "Posição y",
+                "Escala X",
+                "Escala Y",
                 "Ângulo X",
                 "Ângulo Y",
                 "Ângulo Z",
-                "Quadrado"
+                "Linha",
+                "Coluna"
             },
             new float[] {
-                0.42f,
-                0.86f,
-                0.26f,
+                0.90f,
+                0.82f,
+                0.24f,
+                0.25f,
                 90.00f,
                 90.00f,
-                90.00f,
-                0.00f
+                89.00f,
+                2,
+                1
             }
         )
     };
@@ -82,12 +86,12 @@ public class Aplicativo {
         return ENTRADA.nextInt();
     }
     
-    private static final Object travaImpressao = new Object();
-    private static boolean imprimindo = false;
+    private static final Object travaImpressaoPontos = new Object();
+    private static boolean imprimindoPontos = false;
     
-    public static boolean getImprimindo() {
-        synchronized ( travaImpressao ) {
-            return imprimindo;
+    public static boolean getImprimindoPontos() {
+        synchronized ( travaImpressaoPontos ) {
+            return imprimindoPontos;
         }
     }
     
@@ -97,8 +101,8 @@ public class Aplicativo {
     private static int numeroLinhas = 0; 
     
     public static void imprimirPontos( Dispositivo[] dispositivo ) {
-        synchronized ( travaImpressao ) {
-            if ( !imprimindo )
+        synchronized ( travaImpressaoPontos ) {
+            if ( !imprimindoPontos )
                 return;
             
             List<PontoMarcador> listaPontos =
@@ -220,41 +224,11 @@ public class Aplicativo {
         }
     }
     
-    private static final Object travaEstimativa = new Object();
-    private static boolean estimando = false;
-    
-    public static boolean getEstimando() {
-        synchronized ( travaEstimativa ) {
-            return estimando;
-        }
-    }
-    
-    public static void imprimirEstimativaDistancia( Dispositivo[] dispositivo ) {
-        float[] distancia = new float[dispositivo.length];
-        
-        for ( int i = 0; i < dispositivo.length; i++ )
-            distancia[i] = dispositivo[i].getDistanciaMarcadorEstimada();
-        
-        synchronized ( travaEstimativa ) {
-            if ( !estimando )
-                return;
-            
-            System.out.print( "\u001B[s" );
-            
-            for ( int i = 0; i < dispositivo.length; i++ )
-                System.out.println(
-                    apagarLinha + dispositivo[i].getId() + ":\t" + String.format( "%.4f", distancia[i] )
-                );
-            
-            System.out.print( "\u001B[u" );
-        }
-    }
-    
-    private static final Object travaProjecao = new Object();
+    private static final Object travaSinal = new Object();
     private static int sinal = 0;
     
     public static int getSinal() {
-        synchronized ( travaProjecao ) {
+        synchronized ( travaSinal ) {
             int sinalOriginal = sinal;
             sinal = 0;
             
@@ -305,6 +279,45 @@ public class Aplicativo {
         }
     }
     
+    private static final Object travaEstimativa = new Object();
+    private static boolean estimando = false;
+    
+    public static boolean getEstimando() {
+        synchronized ( travaEstimativa ) {
+            return estimando;
+        }
+    }
+    
+    public static void imprimirEstimativaDistancia( Dispositivo[] dispositivo ) {
+        float[] distancia = new float[dispositivo.length];
+        
+        for ( int i = 0; i < dispositivo.length; i++ )
+            distancia[i] = dispositivo[i].getDistanciaMarcadorEstimada();
+        
+        synchronized ( travaEstimativa ) {
+            if ( !estimando )
+                return;
+            
+            System.out.print( "\u001B[s" );
+            
+            for ( int i = 0; i < dispositivo.length; i++ )
+                System.out.println(
+                    apagarLinha + dispositivo[i].getId() + ":\t" + String.format( "%.4f", distancia[i] )
+                );
+            
+            System.out.print( "\u001B[u" );
+        }
+    }
+    
+    private static final Object travaTesteCalibracao = new Object();
+    private static boolean testandoCalibracao = false;
+    
+    public static boolean getTestandoCalibracao() {
+        synchronized ( travaTesteCalibracao ) {
+            return testandoCalibracao;
+        }
+    }
+    
     public static void lerEntradaAssincrona() {
         entradaAssincrona = new Thread(
             () ->
@@ -314,7 +327,8 @@ public class Aplicativo {
                 
                 do {
                     System.out.print(
-                        "(L)er parâmetros / (I)mprimir saída / (C)alibrar / E(t)imativa / (E)ncerrar: "
+                            "(L)er parâmetros / (I)mprimir pontos / (C)alibrar / "
+                        +   "Es(t)imar distância / Te(s)tar calibração / (E)ncerrar: "
                     );
                     opcao = ENTRADA.next().charAt( 0 );
                     
@@ -355,12 +369,12 @@ public class Aplicativo {
                                     indice = PARAMETROS.length - 1;
                                 
                                 if ( indice == 3 )
-                                    synchronized ( travaProjecao ) {
+                                    synchronized ( travaSinal ) {
                                         sinal = -1;
                                     }
                                 PARAMETROS[indice].ler( ENTRADA );
                                 if ( indice == 3 )
-                                    synchronized ( travaProjecao ) {
+                                    synchronized ( travaSinal ) {
                                         sinal = -2;
                                     }
                             } while( !linhaAtual.isInterrupted() );
@@ -378,18 +392,18 @@ public class Aplicativo {
                             System.out.println( "Pressione <Enter> para parar" );
                             System.out.println();
                             
-                            synchronized ( travaImpressao ) {
+                            synchronized ( travaImpressaoPontos ) {
                                 System.out.print( "\u001B[?25l" );
                                 numeroLinhas = 0;
-                                imprimindo = true;
+                                imprimindoPontos = true;
                             }
                             
                             try {
                                 System.in.read();
                             } catch ( IOException ignorada ) {}
                             
-                            synchronized ( travaImpressao ) {
-                                imprimindo = false;
+                            synchronized ( travaImpressaoPontos ) {
+                                imprimindoPontos = false;
                                 System.out.print( "\u001B[10B\n" );
                                 System.out.print( "\u001B[?25h" );
                             }
@@ -491,6 +505,28 @@ public class Aplicativo {
                             }
                         
                         break;
+                        
+                        case 'S':
+                            System.out.println();
+                            System.out.println( "\u001B[1mTestando calibração\u001B[0m" );
+                            System.out.println( "Pressione <Enter> para parar" );
+                            System.out.println();
+                            
+                            synchronized ( travaTesteCalibracao ) {
+                                System.out.print( "\u001B[?25l" );
+                                testandoCalibracao = true;
+                            }
+                            
+                            try {
+                                System.in.read();
+                            } catch ( IOException ignorada ) {}
+                            
+                            synchronized ( travaTesteCalibracao ) {
+                                testandoCalibracao = false;
+                                System.out.print( "\u001B[?25h" );
+                            }
+                            
+                            break;
                         
                         case 'E':
                             return;
