@@ -24,7 +24,7 @@ public class Janela extends JFrame implements Runnable {
         canvas = new GLCanvas( capacidades );
         canvas.addGLEventListener( renderizadorOpenGL = new Renderizador() );
         
-        setBounds( 0, 0, 1366, 650 );
+        setBounds( 268, 0, 830, 523 );
         setDefaultCloseOperation( WindowConstants.DISPOSE_ON_CLOSE );
         getContentPane().setLayout( new BorderLayout() );
         add( canvas );
