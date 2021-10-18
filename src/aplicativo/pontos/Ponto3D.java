@@ -111,6 +111,21 @@ public class Ponto3D extends Ponto2D {
         z *= escalar;
     }
     
+    public void escalar( float escalaX, float escalaY, float escalaZ ) {
+        escalar( escalaX, escalaY );
+        this.z *= escalaZ;
+    }
+    
+    @Override
+    public void rotacionar( float rotacaoX, float rotacaoY, float rotacaoZ ) {
+        rotacionar( rotacaoX, rotacaoY, rotacaoZ, z );
+    }
+    
+    public void transladar( float translacaoX, float translacaoY, float translacaoZ ) {
+        transladar( translacaoX, translacaoY );
+        z += translacaoZ;
+    }
+    
     @Override
     public String toString() {
         return 

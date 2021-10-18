@@ -111,6 +111,47 @@ public class Ponto2D {
         y *= escalar;
     }
     
+    public void escalar( float escalaX, float escalaY ) {
+        this.x *= escalaX;
+        this.y *= escalaY;
+    }
+    
+    protected void rotacionar( float rotacaoX, float rotacaoY, float rotacaoZ, float z ) {
+        float
+            sinX, cosX,
+            sinY, cosY,
+            sinZ, cosZ,
+            xAuxiliar, yAuxiliar, zAuxiliar;
+        
+        sinX = (float) Math.sin( rotacaoX ); cosX = (float) Math.cos( rotacaoX );
+        sinY = (float) Math.sin( rotacaoY ); cosY = (float) Math.cos( rotacaoY );
+        sinZ = (float) Math.sin( rotacaoZ ); cosZ = (float) Math.cos( rotacaoZ );
+        
+        yAuxiliar = y;
+        zAuxiliar = z;
+        y =  yAuxiliar * cosX - zAuxiliar * sinX;
+        z =  yAuxiliar * sinX + zAuxiliar * cosX;
+        
+        xAuxiliar = x;
+        zAuxiliar = z;
+        x =  xAuxiliar * cosY + zAuxiliar * sinY;
+        z = -xAuxiliar * sinY + zAuxiliar * cosY;
+        
+        xAuxiliar = x;
+        yAuxiliar = y;
+        x =  xAuxiliar * cosZ - yAuxiliar * sinZ;
+        y =  xAuxiliar * sinZ + yAuxiliar * cosZ;
+    }
+    
+    public void rotacionar( float rotacaoX, float rotacaoY, float rotacaoZ ) {
+        rotacionar( rotacaoX, rotacaoY, rotacaoZ, 0 );
+    }
+    
+    public void transladar( float translacaoX, float translacaoY ) {
+        x += translacaoX;
+        y += translacaoY;
+    }
+    
     @Override
     public String toString() {
         return "( " + (int) x + "; " + (int) y + " )";
