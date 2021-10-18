@@ -60,46 +60,21 @@ public class FuncaoParametrosProjecao implements FuncaoDesempenho {
         Ponto2D pontoEstimado = new Ponto2D();
         float
             zMundo,
-            xEstimado, yEstimado, zEstimado,
-            xEstimadoAuxiliar, yEstimadoAuxiliar, zEstimadoAuxiliar,
-            sinX, cosX,
-            sinY, cosY,
-            sinZ, cosZ,
             distancia,
             somaQuadrados = 0;
         
         for ( int i = 0; i < ponto3D.length; i++ ) {
             pontoMundo = ponto3D[i];
-            
             zMundo = pontoMundo.getZ();
             
-            xEstimado = pontoMundo.getX() * x[0] / zMundo;
-            yEstimado = pontoMundo.getY() * x[1] / zMundo;
-            zEstimado = 0;
+            pontoEstimado.setCoordenadas(
+                pontoMundo.getX() * x[0] / zMundo, pontoMundo.getY() * x[1] / zMundo
+            );
+            pontoEstimado.transladar( x[5], x[6] );
+            pontoEstimado.transladar( -1, 0 );
+            pontoEstimado.rotacionar( x[2], x[3], x[4] );
+            pontoEstimado.transladar( +1, 0 );
             
-            sinX = (float) Math.sin( x[2] ); cosX = (float) Math.cos( x[2] );
-            sinY = (float) Math.sin( x[3] ); cosY = (float) Math.cos( x[3] );
-            sinZ = (float) Math.sin( x[4] ); cosZ = (float) Math.cos( x[4] );
-            
-            xEstimadoAuxiliar = xEstimado;
-            yEstimadoAuxiliar = yEstimado;
-            xEstimado =  xEstimadoAuxiliar * cosZ - yEstimadoAuxiliar * sinZ;
-            yEstimado =  xEstimadoAuxiliar * sinZ + yEstimadoAuxiliar * cosZ;
-            
-            xEstimadoAuxiliar = xEstimado;
-            zEstimadoAuxiliar = zEstimado;
-            xEstimado =  xEstimadoAuxiliar * cosY + zEstimadoAuxiliar * sinY;
-            zEstimado = -xEstimadoAuxiliar * sinY + zEstimadoAuxiliar * cosY;
-            
-            yEstimadoAuxiliar = yEstimado;
-            zEstimadoAuxiliar = zEstimado;
-            yEstimado =  yEstimadoAuxiliar * cosX - zEstimadoAuxiliar * sinX;
-            zEstimado =  yEstimadoAuxiliar * sinX + zEstimadoAuxiliar * cosX;
-            
-            xEstimado += x[5];
-            yEstimado += x[6];
-            
-            pontoEstimado.setCoordenadas( xEstimado, yEstimado );
             distancia = pontoEstimado.getDistanciaTabuleiro( ponto2D[i] );
             somaQuadrados += distancia * distancia;
         }
