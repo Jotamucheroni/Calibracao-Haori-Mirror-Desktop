@@ -169,7 +169,8 @@ public class Renderizador extends OpenGL implements GLEventListener {
                         Aplicativo.PARAMETROS[i].getValor( 2 ),
                         Aplicativo.PARAMETROS[i].getValor( 3 ),
                         Aplicativo.PARAMETROS[i].getValor( 4 ),
-                        Aplicativo.PARAMETROS[i].getValor( 5 )
+                        Aplicativo.PARAMETROS[i].getValor( 5 ),
+                        Aplicativo.PARAMETROS[i].getValor( 6 )
                     }
                 );
         }
@@ -182,7 +183,7 @@ public class Renderizador extends OpenGL implements GLEventListener {
             tela, 0, 0, tela.getLargura(), tela.getAltura() / 2, 3, 1
         );
         
-        if ( Aplicativo.getImprimindo() )
+        if ( Aplicativo.getImprimindoPontos() )
             Aplicativo.imprimirPontos( dispositivo );
         
         if ( Aplicativo.getCalibrandoIntrinsecos() )
@@ -191,11 +192,11 @@ public class Renderizador extends OpenGL implements GLEventListener {
         if ( Aplicativo.getCalibrandoExtrinsecos() )
             Aplicativo.imprimirParametrosExtrinsecos( olhoVirtual );
         
+        if ( Aplicativo.getCalibrandoProjecao() )
+            Aplicativo.imprimirParametrosProjecao( olhoVirtual );    
+        
         if ( Aplicativo.getEstimando() )
             Aplicativo.imprimirEstimativaDistancia( dispositivo );
-        
-        if ( Aplicativo.getCalibrandoProjecao() )
-            Aplicativo.imprimirParametrosProjecao( olhoVirtual );
     }
     
     private boolean executando = true;
