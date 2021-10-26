@@ -70,10 +70,8 @@ public class FuncaoParametrosProjecao implements FuncaoDesempenho {
             pontoEstimado.setCoordenadas(
                 pontoMundo.getX() * x[0] / zMundo, pontoMundo.getY() * x[1] / zMundo
             );
-            pontoEstimado.transladar( x[5], x[6] );
-            pontoEstimado.transladar( -1, 0 );
             pontoEstimado.rotacionar( x[2], x[3], x[4] );
-            pontoEstimado.transladar( +1, 0 );
+            pontoEstimado.transladar( x[5] / ( zMundo * zMundo ), x[6] / ( zMundo * zMundo ) );
             
             distancia = pontoEstimado.getDistanciaTabuleiro( ponto2D[i] );
             somaQuadrados += distancia * distancia;
