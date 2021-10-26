@@ -12,7 +12,6 @@ import aplicativo.pontos.PontoMarcador;
 public class Aplicativo {
     public final static Scanner ENTRADA = new Scanner( System.in );
     private static Thread entradaAssincrona;
-    
     //  0.2, 0.4 - Olho virtual
     //  0.15, 0.75 - Smartphone
     private final static String[] nomeParametro = {
@@ -51,14 +50,14 @@ public class Aplicativo {
                 "Coluna"
             },
             new float[] {
-                0.90f,
-                0.82f,
-                0.24f,
+                0.98f,
+                1.26f,
+                0.25f,
                 0.25f,
                 90.00f,
                 90.00f,
-                89.00f,
-                2,
+                88.00f,
+                1,
                 1
             }
         )
@@ -293,9 +292,15 @@ public class Aplicativo {
         
         for ( int i = 0; i < dispositivo.length; i++ )
             distancia[i] = dispositivo[i].getDistanciaMarcadorEstimada();
+            
+        boolean testandoCalibracao;
+        
+        synchronized ( travaTesteCalibracao ) {
+            testandoCalibracao = Aplicativo.testandoCalibracao;
+        }
         
         synchronized ( travaEstimativa ) {
-            if ( !estimando )
+            if ( !estimando && !testandoCalibracao )
                 return;
             
             System.out.print( "\u001B[s" );
@@ -516,13 +521,20 @@ public class Aplicativo {
                                 System.out.print( "\u001B[?25l" );
                                 testandoCalibracao = true;
                             }
+                            synchronized ( travaSinal ) {
+                                sinal = -3;
+                            }
                             
                             try {
                                 System.in.read();
                             } catch ( IOException ignorada ) {}
                             
+                            synchronized ( travaSinal ) {
+                                sinal = -4;
+                            }
                             synchronized ( travaTesteCalibracao ) {
                                 testandoCalibracao = false;
+                                System.out.print( "\u001B[3B\n" );
                                 System.out.print( "\u001B[?25h" );
                             }
                             

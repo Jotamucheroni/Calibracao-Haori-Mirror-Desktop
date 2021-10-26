@@ -81,8 +81,7 @@ public class Renderizador extends OpenGL implements GLEventListener {
     
     private int
         i,
-        sinal = 0,
-        sinalAnterior = 0;
+        sinal = 0, ultimoSinalEnviado = 0;
     
     @Override
     public void display( GLAutoDrawable drawable ) {
@@ -122,8 +121,13 @@ public class Renderizador extends OpenGL implements GLEventListener {
                 if ( !disp.getEstimando() )
                     disp.estimarDistanciaMarcador();
             }
-            else if ( disp.getEstimando() )
-                disp.encerrarEstimativa();
+        }
+        
+        if ( !Aplicativo.getEstimando() ) { 
+            if ( olhoVirtual.getEstimando() )
+                olhoVirtual.encerrarEstimativa();
+            if ( smartphone.getEstimando() && !olhoVirtual.getTestandoCalibracao() )
+                smartphone.encerrarEstimativa();
         }
         
         if ( Aplicativo.getCalibrandoExtrinsecos() ) {
@@ -139,6 +143,13 @@ public class Renderizador extends OpenGL implements GLEventListener {
         }
         else if ( olhoVirtual.getCalibrandoParametrosProjecao() )
             olhoVirtual.encerrarCalibracaoProjecao();
+        
+        if ( Aplicativo.getTestandoCalibracao() ) {
+            if ( !olhoVirtual.getTestandoCalibracao() )
+                olhoVirtual.testarCalibracao( smartphone );
+        }
+        else if ( olhoVirtual.getTestandoCalibracao() )
+            olhoVirtual.encerrarTesteCalibracao();
         
         if ( Aplicativo.PARAMETROS[i].getAtualizado() ) {
             float ladoQuadrado = Aplicativo.PARAMETROS[i].getValor( 0 );
@@ -159,11 +170,11 @@ public class Renderizador extends OpenGL implements GLEventListener {
             
             if ( sinal < 0 ) {
                 smartphone.getCameraRemota().enviarDados( new float[]{ sinal } );
-                sinalAnterior = sinal;
+                ultimoSinalEnviado = sinal;
             }
-            else if ( sinalAnterior == -1 && Aplicativo.PARAMETROS[i].getAtualizado() )
+            else if ( ultimoSinalEnviado == -1 && Aplicativo.PARAMETROS[i].getAtualizado() )
                 smartphone.getCameraRemota().enviarDados(
-                    new float[]{
+                    new float[] {
                         Aplicativo.PARAMETROS[i].getValor( 0 ),
                         Aplicativo.PARAMETROS[i].getValor( 1 ),
                         Aplicativo.PARAMETROS[i].getValor( 2 ),
@@ -171,6 +182,23 @@ public class Renderizador extends OpenGL implements GLEventListener {
                         Aplicativo.PARAMETROS[i].getValor( 4 ),
                         Aplicativo.PARAMETROS[i].getValor( 5 ),
                         Aplicativo.PARAMETROS[i].getValor( 6 )
+                    }
+                );
+            else if ( ultimoSinalEnviado == -3 )
+                smartphone.getCameraRemota().enviarDados(
+                    new float[] {
+                        olhoVirtual.getEscalaProjecaoX() + 1000,
+                        olhoVirtual.getEscalaProjecaoY() + 1000,
+                        olhoVirtual.getTranslacaoTelaX() + 1000,
+                        olhoVirtual.getTranslacaoTelaY() + 1000,
+                        ( (float) Math.toDegrees( olhoVirtual.getRotacaoTelaX() ) ) + 90 + 1000,
+                        ( (float) Math.toDegrees( olhoVirtual.getRotacaoTelaY() ) ) + 90 + 1000,
+                        ( (float) Math.toDegrees( olhoVirtual.getRotacaoTelaZ() ) ) + 90 + 1000,
+                        2.67f + 1000,
+                        2.67f + 1000,
+                        olhoVirtual.getPosicaoX() + 1000,
+                        olhoVirtual.getPosicaoY() + 1000,
+                        olhoVirtual.getPosicaoZ() + 1000
                     }
                 );
         }
@@ -195,7 +223,7 @@ public class Renderizador extends OpenGL implements GLEventListener {
         if ( Aplicativo.getCalibrandoProjecao() )
             Aplicativo.imprimirParametrosProjecao( olhoVirtual );    
         
-        if ( Aplicativo.getEstimando() )
+        if ( Aplicativo.getEstimando() || Aplicativo.getTestandoCalibracao() )
             Aplicativo.imprimirEstimativaDistancia( dispositivo );
     }
     
