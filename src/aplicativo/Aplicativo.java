@@ -32,8 +32,8 @@ public class Aplicativo {
             },
             new float[] {
                 5.34f,
-                27.6f,
-                9.5f
+                32.6f,
+                9.3f
             }
         ),
         new Parametros(
