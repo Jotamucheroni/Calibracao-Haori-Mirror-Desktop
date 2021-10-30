@@ -677,6 +677,8 @@ public class Dispositivo implements AutoCloseable {
         translacaoTelaX, translacaoTelaY,
         aptidaoProjecaoOtima = Float.MAX_VALUE;
     private final float anguloRadianoProjecao = (float) Math.toRadians( 5 );
+    public static final float EXPOENTE_ZX = 1.5f;
+    public static final float EXPOENTE_ZY = 1.5f;
     
     public void calibrarParametrosProjecao() {
         if ( calibracaoParametrosProjecao != null && calibracaoParametrosProjecao.isAlive() )
@@ -715,6 +717,8 @@ public class Dispositivo implements AutoCloseable {
                     superiorEsquerdoX, superiorEsquerdoY,
                     rotacaoX, rotacaoY, rotacaoZ,
                     z,
+                    zxn, zxnM1,
+                    zyn, zynM1,
                     escalaXMedia, escalaYMedia,
                     translacaoXMedia, translacaoYMedia;
                 float[]
@@ -787,6 +791,10 @@ public class Dispositivo implements AutoCloseable {
                     escalaYMedia = 0;
                     
                     z = superiorEsquerdo3D.getZ();
+                    zxn  = (float) Math.pow( z, EXPOENTE_ZX );
+                    zxnM1 = (float) Math.pow( z, EXPOENTE_ZX - 1 );
+                    zyn  = (float) Math.pow( z, EXPOENTE_ZY );
+                    zynM1 = (float) Math.pow( z, EXPOENTE_ZY - 1 );
                     
                     escalaXMedia += Math.sqrt(
                         ( z * z ) * (float) (
@@ -820,8 +828,8 @@ public class Dispositivo implements AutoCloseable {
                         pontoMundo = ponto3D[i];
                         pontoTela = ponto2D[i];
                         
-                        translacaoXMedia += pontoTela.getX() * z * z - pontoMundo.getX() * escalaXMedia * z;
-                        translacaoYMedia += pontoTela.getY() * z * z - pontoMundo.getY() * escalaYMedia * z;
+                        translacaoXMedia += pontoTela.getX() * zxn - pontoMundo.getX() * escalaXMedia * zxnM1;
+                        translacaoYMedia += pontoTela.getY() * zyn - pontoMundo.getY() * escalaYMedia * zynM1;
                     }
                     
                     translacaoXMedia /= ponto3D.length;

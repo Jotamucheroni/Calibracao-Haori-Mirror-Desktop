@@ -43,7 +43,7 @@ public class Renderizador extends OpenGL implements GLEventListener {
         desenho.setParametroTextura( 1, 0.4f );
         detector = olhoVirtual.getDetectorPontos();
         detector.setMaximoColunasAEsquerda( 1 );
-        detector.setDistanciaImagem( detector.getDistanciaImagem() + 9.5f );
+        detector.setDistanciaImagem( detector.getDistanciaImagem() + 9.3f );
         
         smartphone = new DispositivoRemoto(
             "Smartphone", new CameraRemota( 320, 240, 1 )
@@ -198,7 +198,9 @@ public class Renderizador extends OpenGL implements GLEventListener {
                         2.67f + 1000,
                         olhoVirtual.getPosicaoX() + 1000,
                         olhoVirtual.getPosicaoY() + 1000,
-                        olhoVirtual.getPosicaoZ() + 1000
+                        olhoVirtual.getPosicaoZ() + 1000,
+                        Dispositivo.EXPOENTE_ZX + 1000,
+                        Dispositivo.EXPOENTE_ZY + 1000
                     }
                 );
         }

@@ -1,6 +1,7 @@
 package aplicativo.otimizacao;
 
 import aplicativo.pontos.Ponto3D;
+import aplicativo.es.dispositivo.Dispositivo;
 import aplicativo.pontos.Ponto2D;
 
 public class FuncaoParametrosProjecao implements FuncaoDesempenho {
@@ -71,7 +72,11 @@ public class FuncaoParametrosProjecao implements FuncaoDesempenho {
                 pontoMundo.getX() * x[0] / zMundo, pontoMundo.getY() * x[1] / zMundo
             );
             pontoEstimado.rotacionar( x[2], x[3], x[4] );
-            pontoEstimado.transladar( x[5] / ( zMundo * zMundo ), x[6] / ( zMundo * zMundo ) );
+            
+            pontoEstimado.transladar(
+                x[5] / ( (float) Math.pow( zMundo, Dispositivo.EXPOENTE_ZX ) ),
+                x[6] / ( (float) Math.pow( zMundo, Dispositivo.EXPOENTE_ZY ) )
+            );
             
             distancia = pontoEstimado.getDistanciaTabuleiro( ponto2D[i] );
             somaQuadrados += distancia * distancia;
