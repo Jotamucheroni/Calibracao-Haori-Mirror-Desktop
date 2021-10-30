@@ -547,7 +547,7 @@ public class DetectorPontos implements AutoCloseable {
     
     private float
         ladoQuadradoReal = 5.34f,
-        distanciaImagem = 27.6f;
+        distanciaImagem = 32.6f;
     
     public void setLadoQuadradoReal( float valor ) {
         if ( valor < 0 )
