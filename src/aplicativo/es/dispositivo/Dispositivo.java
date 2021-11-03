@@ -155,6 +155,8 @@ public class Dispositivo implements AutoCloseable {
         atualizarImagemDetector( 1 );
     }
     
+    // private final int numeroTestes = 1000;
+    
     private Thread calibracaoParametrosIntrinsecos;
     private final Object travaParametrosIntrinsecos = new Object();
     private float
@@ -174,7 +176,13 @@ public class Dispositivo implements AutoCloseable {
                 EstrategiaEvolutiva estrategiaEvolutiva = new EstrategiaEvolutiva( funcao );
                 EnxameParticulas enxameParticulas = new EnxameParticulas( funcao );
                 float[] resultadoRecozimento, resultadoEstrategia, resultadoEnxame;
-                float aptidaoRecozimento, aptidaoEstrategia, aptidaoEnxame;
+                float
+                    aptidaoRecozimento, aptidaoEstrategia, aptidaoEnxame;/* ,
+                    aptidaoMediaRecozimento = 0,
+                    aptidaoMediaEstrategia = 0,
+                    aptidaoMediaEnxame = 0;
+                String mediaRecozimentoFormatada, mediaEstrategiaFormatada, mediaEnxameFormatada;
+                int numeroTestesAtual = 0; */
                 
                 List<PontoMarcador> listaPontos;
                 PontoMarcador[] vetorPontos;
@@ -258,6 +266,26 @@ public class Dispositivo implements AutoCloseable {
                     aptidaoRecozimento = funcao.f( resultadoRecozimento );
                     aptidaoEstrategia = funcao.f( resultadoEstrategia );
                     aptidaoEnxame = funcao.f( resultadoEnxame );
+                    
+                    /* aptidaoMediaRecozimento += aptidaoRecozimento;
+                    aptidaoMediaEstrategia += aptidaoEstrategia;
+                    aptidaoMediaEnxame += aptidaoEnxame;
+                    
+                    numeroTestesAtual++;
+                    if ( numeroTestesAtual == numeroTestes && id.equals( "Smartphone" ) ) {
+                        aptidaoMediaRecozimento /= numeroTestes;
+                        aptidaoMediaEstrategia /= numeroTestes;
+                        aptidaoMediaEnxame /= numeroTestes;
+                        
+                        mediaRecozimentoFormatada = String.format( "%.15f", aptidaoMediaRecozimento );
+                        mediaEstrategiaFormatada = String.format( "%.15f", aptidaoMediaEstrategia );
+                        mediaEnxameFormatada = String.format( "%.15f", aptidaoMediaEnxame );
+                        
+                        numeroTestesAtual = 0;
+                        aptidaoMediaRecozimento = 0;
+                        aptidaoMediaEstrategia = 0;
+                        aptidaoMediaEnxame = 0;
+                    } */
                     
                     synchronized ( travaParametrosIntrinsecos ) {
                         if ( aptidaoRecozimento < aptidaoIntrinsecosOtima ) {
@@ -433,7 +461,12 @@ public class Dispositivo implements AutoCloseable {
                 EstrategiaEvolutiva estrategiaEvolutiva = new EstrategiaEvolutiva( funcao );
                 EnxameParticulas enxameParticulas = new EnxameParticulas( funcao );
                 float[] resultadoRecozimento, resultadoEstrategia, resultadoEnxame;
-                float aptidaoRecozimento, aptidaoEstrategia, aptidaoEnxame;
+                float aptidaoRecozimento, aptidaoEstrategia, aptidaoEnxame;/* ,
+                    aptidaoMediaRecozimento = 0,
+                    aptidaoMediaEstrategia = 0,
+                    aptidaoMediaEnxame = 0;
+                String mediaRecozimentoFormatada, mediaEstrategiaFormatada, mediaEnxameFormatada;
+                int numeroTestesAtual = 0; */
                 
                 List<PontoMarcador> listaPontos, listaPontosReferencia;
                 Marcador marcador, marcadorReferencia;
@@ -519,6 +552,26 @@ public class Dispositivo implements AutoCloseable {
                     aptidaoRecozimento = funcao.f( resultadoRecozimento );
                     aptidaoEstrategia = funcao.f( resultadoEstrategia );
                     aptidaoEnxame = funcao.f( resultadoEnxame );
+                    
+                    /* aptidaoMediaRecozimento += aptidaoRecozimento;
+                    aptidaoMediaEstrategia += aptidaoEstrategia;
+                    aptidaoMediaEnxame += aptidaoEnxame;
+                    
+                    numeroTestesAtual++;
+                    if ( numeroTestesAtual == numeroTestes ) {
+                        aptidaoMediaRecozimento /= numeroTestes;
+                        aptidaoMediaEstrategia /= numeroTestes;
+                        aptidaoMediaEnxame /= numeroTestes;
+                        
+                        mediaRecozimentoFormatada = String.format( "%.15f", aptidaoMediaRecozimento );
+                        mediaEstrategiaFormatada = String.format( "%.15f", aptidaoMediaEstrategia );
+                        mediaEnxameFormatada = String.format( "%.15f", aptidaoMediaEnxame );
+                        
+                        numeroTestesAtual = 0;
+                        aptidaoMediaRecozimento = 0;
+                        aptidaoMediaEstrategia = 0;
+                        aptidaoMediaEnxame = 0;
+                    } */
                     
                     synchronized ( travaParametrosExtrinsecos ) {
                         if ( aptidaoRecozimento < aptidaoExtrinsecosOtima ) {
@@ -696,7 +749,12 @@ public class Dispositivo implements AutoCloseable {
                 EstrategiaEvolutiva estrategiaEvolutiva = new EstrategiaEvolutiva( funcao );
                 EnxameParticulas enxameParticulas = new EnxameParticulas( funcao );
                 float[] resultadoRecozimento, resultadoEstrategia, resultadoEnxame;
-                float aptidaoRecozimento, aptidaoEstrategia, aptidaoEnxame;
+                float aptidaoRecozimento, aptidaoEstrategia, aptidaoEnxame;/* ,
+                    aptidaoMediaRecozimento = 0,
+                    aptidaoMediaEstrategia = 0,
+                    aptidaoMediaEnxame = 0;
+                String mediaRecozimentoFormatada, mediaEstrategiaFormatada, mediaEnxameFormatada;
+                int numeroTestesAtual = 0; */
                 
                 List<PontoMarcador> listaPontos;
                 Marcador marcador;
@@ -865,6 +923,26 @@ public class Dispositivo implements AutoCloseable {
                     aptidaoRecozimento = funcao.f( resultadoRecozimento );
                     aptidaoEstrategia = funcao.f( resultadoEstrategia );
                     aptidaoEnxame = funcao.f( resultadoEnxame );
+                    
+                    /* aptidaoMediaRecozimento += aptidaoRecozimento;
+                    aptidaoMediaEstrategia += aptidaoEstrategia;
+                    aptidaoMediaEnxame += aptidaoEnxame;
+                    
+                    numeroTestesAtual++;
+                    if ( numeroTestesAtual == numeroTestes ) {
+                        aptidaoMediaRecozimento /= numeroTestes;
+                        aptidaoMediaEstrategia /= numeroTestes;
+                        aptidaoMediaEnxame /= numeroTestes;
+                        
+                        mediaRecozimentoFormatada = String.format( "%.15f", aptidaoMediaRecozimento );
+                        mediaEstrategiaFormatada = String.format( "%.15f", aptidaoMediaEstrategia );
+                        mediaEnxameFormatada = String.format( "%.15f", aptidaoMediaEnxame );
+                        
+                        numeroTestesAtual = 0;
+                        aptidaoMediaRecozimento = 0;
+                        aptidaoMediaEstrategia = 0;
+                        aptidaoMediaEnxame = 0;
+                    } */
                     
                     synchronized ( travaParametrosProjecao ) {
                         if ( aptidaoRecozimento < aptidaoProjecaoOtima ) {
